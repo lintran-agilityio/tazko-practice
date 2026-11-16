@@ -23,3 +23,7 @@ G-17 (description edits log who and when, not the text) affects the Activity log
 ## Prototype panel (v24)
 
 The `Prototype panel` artboard simulates the backend with one fake API: 6 scenarios, 4 latency levels and 5 faults, plus a request log. See the "Prototype panel" section in `../../plan/PLAN.md`.
+
+## Prototype panel (v26)
+
+Changes are now optimistic with undo on failure, and the panel has 6 faults: Offline, Server error, Session expired, Forbidden, Not found and Conflict. Loading the board shows clear offline and session-expired screens.

@@ -397,6 +397,7 @@ Each row is one pull request and one release.
 - [ ] Check every screen at phone width and fix layout problems.
 - [ ] Accessibility pass: visible focus, labels on every input, and text contrast.
 - [ ] Empty, loading and error states for every list and form.
+- [ ] Make every change optimistic with undo on failure, and add clear error, session-expired and offline states.
 - [ ] Use the prototype panel (see below) to check every screen against each scenario, latency level and fault.
 - [ ] Write the README: setup, seed accounts, how to run the tests.
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
@@ -498,13 +499,13 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 |---|---|
 | Scenarios (6) | Normal day, New company (no cards), Observer view, Super admin opens as Owner, Big board (24 cards), Archived project |
 | Latency (4) | Instant (0 ms), Fast (300 ms), Slow (1500 ms), Very slow (4000 ms) |
-| Faults (5) | Network error (status 0), Server error (500), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card) |
+| Faults (6) | Offline (status 0), Server error (500), Session expired (401), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card) |
 
 ### The 6 scenarios in detail
 
 | Scenario | Who | Data | What to try | Expected |
 |---|---|---|---|---|
-| Normal day | Minh, Owner of Harbor Logistics | 4 columns, 7 cards | Move "Add invoice export"; move again with the Conflict fault; reload with Slow latency | First move succeeds (PATCH 200). Conflict shows a red banner and the card stays. Slow shows a skeleton for 1.5 s |
+| Normal day | Minh, Owner of Harbor Logistics | 4 columns, 7 cards | Move "Add invoice export"; move again with the Conflict fault; reload with Slow latency | The first move shows at once and is saved (PATCH 200). With Conflict the card moves, then jumps back with a red banner and Retry. Slow shows a skeleton for 1.5 s |
 | New company | Minh, Owner of Northwind Foods | 4 columns, 0 cards | Reload; reload with Server error; reload with No fault | "No cards yet" (GET 200), then a 500 error screen with Try again, then "No cards yet" again |
 | Observer view | Khoa, Observer | Same 7 cards | Look for Move buttons and PATCH requests | Banner says Observers cannot change anything; no Move buttons; the API would answer 403 (G-3) |
 | Super admin opens as Owner | Linh, Super admin | Same 7 cards | Read the banner; move a card | Banner says she views the company as its Owner and changes are logged; the move works (G-6, G-14) |
@@ -513,6 +514,8 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 
 The request log clears when the scenario changes, so it only shows requests for the current scenario.
 
+- Every change is optimistic: the card moves on screen at once and a "Saving..." note shows while the request is pending. If the request fails, the card goes back to its original column, a message explains why, and the user gets Retry (or Sign in again when the session has expired).
+- Loading the board has its own clear states: skeleton while loading, "You are offline" with Try again, "Your session has expired" with Sign in again, and a generic error with the status code.
 - All requests go through a single function, `api(method, path, body)`. It waits for the latency, applies the fault, checks the role, and writes a line to the request log.
 - Observers and archived projects get 403 on writes, matching the access rules above.
 - In the real app, the same states are covered by tests that stub the data layer with these scenarios, latencies and faults.
