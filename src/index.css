@@ -1,0 +1,19 @@
+@import 'tailwindcss';
+
+/* Tazko Indigo design tokens (see ../plan/PLAN.md, milestone M1). */
+@theme {
+  --color-bg: #f6f6fb;
+  --color-surface: #ffffff;
+  --color-ink: #1b1b2e;
+  --color-muted: #5b5b76;
+  --color-line: #e3e3ee;
+  --color-accent: #4f52d9;
+  --color-accent-strong: #3a3db8;
+  --color-accent-soft: #ececfd;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+}

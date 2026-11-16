@@ -1,0 +1,484 @@
+# Tazko build plan
+
+A step-by-step plan to build Tazko as a real app, based on the 13 decisions from the interview and the 14-screen prototype. It is split into 20 small milestones. Each milestone ends in one pull request and one release.
+
+- Prototype (14 screens): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
+- Interactive plan page with checklists: https://claude.ai/artifact/1QfkQMLg4LNxHFmd4pPDEY
+
+## How the work flows
+
+Seven phases made of 20 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
+
+```mermaid
+flowchart LR
+  A[Foundation] --> B[Accounts and companies] --> C[Daily flow] --> D[Find and organise] --> E[Company management] --> F[Super admin] --> G[Polish]
+```
+
+## Decisions
+
+These came from the interview and are the source of truth for the build.
+
+| Code | Area | Decision |
+|---|---|---|
+| G-1 | Goal | Build one practice project and apply what was learned; practise using claude.ai. |
+| G-2 | Scope | All 14 screens of the prototype, with sample data seeded into the database. |
+| G-3 | Spec (Q-2) | A card can be assigned to an Observer so they can follow it. Observers still cannot edit, move or archive anything. |
+| G-4 | Spec (Q-1) | Activity logs everything: comments, column moves, assignments, due dates and description edits. |
+| G-5 | Spec (DR-3) | Archiving or deleting a project requires typing the project name. |
+| G-6 | Permissions | A Super admin opens a company as its Owner. A banner says so, and every change is logged in Activity as made by the Super admin. |
+| G-7 | Multi-company | A company switcher sits at the top of the left navigation and remembers the last company used. |
+| G-8 | Sample data | 2 companies and 4 users: Linh (Super admin), Minh (Owner of both companies), Hoa (Member) and Khoa (Observer), both in Harbor Logistics. |
+| G-9 | Backend | A real backend with an API and a database from the start. |
+| G-10 | Stack | Supabase (Postgres and Auth) with a React and Tailwind front end. |
+| G-11 | Sign-in | Google plus email and password, so test accounts for each role are easy to create. |
+| G-12 | Build setup | The autonomous build runs in Claude Code on the developer's machine, in the dedicated repo `lintran-agilityio/tazko-practice`, apart from any client code. |
+| G-13 | Checkpoints | Claude stops after each milestone and opens a pull request for your review. |
+
+## Stack and setup
+
+| Part | Choice |
+|---|---|
+| Front end | React, TypeScript and Tailwind, built with Vite. Look and feel follow the prototype (Tazko Indigo, Hanken Grotesk and DM Mono). |
+| Backend | Supabase: Postgres for data, Auth for sign-in, and Row Level Security to enforce company isolation and roles in the database. |
+| Sign-in | Google, and email with password for test accounts. |
+| Tests | Vitest for the app, plus database tests that prove one company cannot see another company's data. |
+| Where it runs | Claude Code on the developer's machine, in the dedicated tazko-practice repo. |
+
+Why Row Level Security matters here: the rule that each company sees only its own boards is enforced by the database itself, so a bug in the screens cannot leak data between companies.
+
+## Data model
+
+| Table | Main columns | Notes |
+|---|---|---|
+| companies | id, name, created_at | A tenant. Every board, card and member belongs to exactly one company (T-1). |
+| profiles | id (the auth user), display_name, is_super_admin, last_company_id | One row per signed-in person. last_company_id powers the company switcher (G-7). |
+| memberships | company_id, user_id, role (owner, member, observer) | Links people to companies. Unique per company and person. |
+| boards | id, company_id, name, description, archived_at | Called a project in settings (T-2). archived_at starts the 30-day restore window (BR-2). |
+| columns | id, board_id, name, position | The columns of a board. |
+| cards | id, company_id, board_id, column_id, title, description, due_date, position | A card lives on exactly one board and in one column; moving it changes column_id only (BR-1). |
+| card_assignees | card_id, user_id | Any role can be assigned, Observers included (G-3). |
+| labels, card_labels | labels(id, company_id, name, color); card_labels(card_id, label_id) | Labels belong to a company and are shared by its boards. |
+| comments | id, card_id, author_id, body, created_at | Shown in Activity. |
+| activity | id, company_id, card_id, actor_id, acting_as_super_admin, type, payload, created_at | Written by database triggers so nothing can skip it (G-4). acting_as_super_admin records the Open as Owner case (G-6). |
+| notifications | id, user_id, activity_id, read_at | Generated from activity for assignments, comments and due dates. |
+
+### Who can do what
+
+| Action | Who can do it |
+|---|---|
+| Read | Anyone who belongs to the company, in any role. Super admins can read every company. |
+| Create, edit and move cards, comment | Owners and Members of that company. Observers cannot (BR-3). |
+| Manage labels, members and project settings | Owners of that company. Members can still apply existing labels to cards. |
+| Archive, restore and delete a project | Owners only. An archived project is read-only (BR-2). |
+| Companies, usage, Open as Owner | Super admins only. Owners and Members never see this area. |
+
+## Release roadmap
+
+Each row is one pull request and one release.
+
+| Milestone | Name | Screens | Depends on | Release |
+|---|---|---|---|---|
+| M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 |
+| M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 |
+| M3 | Sign in with email | Sign in | M2 | v0.3.0 |
+| M4 | Company switcher and Profile | Profile | M3 | v0.4.0 |
+| M5 | Sign in with Google | Sign in | M3 | v0.5.0 |
+| M6 | Boards on screen | Home, Board | M4 | v0.6.0 |
+| M7 | Create and move cards | Board | M6 | v0.7.0 |
+| M8 | Card detail | Card detail | M7 | v0.8.0 |
+| M9 | Comments and Activity | Card detail | M8 | v0.9.0 |
+| M10 | Labels | Labels | M8 | v0.10.0 |
+| M11 | Board as list | Board as list | M7 | v0.11.0 |
+| M12 | Search | Search | M7 | v0.12.0 |
+| M13 | Notifications | Notifications | M9 | v0.13.0 |
+| M14 | Members and invites | Members | M4 | v0.14.0 |
+| M15 | Project settings | Project settings | M7 | v0.15.0 |
+| M16 | Archive and delete project | Project settings | M15 | v0.16.0 |
+| M17 | Companies and Company detail | Companies, Company detail | M4 | v0.17.0 |
+| M18 | Open as Owner | Company detail, banner on every screen | M9, M17 | v0.18.0 |
+| M19 | Usage | Usage | M9, M17 | v0.19.0 |
+| M20 | Polish and hand-off | All 14 screens | M1 to M19 | v1.0.0 |
+
+## Milestones
+
+### Phase 1: Foundation
+
+#### M1: Scaffold and app shell
+
+- **Screens:** Placeholders for all 14
+- **Depends on:** None
+- **Release:** `v0.1.0`
+- **Models:** Sonnet builds, Haiku does scaffolding
+
+- [ ] Create the Vite, React, TypeScript and Tailwind project in the sandbox repo.
+- [ ] Add lint, typecheck and Vitest, plus a GitHub Actions workflow that runs all three.
+- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens.
+- [ ] Add the Tazko Indigo design tokens: colours, Hanken Grotesk and DM Mono.
+
+**Done when:** npm run dev shows the shell, every route is reachable, and CI is green.
+
+### Phase 2: Accounts and companies
+
+#### M2: Database, roles and isolation
+
+- **Screens:** None (database only)
+- **Depends on:** M1
+- **Release:** `v0.2.0`
+- **Models:** Opus reviews the schema first, Sonnet builds, Haiku writes seed data
+
+- [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder and an .env.example.
+- [ ] Migrations for companies, profiles and memberships, plus the role type and the is_super_admin flag.
+- [ ] Row Level Security helpers that answer: is this person a member, what is their role, are they a Super admin.
+- [ ] Seed the 2 companies and 4 users from G-8 with one command.
+- [ ] Tests that prove isolation: one company cannot read another company’s rows, and an Observer cannot write.
+
+**Done when:** The seed loads with one command and every isolation test passes.
+
+#### M3: Sign in with email
+
+- **Screens:** Sign in
+- **Depends on:** M2
+- **Release:** `v0.3.0`
+- **Models:** Sonnet builds
+
+- [ ] Sign in screen with email and password, and a sign out action.
+- [ ] Create a profile row automatically when someone signs up.
+- [ ] Redirect signed-out visitors to Sign in from every other route.
+- [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
+
+**Done when:** You can sign in as each seed user and sign out again.
+
+#### M4: Company switcher and Profile
+
+- **Screens:** Profile
+- **Depends on:** M3
+- **Release:** `v0.4.0`
+- **Models:** Sonnet builds
+
+- [ ] Company switcher at the top of the left navigation (G-7), remembering the last company used.
+- [ ] Show only the navigation items a role may use: Owners also see Members, Labels and Project settings.
+- [ ] Profile screen: edit display name, list your companies and roles, sign out.
+
+**Done when:** Minh switches between both companies without signing out, and the choice is remembered.
+
+#### M5: Sign in with Google
+
+- **Screens:** Sign in
+- **Depends on:** M3
+- **Release:** `v0.5.0`
+- **Models:** Sonnet builds
+
+- [ ] Configure the Google provider locally: client ID in the config file, secret in the environment.
+- [ ] Add Continue with Google as the single primary action on Sign in.
+- [ ] Handle the callback and send the person to Home.
+- [ ] Document the Google setup in the README.
+
+**Done when:** A Google account can sign in and gets a profile row. If the Google credential is not ready, skip this milestone for now; nothing after it depends on it.
+
+### Phase 3: Daily flow
+
+#### M6: Boards on screen
+
+- **Screens:** Home, Board
+- **Depends on:** M4
+- **Release:** `v0.6.0`
+- **Models:** Sonnet builds, Haiku writes sample boards
+
+- [ ] Migrations for boards, columns and cards, and seed the four sample boards from the prototype.
+- [ ] Home: recent boards as tiles first, then what needs attention; tiles scroll sideways under 600px (DR-4).
+- [ ] Board screen: columns and cards, read-only, with tabs to switch between boards.
+- [ ] Empty state for a board with no cards.
+
+**Done when:** Every role sees only the current company’s boards, and the tabs switch boards.
+
+#### M7: Create and move cards
+
+- **Screens:** Board
+- **Depends on:** M6
+- **Release:** `v0.7.0`
+- **Models:** Sonnet builds
+
+- [ ] Settle open question Q3 (how cards move), then build it.
+- [ ] Add card as the single primary action on Board.
+- [ ] Moving a card changes its column only, never copies it (BR-1).
+- [ ] Hide create and move controls from Observers, and block the same writes in the database (BR-3).
+
+**Done when:** Hoa can add and move cards; Khoa sees no controls and the database refuses his writes.
+
+#### M8: Card detail
+
+- **Screens:** Card detail
+- **Depends on:** M7
+- **Release:** `v0.8.0`
+- **Models:** Sonnet builds
+
+- [ ] Card page with title, description editing, due date and column, and a link back to the board.
+- [ ] Assignees, Observers included, with a note that Observers follow the card but cannot edit it (G-3).
+- [ ] Observers see the page read-only.
+
+**Done when:** Hoa can edit a card; Khoa can be assigned to it but cannot change anything.
+
+#### M9: Comments and Activity
+
+- **Screens:** Card detail
+- **Depends on:** M8
+- **Release:** `v0.9.0`
+- **Models:** Opus reviews the trigger design first, Sonnet builds
+
+- [ ] Comments table and a comment box on Card detail.
+- [ ] Activity table plus database triggers for comments, moves, assignments, due dates and description edits (G-4).
+- [ ] Add the acting_as_super_admin column now, ready for M18 (G-6).
+- [ ] Activity list on Card detail showing who did what and when, with times in the mono face.
+
+**Done when:** Every action from M7 and M8 appears in Activity.
+
+#### M10: Labels
+
+- **Screens:** Labels
+- **Depends on:** M8
+- **Release:** `v0.10.0`
+- **Models:** Sonnet builds
+
+- [ ] Migrations for labels and card_labels.
+- [ ] Labels screen for Owners: create, edit and delete.
+- [ ] Members and Owners can apply labels on Card detail; label chips show on board cards.
+
+**Done when:** An Owner manages labels, and labels show on cards across the company’s boards.
+
+### Phase 4: Find and organise
+
+#### M11: Board as list
+
+- **Screens:** Board as list
+- **Depends on:** M7
+- **Release:** `v0.11.0`
+- **Models:** Sonnet builds
+
+- [ ] List view of the same cards with sortable columns.
+- [ ] Board and List toggle on both views.
+
+**Done when:** The list shows exactly the cards the board shows, and sorting works.
+
+#### M12: Search
+
+- **Screens:** Search
+- **Depends on:** M7
+- **Release:** `v0.12.0`
+- **Models:** Sonnet builds
+
+- [ ] Search across card titles and board names in the current company only.
+- [ ] Results table showing board and column.
+- [ ] A test proving search never returns another company’s data.
+
+**Done when:** Searching for a word finds matching cards, and the isolation test passes.
+
+#### M13: Notifications
+
+- **Screens:** Notifications
+- **Depends on:** M9
+- **Release:** `v0.13.0`
+- **Models:** Sonnet builds
+
+- [ ] Settle open question Q4 (in-app only or real email).
+- [ ] Notifications table filled from Activity for assignments and comments; work out due tomorrow when the list loads.
+- [ ] Notifications screen with All and Unread, and a Mark all as read action.
+- [ ] Unread count in the left navigation.
+
+**Done when:** Being assigned a card or getting a comment creates a notification that can be marked as read.
+
+### Phase 5: Company management
+
+#### M14: Members and invites
+
+- **Screens:** Members
+- **Depends on:** M4
+- **Release:** `v0.14.0`
+- **Models:** Sonnet builds
+
+- [ ] Members list with role chips and last seen in the mono face (DR-2).
+- [ ] Change a member’s role, for Owners only.
+- [ ] Invite someone by email, shown as a pending row until accepted.
+
+**Done when:** An Owner can invite someone and change their role; Members and Observers cannot reach the screen.
+
+#### M15: Project settings
+
+- **Screens:** Project settings
+- **Depends on:** M7
+- **Release:** `v0.15.0`
+- **Models:** Sonnet builds
+
+- [ ] Edit a project’s name and description.
+- [ ] Add, rename and reorder columns.
+- [ ] Owners only.
+
+**Done when:** Changes show up on the board straight away.
+
+#### M16: Archive and delete project
+
+- **Screens:** Project settings
+- **Depends on:** M15
+- **Release:** `v0.16.0`
+- **Models:** Sonnet builds, Haiku does the shared confirm component
+
+- [ ] Settle open question Q2 (how the 30-day purge runs).
+- [ ] A shared confirm-by-name component used for both archive and delete (G-5).
+- [ ] Archive makes a project read-only and restorable for 30 days; after that it is purged (BR-2).
+- [ ] Delete a project, also confirmed by typing its name.
+
+**Done when:** Archiving needs the typed name, an archived project restores within 30 days, and only Owners can do it.
+
+### Phase 6: Super admin
+
+#### M17: Companies and Company detail
+
+- **Screens:** Companies, Company detail
+- **Depends on:** M4
+- **Release:** `v0.17.0`
+- **Models:** Sonnet builds
+
+- [ ] Companies screen: list companies and create a new one.
+- [ ] Company detail: people, counts and a link back to the list.
+- [ ] Make sure Owners and Members can never see or reach the Super admin area.
+
+**Done when:** A Super admin sees both companies and their people; nobody else can open these screens.
+
+#### M18: Open as Owner
+
+- **Screens:** Company detail, banner on every screen
+- **Depends on:** M9, M17
+- **Release:** `v0.18.0`
+- **Models:** Opus reviews the approach first, Sonnet builds
+
+- [ ] Settle open question Q1 (how Open as Owner works technically).
+- [ ] Open as Owner action on Company detail.
+- [ ] Banner on every screen while it is active: Viewing as Owner of the company (G-6).
+- [ ] Set acting_as_super_admin on every change made in this mode, and show it in Activity.
+- [ ] Exit action that returns to Companies.
+
+**Done when:** A Super admin opens either company as Owner, the banner shows, and Activity shows who really acted.
+
+#### M19: Usage
+
+- **Screens:** Usage
+- **Depends on:** M9, M17
+- **Release:** `v0.19.0`
+- **Models:** Sonnet builds
+
+- [ ] Compute active members per week and totals per company from Activity.
+- [ ] Usage screen with a chart of active members per week and a table of totals.
+- [ ] Super admins only.
+
+**Done when:** The numbers on Usage match the Activity records.
+
+### Phase 7: Polish
+
+#### M20: Polish and hand-off
+
+- **Screens:** All 14 screens
+- **Depends on:** M1 to M19
+- **Release:** `v1.0.0`
+- **Models:** Sonnet builds, Haiku writes docs
+
+- [ ] Check every screen at phone width and fix layout problems.
+- [ ] Accessibility pass: visible focus, labels on every input, and text contrast.
+- [ ] Empty, loading and error states for every list and form.
+- [ ] Write the README: setup, seed accounts, how to run the tests.
+- [ ] Compare each screen with the prototype and list any differences in the final pull request.
+
+**Done when:** All 14 screens match the prototype, the README works from a clean clone, and every test passes.
+
+### Which milestone builds which screen
+
+| Screen | Built in |
+|---|---|
+| Sign in | M3, M5 |
+| Profile | M4 |
+| Home | M6 |
+| Board | M6, M7 |
+| Card detail | M8, M9 |
+| Board as list | M11 |
+| Search | M12 |
+| Notifications | M13 |
+| Members | M14 |
+| Labels | M10 |
+| Project settings | M15, M16 |
+| Companies | M17 |
+| Company detail | M17, M18 |
+| Usage | M19 |
+
+## How to release and manage
+
+1. One milestone is one branch, one pull request and one release tag. The tag is named in the milestone, for example v0.7.0.
+2. The main branch must always work: merge only when typecheck, lint and all tests pass.
+3. After each merge, add a line to CHANGELOG.md saying what changed, so the history is clear at a glance.
+4. Keep milestones small. If one grows past about five tasks, or needs more than one group of screens, split it before building.
+5. To track work on GitHub, create a GitHub milestone for each M and an issue for each task, or simply use the checklists on this page.
+6. Branches: main is the release branch. Cut each milestone branch from main, open the pull request back into main, and create the release tag on main after the merge.
+
+## Models and cost
+
+To keep usage cost down, the expensive model advises and the cheaper ones do the work.
+
+| Role | Model | Used for |
+|---|---|---|
+| Advisor | Opus | Reviews this plan, the schema and the access rules before M1 and before M5. Never writes code. |
+| Builder | Sonnet | All feature code, database migrations and tests. |
+| Mechanical | Haiku | Seed data, renames, formatting, boilerplate and small documentation fixes. |
+
+## Rules for the autonomous build
+
+1. Work only inside this repository. Never touch client code.
+2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-and-move-cards.
+3. Before starting a milestone, re-read it and the decisions G-1 to G-13. After finishing, run typecheck, lint and every test, including the isolation tests.
+4. The pull request lists what was built, the assumptions made and anything left unfinished. Then stop and wait for review.
+5. Once I merge, tag the release named in the milestone and add a line to CHANGELOG.md. Then wait for me to say go before starting the next milestone.
+6. If the plan is silent or two rules conflict, add the question to the open questions list and ask. Do not guess.
+7. Write all code, comments, documentation and commit messages in English.
+8. Never commit secrets. Keep only an .env.example in the repo.
+
+## Open questions
+
+Settle each one before the milestone that needs it. Out of scope for now: real-time collaboration, file uploads and card cover images, the weekly digest email, the board background picker, and a mobile app. Card titles such as "Weekly digest email" in the prototype are sample data, not features.
+
+|  | Question | Decide |
+|---|---|---|
+| Q1 | How should Open as Owner work technically? Recommended: a session flag that the database policies check, so no extra membership row is written. | Before M18 |
+| Q2 | How is the 30-day purge of archived projects run: a scheduled database job or a scheduled function? | Before M16 |
+| Q3 | How do people move cards: a menu, drag and drop, or both? Recommended: a menu first because it is easier to make accessible. | Before M7 |
+| Q4 | Do invites and notifications send real email, or stay in the app only? Recommended: in the app only for this practice. | Before M13 |
+
+## Before the build
+
+- [x] Use the dedicated repo `lintran-agilityio/tazko-practice` (practice only, no client code).
+- [x] Install Claude Code on your machine.
+- [ ] Install Docker and Node.js 20 or newer, so the local Supabase stack can run.
+- [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
+- [ ] Export the prototype screens as images or PDF into docs/prototype/, and save this plan as PLAN.md in the repo.
+
+## Kickoff prompt for Claude Code
+
+Paste this into Claude Code from the root of this repository.
+
+```text
+You are building Tazko, a kanban work tracker that one group runs for several of its companies.
+
+Source of truth: PLAN.md in this repository (20 small milestones, each one pull request and one release). Visual reference: the images in docs/prototype/.
+
+Work one milestone at a time, starting with M1. For each milestone:
+1. Read the milestone and the decisions G-1 to G-13.
+2. Create a branch named mN-short-name from main.
+3. Implement the tasks.
+4. Run typecheck, lint and all tests, including the isolation tests.
+5. Open a pull request into main that lists what you built, the assumptions you made and anything unfinished.
+6. Stop and wait for my review.
+7. After I merge, tag the release named in the milestone and add a line to CHANGELOG.md.
+8. Do not start the next milestone until I say so.
+
+Rules:
+- Work only in this repository.
+- Write all code, comments, docs and commit messages in English.
+- Never commit secrets.
+- If the plan is silent or two rules conflict, add the question to the open questions list and ask me instead of guessing.
+- Follow the model split in PLAN.md: Opus advises, Sonnet writes code, Haiku handles mechanical work.
+```
