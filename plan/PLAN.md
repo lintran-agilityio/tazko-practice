@@ -436,6 +436,44 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 6. If the plan is silent or two rules conflict, add the question to the open questions list and ask. Do not guess.
 7. Write all code, comments, documentation and commit messages in English.
 8. Never commit secrets. Keep only an .env.example in the repo.
+9. Follow the Safety section: the trust ladder decides how much runs unattended, and the stop conditions always apply.
+
+## Safety
+
+Three built-in lessons for the autonomous build. They apply to every milestone.
+
+### 1. Review the plan like code
+
+Read this plan the way you would read a pull request before running anything from it.
+
+- For each milestone, list the commands it implies, the packages it installs and the places it writes files. Anything surprising is a bug in the plan.
+- Check that every task matches a decision (G-1 to G-13) and a rule in this file.
+- Start Claude Code in plan mode first, so it proposes the steps and you approve them before any file changes.
+- Ask the advisor model (Opus) to review the plan or a risky milestone before it is built. It reviews and never writes code.
+
+### 2. Trust ladder
+
+Give Claude more freedom one rung at a time. Move up only when the previous rung finished without an incident.
+
+| Rung | Milestones | How it runs |
+|---|---|---|
+| 1. Supervised | M1 | You approve every command and read every diff. No chained or batched commands. |
+| 2. Semi-supervised | M2 to M5 | Claude edits code freely. It asks first for migrations, package installs, and auth or Supabase configuration. |
+| 3. Autonomous | M6 to M19 | Claude runs a whole milestone and stops at each pull request. |
+| 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
+
+An incident is any stop condition that fired unexpectedly, a secret that reached a tracked file, or a change outside this repository. After an incident, go back one rung.
+
+### 3. Stop conditions
+
+Claude stops and asks before doing any of these, at every rung.
+
+| Group | Stop when |
+|---|---|
+| Secrets | About to read, write or print a `.env` file, a Supabase `service_role` key, a Google client secret or any token. About to commit a file that holds a secret. |
+| Machine changes | About to install a global package, change PATH or a shell profile, change Docker settings, use `sudo`, or write or delete a file outside this repository. |
+| Risky git | About to force push, delete a branch, rewrite history, or push directly to `main`. |
+| Surprises | A command fails twice in a row, a test is deleted or skipped to make the suite pass, or the plan and a decision disagree. |
 
 ## Open questions
 
@@ -452,6 +490,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 
 - [x] Use the dedicated repo `lintran-agilityio/tazko-practice` (practice only, no client code).
 - [x] Install Claude Code on your machine.
+- [ ] Review this plan like code (see Safety) before the first run, and start Claude Code in plan mode.
 - [ ] Install Docker and Node.js 20 or newer, so the local Supabase stack can run.
 - [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
 - [ ] Export the prototype screens as images or PDF into docs/prototype/, and save this plan as PLAN.md in the repo.
@@ -479,6 +518,8 @@ Rules:
 - Work only in this repository.
 - Write all code, comments, docs and commit messages in English.
 - Never commit secrets.
+- Follow the trust ladder in the Safety section of PLAN.md. In M1, I approve every command: do not chain or batch commands.
+- Stop and ask me before: touching secrets (.env files, keys, tokens); changing my machine (global installs, PATH, shell profile, Docker settings, sudo, files outside this repository); risky git (force push, deleting branches, pushing to main); or when a command fails twice in a row.
 - If the plan is silent or two rules conflict, add the question to the open questions list and ask me instead of guessing.
 - Follow the model split in PLAN.md: Opus advises, Sonnet writes code, Haiku handles mechanical work.
 ```
