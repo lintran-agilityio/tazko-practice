@@ -397,6 +397,7 @@ Each row is one pull request and one release.
 - [ ] Check every screen at phone width and fix layout problems.
 - [ ] Accessibility pass: visible focus, labels on every input, and text contrast.
 - [ ] Empty, loading and error states for every list and form.
+- [ ] Use the prototype panel (see below) to check every screen against each scenario, latency level and fault.
 - [ ] Write the README: setup, seed accounts, how to run the tests.
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
 
@@ -488,6 +489,33 @@ Claude stops and asks before doing any of these, at every rung.
 | Machine changes | About to install a global package, change PATH or a shell profile, change Docker settings, use `sudo`, or write or delete a file outside this repository. |
 | Risky git | About to force push, delete a branch, rewrite history, or push directly to `main`. |
 | Surprises | A command fails twice in a row, a test is deleted or skipped to make the suite pass, or the plan and a decision disagree. |
+
+## Prototype panel
+
+The prototype has a panel artboard (`Prototype panel`) that drives one fake API. It is the reference for how every screen must behave when data is slow, empty, restricted or failing. Each milestone that builds a screen with a list or a form should show these states.
+
+| Group | Options |
+|---|---|
+| Scenarios (6) | Normal day, New company (no cards), Observer view, Super admin opens as Owner, Big board (24 cards), Archived project |
+| Latency (4) | Instant (0 ms), Fast (300 ms), Slow (1500 ms), Very slow (4000 ms) |
+| Faults (5) | Network error (status 0), Server error (500), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card) |
+
+### The 6 scenarios in detail
+
+| Scenario | Who | Data | What to try | Expected |
+|---|---|---|---|---|
+| Normal day | Minh, Owner of Harbor Logistics | 4 columns, 7 cards | Move "Add invoice export"; move again with the Conflict fault; reload with Slow latency | First move succeeds (PATCH 200). Conflict shows a red banner and the card stays. Slow shows a skeleton for 1.5 s |
+| New company | Minh, Owner of Northwind Foods | 4 columns, 0 cards | Reload; reload with Server error; reload with No fault | "No cards yet" (GET 200), then a 500 error screen with Try again, then "No cards yet" again |
+| Observer view | Khoa, Observer | Same 7 cards | Look for Move buttons and PATCH requests | Banner says Observers cannot change anything; no Move buttons; the API would answer 403 (G-3) |
+| Super admin opens as Owner | Linh, Super admin | Same 7 cards | Read the banner; move a card | Banner says she views the company as its Owner and changes are logged; the move works (G-6, G-14) |
+| Big board | Minh, Owner | 4 columns, 24 cards | Scroll; reload with Very slow latency; move a card | Counts of 6 per column and a layout that holds; 4 s skeleton; counts become 5 and 7 after the move |
+| Archived project | Minh, Owner | Same 7 cards | Read the banner; look for Move buttons | Banner says archived and read-only; no Move buttons; the API would answer 403 (G-15) |
+
+The request log clears when the scenario changes, so it only shows requests for the current scenario.
+
+- All requests go through a single function, `api(method, path, body)`. It waits for the latency, applies the fault, checks the role, and writes a line to the request log.
+- Observers and archived projects get 403 on writes, matching the access rules above.
+- In the real app, the same states are covered by tests that stub the data layer with these scenarios, latencies and faults.
 
 ## Open questions
 
