@@ -24,7 +24,7 @@ These came from the interview and are the source of truth for the build.
 | G-2 | Scope | All 14 screens of the prototype, with sample data seeded into the database. |
 | G-3 | Spec (Q-2) | A card can be assigned to an Observer so they can follow it. Observers still cannot edit, move or archive anything. |
 | G-4 | Spec (Q-1) | Activity logs everything: comments, column moves, assignments, due dates and description edits. |
-| G-5 | Spec (DR-3) | Archiving or deleting a project requires typing the project name. |
+| G-5 | Spec (DR-3) | Archiving a project requires typing the project name. |
 | G-6 | Permissions | A Super admin opens a company as its Owner. A banner says so, and every change is logged in Activity as made by the Super admin. |
 | G-7 | Multi-company | A company switcher sits at the top of the left navigation and remembers the last company used. |
 | G-8 | Sample data | 2 companies and 4 users: Linh (Super admin), Minh (Owner of both companies), Hoa (Member) and Khoa (Observer), both in Harbor Logistics. |
@@ -33,6 +33,11 @@ These came from the interview and are the source of truth for the build.
 | G-11 | Sign-in | Google plus email and password, so test accounts for each role are easy to create. |
 | G-12 | Build setup | The autonomous build runs in Claude Code on the developer's machine, in the dedicated repo `lintran-agilityio/tazko-practice`, apart from any client code. |
 | G-13 | Checkpoints | Claude stops after each milestone and opens a pull request for your review. |
+| G-14 | Permissions | By default a Super admin sees company-level figures only: the company list, people and counts. Boards and cards can be read only through Open as Owner, which shows a banner and is logged. |
+| G-15 | Spec (BR-2) | A project is never deleted by hand. It can only be archived, and an archived project is purged automatically after 30 days. There is no Delete button. |
+| G-16 | Permissions | Only Owners create projects. |
+| G-17 | Spec (Q-1) | When a description is edited, Activity records who and when, never the text. |
+| G-18 | Scope | Usage has no CSV export. |
 
 ## Stack and setup
 
@@ -59,17 +64,18 @@ Why Row Level Security matters here: the rule that each company sees only its ow
 | card_assignees | card_id, user_id | Any role can be assigned, Observers included (G-3). |
 | labels, card_labels | labels(id, company_id, name, color); card_labels(card_id, label_id) | Labels belong to a company and are shared by its boards. |
 | comments | id, card_id, author_id, body, created_at | Shown in Activity. |
-| activity | id, company_id, card_id, actor_id, acting_as_super_admin, type, payload, created_at | Written by database triggers so nothing can skip it (G-4). acting_as_super_admin records the Open as Owner case (G-6). |
+| activity | id, company_id, card_id, actor_id, acting_as_super_admin, type, payload, created_at | Written by database triggers so nothing can skip it (G-4). acting_as_super_admin records the Open as Owner case (G-6). A description edit is an event with no text (G-17). |
 | notifications | id, user_id, activity_id, read_at | Generated from activity for assignments, comments and due dates. |
 
 ### Who can do what
 
 | Action | Who can do it |
 |---|---|
-| Read | Anyone who belongs to the company, in any role. Super admins can read every company. |
+| Read | Anyone who belongs to the company, in any role. A Super admin sees company-level figures only, and reads boards and cards only through Open as Owner (G-14). |
 | Create, edit and move cards, comment | Owners and Members of that company. Observers cannot (BR-3). |
 | Manage labels, members and project settings | Owners of that company. Members can still apply existing labels to cards. |
-| Archive, restore and delete a project | Owners only. An archived project is read-only (BR-2). |
+| Create a project | Owners only (G-16). |
+| Archive and restore a project | Owners only. An archived project is read-only, and it is purged automatically after 30 days (BR-2, G-15). |
 | Companies, usage, Open as Owner | Super admins only. Owners and Members never see this area. |
 
 ## Release roadmap
@@ -92,8 +98,8 @@ Each row is one pull request and one release.
 | M12 | Search | Search | M7 | v0.12.0 |
 | M13 | Notifications | Notifications | M9 | v0.13.0 |
 | M14 | Members and invites | Members | M4 | v0.14.0 |
-| M15 | Project settings | Project settings | M7 | v0.15.0 |
-| M16 | Archive and delete project | Project settings | M15 | v0.16.0 |
+| M15 | Create and edit projects | Project settings | M7 | v0.15.0 |
+| M16 | Archive project | Project settings | M15 | v0.16.0 |
 | M17 | Companies and Company detail | Companies, Company detail | M4 | v0.17.0 |
 | M18 | Open as Owner | Company detail, banner on every screen | M9, M17 | v0.18.0 |
 | M19 | Usage | Usage | M9, M17 | v0.19.0 |
@@ -129,6 +135,7 @@ Each row is one pull request and one release.
 - [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder and an .env.example.
 - [ ] Migrations for companies, profiles and memberships, plus the role type and the is_super_admin flag.
 - [ ] Row Level Security helpers that answer: is this person a member, what is their role, are they a Super admin.
+- [ ] Let a Super admin read company-level tables (companies and memberships) only. Later tables stay closed to a Super admin outside Open as Owner (G-14).
 - [ ] Seed the 2 companies and 4 users from G-8 with one command.
 - [ ] Tests that prove isolation: one company cannot read another company’s rows, and an Observer cannot write.
 
@@ -189,7 +196,10 @@ Each row is one pull request and one release.
 - [ ] Board screen: columns and cards, read-only, with tabs to switch between boards.
 - [ ] Empty state for a board with no cards.
 
-**Done when:** Every role sees only the current company’s boards, and the tabs switch boards.
+- [ ] Seed one board with a few cards for Northwind Foods too, so isolation tests have data on both sides (G-8).
+- [ ] Tests: a user sees only their own company’s boards, and a Super admin sees no boards or cards (G-14).
+
+**Done when:** Every role sees only the current company’s boards, a Super admin sees none, and the tabs switch boards.
 
 #### M7: Create and move cards
 
@@ -199,6 +209,7 @@ Each row is one pull request and one release.
 - **Models:** Sonnet builds
 
 - [ ] Settle open question Q3 (how cards move), then build it.
+- [ ] Settle open question Q5 for cards (archive or delete), then build what it decides.
 - [ ] Add card as the single primary action on Board.
 - [ ] Moving a card changes its column only, never copies it (BR-1).
 - [ ] Hide create and move controls from Observers, and block the same writes in the database (BR-3).
@@ -226,7 +237,7 @@ Each row is one pull request and one release.
 - **Models:** Opus reviews the trigger design first, Sonnet builds
 
 - [ ] Comments table and a comment box on Card detail.
-- [ ] Activity table plus database triggers for comments, moves, assignments, due dates and description edits (G-4).
+- [ ] Activity table plus database triggers for comments, moves, assignments, due dates and description edits (G-4). A description edit records who and when, never the text (G-17).
 - [ ] Add the acting_as_super_admin column now, ready for M18 (G-6).
 - [ ] Activity list on Card detail showing who did what and when, with times in the mono face.
 
@@ -301,20 +312,22 @@ Each row is one pull request and one release.
 
 **Done when:** An Owner can invite someone and change their role; Members and Observers cannot reach the screen.
 
-#### M15: Project settings
+#### M15: Create and edit projects
 
 - **Screens:** Project settings
 - **Depends on:** M7
 - **Release:** `v0.15.0`
 - **Models:** Sonnet builds
 
+- [ ] Settle open question Q5 (cards and columns that are removed).
+- [ ] New project action on the Boards page, for Owners only (G-16). It creates a project with the columns Backlog, In progress, Review and Done.
 - [ ] Edit a project’s name and description.
 - [ ] Add, rename and reorder columns.
 - [ ] Owners only.
 
 **Done when:** Changes show up on the board straight away.
 
-#### M16: Archive and delete project
+#### M16: Archive project
 
 - **Screens:** Project settings
 - **Depends on:** M15
@@ -322,9 +335,9 @@ Each row is one pull request and one release.
 - **Models:** Sonnet builds, Haiku does the shared confirm component
 
 - [ ] Settle open question Q2 (how the 30-day purge runs).
-- [ ] A shared confirm-by-name component used for both archive and delete (G-5).
+- [ ] A shared confirm-by-name component, used for archiving (G-5).
 - [ ] Archive makes a project read-only and restorable for 30 days; after that it is purged (BR-2).
-- [ ] Delete a project, also confirmed by typing its name.
+- [ ] No Delete button. An archived project is purged automatically after 30 days (G-15).
 
 **Done when:** Archiving needs the typed name, an archived project restores within 30 days, and only Owners can do it.
 
@@ -355,6 +368,7 @@ Each row is one pull request and one release.
 - [ ] Banner on every screen while it is active: Viewing as Owner of the company (G-6).
 - [ ] Set acting_as_super_admin on every change made in this mode, and show it in Activity.
 - [ ] Exit action that returns to Companies.
+- [ ] Test: outside Open as Owner a Super admin still cannot read boards, cards or Activity (G-14).
 
 **Done when:** A Super admin opens either company as Owner, the banner shows, and Activity shows who really acted.
 
@@ -365,11 +379,11 @@ Each row is one pull request and one release.
 - **Release:** `v0.19.0`
 - **Models:** Sonnet builds
 
-- [ ] Compute active members per week and totals per company from Activity.
+- [ ] Compute active members per week and totals per company through a database function that returns counts only, so a Super admin never reads Activity rows (G-14).
 - [ ] Usage screen with a chart of active members per week and a table of totals.
-- [ ] Super admins only.
+- [ ] Super admins only. No CSV export (G-18).
 
-**Done when:** The numbers on Usage match the Activity records.
+**Done when:** The numbers on Usage match the Activity records, and no Activity row is readable by a Super admin.
 
 ### Phase 7: Polish
 
@@ -485,6 +499,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q2 | How is the 30-day purge of archived projects run: a scheduled database job or a scheduled function? | Before M16 |
 | Q3 | How do people move cards: a menu, drag and drop, or both? Recommended: a menu first because it is easier to make accessible. | Before M7 |
 | Q4 | Do invites and notifications send real email, or stay in the app only? Recommended: in the app only for this practice. | Before M13 |
+| Q5 | Can cards be removed, and what happens to a column that still has cards? Recommended: cards are archived rather than deleted, and a column that still has cards cannot be deleted. | Before M7 (cards), M15 (columns) |
 
 ## Before the build
 
