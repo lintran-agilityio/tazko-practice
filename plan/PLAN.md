@@ -500,6 +500,19 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 | Latency (4) | Instant (0 ms), Fast (300 ms), Slow (1500 ms), Very slow (4000 ms) |
 | Faults (5) | Network error (status 0), Server error (500), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card) |
 
+### The 6 scenarios in detail
+
+| Scenario | Who | Data | What to try | Expected |
+|---|---|---|---|---|
+| Normal day | Minh, Owner of Harbor Logistics | 4 columns, 7 cards | Move "Add invoice export"; move again with the Conflict fault; reload with Slow latency | First move succeeds (PATCH 200). Conflict shows a red banner and the card stays. Slow shows a skeleton for 1.5 s |
+| New company | Minh, Owner of Northwind Foods | 4 columns, 0 cards | Reload; reload with Server error; reload with No fault | "No cards yet" (GET 200), then a 500 error screen with Try again, then "No cards yet" again |
+| Observer view | Khoa, Observer | Same 7 cards | Look for Move buttons and PATCH requests | Banner says Observers cannot change anything; no Move buttons; the API would answer 403 (G-3) |
+| Super admin opens as Owner | Linh, Super admin | Same 7 cards | Read the banner; move a card | Banner says she views the company as its Owner and changes are logged; the move works (G-6, G-14) |
+| Big board | Minh, Owner | 4 columns, 24 cards | Scroll; reload with Very slow latency; move a card | Counts of 6 per column and a layout that holds; 4 s skeleton; counts become 5 and 7 after the move |
+| Archived project | Minh, Owner | Same 7 cards | Read the banner; look for Move buttons | Banner says archived and read-only; no Move buttons; the API would answer 403 (G-15) |
+
+The request log clears when the scenario changes, so it only shows requests for the current scenario.
+
 - All requests go through a single function, `api(method, path, body)`. It waits for the latency, applies the fault, checks the role, and writes a line to the request log.
 - Observers and archived projects get 403 on writes, matching the access rules above.
 - In the real app, the same states are covered by tests that stub the data layer with these scenarios, latencies and faults.
