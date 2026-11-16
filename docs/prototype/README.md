@@ -19,3 +19,7 @@ The prototype was updated to match the grill round 2 decisions (G-14 to G-18) in
 | Canvas notes | Added G-14 to G-18 to the decisions note | all |
 
 G-17 (description edits log who and when, not the text) affects the Activity log only and has no visible screen change.
+
+## Prototype panel (v24)
+
+The `Prototype panel` artboard simulates the backend with one fake API: 6 scenarios, 4 latency levels and 5 faults, plus a request log. See the "Prototype panel" section in `../../plan/PLAN.md`.

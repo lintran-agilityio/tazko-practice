@@ -397,6 +397,7 @@ Each row is one pull request and one release.
 - [ ] Check every screen at phone width and fix layout problems.
 - [ ] Accessibility pass: visible focus, labels on every input, and text contrast.
 - [ ] Empty, loading and error states for every list and form.
+- [ ] Use the prototype panel (see below) to check every screen against each scenario, latency level and fault.
 - [ ] Write the README: setup, seed accounts, how to run the tests.
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
 
@@ -488,6 +489,20 @@ Claude stops and asks before doing any of these, at every rung.
 | Machine changes | About to install a global package, change PATH or a shell profile, change Docker settings, use `sudo`, or write or delete a file outside this repository. |
 | Risky git | About to force push, delete a branch, rewrite history, or push directly to `main`. |
 | Surprises | A command fails twice in a row, a test is deleted or skipped to make the suite pass, or the plan and a decision disagree. |
+
+## Prototype panel
+
+The prototype has a panel artboard (`Prototype panel`) that drives one fake API. It is the reference for how every screen must behave when data is slow, empty, restricted or failing. Each milestone that builds a screen with a list or a form should show these states.
+
+| Group | Options |
+|---|---|
+| Scenarios (6) | Normal day, New company (no cards), Observer view, Super admin opens as Owner, Big board (24 cards), Archived project |
+| Latency (4) | Instant (0 ms), Fast (300 ms), Slow (1500 ms), Very slow (4000 ms) |
+| Faults (5) | Network error (status 0), Server error (500), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card) |
+
+- All requests go through a single function, `api(method, path, body)`. It waits for the latency, applies the fault, checks the role, and writes a line to the request log.
+- Observers and archived projects get 403 on writes, matching the access rules above.
+- In the real app, the same states are covered by tests that stub the data layer with these scenarios, latencies and faults.
 
 ## Open questions
 
