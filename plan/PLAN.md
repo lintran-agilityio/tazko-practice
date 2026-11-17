@@ -2,7 +2,8 @@
 
 A step-by-step plan to build Tazko as a real app, based on the 13 decisions from the interview and the 14-screen prototype. It is split into 20 small milestones. Each milestone ends in one pull request and one release.
 
-- Prototype (14 screens): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
+- Prototype (14 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
+- Last updated: prototype Version 34. It now includes the 7 UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
 - Interactive plan page with checklists: https://claude.ai/artifact/1QfkQMLg4LNxHFmd4pPDEY
 
 ## How the work flows
@@ -33,6 +34,12 @@ These came from the interview and are the source of truth for the build.
 | G-11 | Sign-in | Google plus email and password, so test accounts for each role are easy to create. |
 | G-12 | Build setup | The autonomous build runs in Claude Code on the developer's machine, in the dedicated repo `lintran-agilityio/tazko-practice`, apart from any client code. |
 | G-13 | Checkpoints | Claude stops after each milestone and opens a pull request for your review. |
+| UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list, Archive list and Delete list. Delete asks for confirmation. Owners only. The menu must stay fully inside its column (a prototype bug clipped it). |
+| UX-2 | Add list | A dashed "+ Add list" column ends each board. The name field has focus at once; Enter adds, Esc cancels. Owners only. |
+| UX-3 | Checklist | A card has a checklist: check, delete an item with Undo, a "Hide checked items" toggle that shows a count, and a menu to uncheck all or delete the whole checklist (confirmed). |
+| UX-4 | Links | A card has a Links list. Long URLs are cut with an ellipsis (domain and start of path), with the full URL in the tooltip and the accessible name. Long text in descriptions and comments wraps. |
+| UX-5 | Keyboard and search | Ctrl+Enter (Windows) or ⌘+Enter (Mac) sends a comment or saves a description, with a hint under the field. Members and the card's Assignees picker have a search by name or email. Fields that open on click take focus at once. |
+| UX-6 | Quality gate | Nothing is reported as done until the built result was re-run and checked: tests, and the real screens in a browser for UI work. See rule 9. |
 
 ## Stack and setup
 
@@ -57,6 +64,8 @@ Why Row Level Security matters here: the rule that each company sees only its ow
 | columns | id, board_id, name, position | The columns of a board. |
 | cards | id, company_id, board_id, column_id, title, description, due_date, position | A card lives on exactly one board and in one column; moving it changes column_id only (BR-1). |
 | card_assignees | card_id, user_id | Any role can be assigned, Observers included (G-3). |
+| checklist_items | id, card_id, text, done, position | The card checklist (UX-3). Same write rules as the card. |
+| card_links | id, card_id, url, position | Links on a card (UX-4). The full URL is stored; shortening is done on screen only. |
 | labels, card_labels | labels(id, company_id, name, color); card_labels(card_id, label_id) | Labels belong to a company and are shared by its boards. |
 | comments | id, card_id, author_id, body, created_at | Shown in Activity. |
 | activity | id, company_id, card_id, actor_id, acting_as_super_admin, type, payload, created_at | Written by database triggers so nothing can skip it (G-4). acting_as_super_admin records the Open as Owner case (G-6). |
@@ -202,8 +211,10 @@ Each row is one pull request and one release.
 - [ ] Add card as the single primary action on Board.
 - [ ] Moving a card changes its column only, never copies it (BR-1).
 - [ ] Hide create and move controls from Observers, and block the same writes in the database (BR-3).
+- [ ] Move optimistically: the card moves at once; if the API fails it goes back to its column with a message, and Retry (or Sign in again for a 401).
+- [ ] Ignore replies that belong to an older load, so a reload during a save cannot corrupt the "saving" count or roll back the new board.
 
-**Done when:** Hoa can add and move cards; Khoa sees no controls and the database refuses his writes.
+**Done when:** Hoa can add and move cards; Khoa sees no controls and the database refuses his writes. A reload while a move is saving leaves the board and the saving indicator correct.
 
 #### M8: Card detail
 
@@ -215,8 +226,12 @@ Each row is one pull request and one release.
 - [ ] Card page with title, description editing, due date and column, and a link back to the board.
 - [ ] Assignees, Observers included, with a note that Observers follow the card but cannot edit it (G-3).
 - [ ] Observers see the page read-only.
+- [ ] Checklist (UX-3): migration for checklist_items, check and delete with Undo, hide checked items, and the checklist menu.
+- [ ] Links (UX-4): migration for card_links, add and remove, long URLs cut with an ellipsis.
+- [ ] Assignees picker with search by name or email (UX-5).
+- [ ] Description editing takes focus at once and saves with Ctrl+Enter or ⌘+Enter (UX-5).
 
-**Done when:** Hoa can edit a card; Khoa can be assigned to it but cannot change anything.
+**Done when:** Hoa can edit a card, use its checklist and links; Khoa can be assigned to it but cannot change anything. A 200-character URL does not stretch the page.
 
 #### M9: Comments and Activity
 
@@ -225,7 +240,7 @@ Each row is one pull request and one release.
 - **Release:** `v0.9.0`
 - **Models:** Opus reviews the trigger design first, Sonnet builds
 
-- [ ] Comments table and a comment box on Card detail.
+- [ ] Comments table and a comment box on Card detail; Ctrl+Enter or ⌘+Enter sends, with the matching hint (UX-5).
 - [ ] Activity table plus database triggers for comments, moves, assignments, due dates and description edits (G-4).
 - [ ] Add the acting_as_super_admin column now, ready for M18 (G-6).
 - [ ] Activity list on Card detail showing who did what and when, with times in the mono face.
@@ -298,8 +313,9 @@ Each row is one pull request and one release.
 - [ ] Members list with role chips and last seen in the mono face (DR-2).
 - [ ] Change a member’s role, for Owners only.
 - [ ] Invite someone by email, shown as a pending row until accepted.
+- [ ] Search by name or email, with a Clear button, a result count and an empty state; pending invites are searchable by email (UX-5).
 
-**Done when:** An Owner can invite someone and change their role; Members and Observers cannot reach the screen.
+**Done when:** An Owner can invite someone and change their role; Members and Observers cannot reach the screen. Searching narrows the list and shows "No members match" when nothing fits.
 
 #### M15: Project settings
 
@@ -310,9 +326,11 @@ Each row is one pull request and one release.
 
 - [ ] Edit a project’s name and description.
 - [ ] Add, rename and reorder columns.
+- [ ] Column menu on the Board (UX-1): Rename, Add card, Move list, Archive list and Delete list with confirmation; the menu stays inside its column.
+- [ ] "+ Add list" column at the end of the Board, focused name field, Enter to add and Esc to cancel (UX-2).
 - [ ] Owners only.
 
-**Done when:** Changes show up on the board straight away.
+**Done when:** Changes show up on the board straight away, and an Owner can add, rename and delete a list from the Board itself.
 
 #### M16: Archive and delete project
 
@@ -383,6 +401,8 @@ Each row is one pull request and one release.
 - [ ] Check every screen at phone width and fix layout problems.
 - [ ] Accessibility pass: visible focus, labels on every input, and text contrast.
 - [ ] Empty, loading and error states for every list and form.
+- [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 7 faults (none, Offline, Server error, Session expired, Forbidden, Not found, Conflict). Every combination must end in the right screen with no errors.
+- [ ] Open the real app in a browser and run each menu, form and shortcut from UX-1 to UX-5 at desktop and phone width.
 - [ ] Write the README: setup, seed accounts, how to run the tests.
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
 
@@ -430,12 +450,13 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 1. Work only inside this repository. Never touch client code.
 2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-and-move-cards.
-3. Before starting a milestone, re-read it and the decisions G-1 to G-13. After finishing, run typecheck, lint and every test, including the isolation tests.
+3. Before starting a milestone, re-read it and the decisions G-1 to G-13 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
 4. The pull request lists what was built, the assumptions made and anything left unfinished. Then stop and wait for review.
 5. Once I merge, tag the release named in the milestone and add a line to CHANGELOG.md. Then wait for me to say go before starting the next milestone.
 6. If the plan is silent or two rules conflict, add the question to the open questions list and ask. Do not guess.
 7. Write all code, comments, documentation and commit messages in English.
 8. Never commit secrets. Keep only an .env.example in the repo.
+9. Before saying a milestone is done, re-run and check the real result: typecheck, lint and tests, and for any screen change open it in a browser and use it (menus, forms, keyboard, error cases). Write what was checked and what it showed in the pull request. If something could not be checked, say why and what is needed; never end with "not tested".
 
 ## Open questions
 
@@ -466,10 +487,10 @@ You are building Tazko, a kanban work tracker that one group runs for several of
 Source of truth: PLAN.md in this repository (20 small milestones, each one pull request and one release). Visual reference: the images in docs/prototype/.
 
 Work one milestone at a time, starting with M1. For each milestone:
-1. Read the milestone and the decisions G-1 to G-13.
+1. Read the milestone and the decisions G-1 to G-13 and UX-1 to UX-6.
 2. Create a branch named mN-short-name from main.
 3. Implement the tasks.
-4. Run typecheck, lint and all tests, including the isolation tests.
+4. Run typecheck, lint and all tests, including the isolation tests. For screen changes, also open the app in a browser and use the feature, including error cases.
 5. Open a pull request into main that lists what you built, the assumptions you made and anything unfinished.
 6. Stop and wait for my review.
 7. After I merge, tag the release named in the milestone and add a line to CHANGELOG.md.
