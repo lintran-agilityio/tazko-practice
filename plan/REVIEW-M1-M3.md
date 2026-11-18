@@ -80,10 +80,10 @@ Prerequisite: the plan is reconciled on `dev` (I9). Q6, Q9 and Q11 are decided.
 
 | ID | Ticket | Model | Size | Acceptance |
 |---|---|---|---|---|
-| M1-1 | Fix the test runner (I15), then add a GitHub Actions workflow running `npm ci`, lint, typecheck and test. | Sonnet | S | `npm test` passes locally and CI is green on the PR. |
+| M1-1 | Fix the test runner (I15) by trying `vitest@5.1.1` first (install asks permission); set `pool: 'vmThreads'` only if that still fails. Then add a GitHub Actions workflow running `npm ci`, lint, typecheck and test. | Sonnet | S | `npm test` passes locally and CI is green on the PR. |
 | M1-2 | Tokens and fonts: copy the full token set from `design/tokens.css` (colours, radii, `--tap-min`, font families) and load DM Mono and Hanken Grotesk (I16). | Sonnet | S | Every token in tokens.css exists in `src/index.css`. Both fonts render. |
 | M1-3 | Router and 14 placeholder routes: sign-in, profile, home, board, card detail, board list, search, notifications, members, labels, project settings, companies, company detail, usage. | Sonnet | M | Each route loads and has an H1. An unknown route shows a 404. |
-| M1-4 | App shell: left nav with the prototype items, a reserved slot for the company switcher and the user footer. It collapses at phone width. Sign in renders without the shell. | Sonnet | M | The nav ispush keyboard-usable and the current page has `aria-current`. |
+| M1-4 | App shell: left nav with the prototype items, a reserved slot for the company switcher and the user footer. At phone width the nav becomes a drawer (button with `aria-expanded`, Esc and route change close it, focus returns to the button). Sign in renders without the shell. | Sonnet | L | The nav is keyboard-usable, the current page has `aria-current`, and the drawer works at phone width. |
 | M1-5 | Route-table and shell tests. Open the app, visit every route and resize to phone width. Add CHANGELOG.md. | Haiku | S | The PR lists what was checked. |
 
 ### M2 Database, roles and isolation (`m2-database-roles-isolation`, v0.2.0)

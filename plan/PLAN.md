@@ -127,7 +127,7 @@ Each row is one pull request and one release.
 
 - [ ] Create the Vite, React, TypeScript and Tailwind project in the sandbox repo.
 - [ ] Add lint, typecheck and Vitest, plus a GitHub Actions workflow that runs all three.
-- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens.
+- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens. At phone width the navigation becomes a drawer: a button opens it, Esc and choosing a page close it.
 - [ ] Add the Tazko Indigo design tokens: colours, Hanken Grotesk and DM Mono.
 
 **Done when:** npm run dev shows the shell, every route is reachable, and CI is green.
