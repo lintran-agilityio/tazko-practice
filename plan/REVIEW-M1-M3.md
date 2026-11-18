@@ -42,11 +42,11 @@ Seed (G-8): Linh is Super admin. Minh is Owner of Harbor Logistics and Northwind
 | # | Severity | Issue | Impact | Proposal |
 |---|---|---|---|---|
 | I4 | Med | The M2 Observer-write test has no card or board tables until M6. | It can only cover companies, profiles and memberships. | Test those now. Add card-write tests in M6 and M7 (BR-3). |
-| I5 | High | Users could change their own `is_super_admin` or `role`. Not in PLAN.md. | Privilege escalation. | Add a task: block self-update of both columns. Run the `security` agent on M2. |
+| I5 | High | Users could change their own `is_super_admin` or `role`. Not in PLAN.md. | Privilege escalation. | Added to M2 in PLAN.md (task and test). Run the `security` agent on M2. |
 | I6 | Med | Prototype Sign in has Google first and email second. M3 ships email only. | M3 differs from the prototype. | Email is the primary button in M3, no Google button. M5 restores the layout. Note it in the PR. |
 | I7 | Med | The prototype has no sign-up, forgot-password or error states. | M3 needs wording for wrong password, offline and expired session. | Use the M20 fault-matrix wording. Record it in the PR. |
 | I8 | Med | The app has no router and no CI. Fonts and DM Mono are not loaded. | M1 has real work left. | See the M1 tickets. |
-| I9 | High | The plan history has forked. `origin/dev` holds grill round 2 (G-14 to G-18), safety lessons, prototype panel and optimistic updates. The current branch holds UX-1 to UX-6, the design handoff, the prettier hook and permission rules. Neither has the other's commits. Since the first check, `origin/main` (f5b3260) gained UX-1 to UX-6 through PR #6, but it still lacks everything on dev; local `main` (396d1ef) is behind origin. Verified: `git merge-tree` reports a `plan/PLAN.md` conflict both ways, and `git merge-base --is-ancestor` shows UX-1 to UX-6 is not in dev. | Starting M1 from main gives a plan without G-14 and without UX-1 to UX-6. Rule 2 says branch from main, but dev is where the plan lives. | Decide Q11, then reconcile PLAN.md once on that base before M1. |
+| I9 | Resolved locally | Resolved on local `dev` (not pushed): `dev` now contains `origin/main`, `chore/claude-permissions`, grill round 2, safety, panel and optimistic updates, with `plan/PLAN.md` reconciled (G-1 to G-18, UX-1 to UX-6, Q1 to Q11, rules 1 to 10). CLAUDE.md rule 2 still says "from main", which now conflicts with working from dev (Q11). The original finding follows. The plan history had forked. `origin/dev` holds grill round 2 (G-14 to G-18), safety lessons, prototype panel and optimistic updates. The current branch holds UX-1 to UX-6, the design handoff, the prettier hook and permission rules. Neither has the other's commits. Since the first check, `origin/main` (f5b3260) gained UX-1 to UX-6 through PR #6, but it still lacks everything on dev; local `main` (396d1ef) is behind origin. Verified: `git merge-tree` reports a `plan/PLAN.md` conflict both ways, and `git merge-base --is-ancestor` shows UX-1 to UX-6 is not in dev. | Starting M1 from main gives a plan without G-14 and without UX-1 to UX-6. Rule 2 says branch from main, but dev is where the plan lives. | Decide Q11, then reconcile PLAN.md once on that base before M1. |
 | I10 | Low | Doc wording: PLAN.md line 6 says "7 UX fixes (decisions UX-1 to UX-5)". The count and the range do not match. | Minor confusion. The other two counts I first flagged are correct: UX-6 is a quality gate, so "UX-1 to UX-5" on line 405 is right, and `canvas.json` has 18 boards. | Haiku fixes line 6 only. |
 | I11 | Med | A role chip is per company, but the switcher arrives in M4. | M3 must pick a company. | Use `profiles.last_company_id`, else the first membership. A Super admin with no membership shows "Super admin". |
 | I12 | Low | Seed users need passwords. | Conflicts with "never commit secrets". | Use a dev-only password from the local env. Document it in the README. |
@@ -67,7 +67,7 @@ Q1 to Q4 are unchanged. PLAN.md Q5 now means "can cards be removed, and what abo
 | Q8 | How do DB tests run locally and in CI? | Vitest plus a pg client against `supabase start`. CI starts Supabase. | M2 |
 | Q9 | Self-host fonts with `@fontsource` or use the Google Fonts link? | Self-host. | M1 |
 | Q10 | May a Super admin read `profiles` (display name only) of a company's members? | Yes, through a view with display name only, not the full table. | M2 |
-| Q11 | Which branch is the base for M1: `main`, or `dev`? Dev has the newest plan, but CLAUDE.md says branch from main. | Merge dev and the current branch into main (resolve `plan/PLAN.md` once), then branch M1 from main. | M1 |
+| Q11 | Which branch is the base for M1: `main`, or `dev`? Dev has the newest plan, but CLAUDE.md says branch from main. | Work from `dev` as decided; merge dev into main per release. Then update CLAUDE.md rule 2 to match. Recorded in PLAN.md. | M1 |
 
 ## 4. Tickets
 
@@ -75,7 +75,7 @@ Sizes are S, M or L. One milestone is one branch, one PR and one tag.
 
 ### M1 Scaffold and app shell (`m1-scaffold-and-shell`, v0.1.0)
 
-Prerequisite: settle Q11 and reconcile `plan/PLAN.md` (I9). Settle Q6 and Q9.
+Prerequisite: the plan is reconciled on `dev` (I9). Settle Q6, Q9 and Q11.
 
 | ID | Ticket | Model | Size | Acceptance |
 |---|---|---|---|---|
