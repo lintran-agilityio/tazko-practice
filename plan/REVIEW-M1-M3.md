@@ -67,7 +67,8 @@ Q1 to Q4 are unchanged. PLAN.md Q5 now means "can cards be removed, and what abo
 | Q8 | How do DB tests run locally and in CI? | Vitest plus a pg client against `supabase start`. CI starts Supabase. | M2 |
 | Q9 | Self-host fonts with `@fontsource` or use the Google Fonts link? | Decided: self-host with `@fontsource`. | Decided |
 | Q10 | May a Super admin read `profiles` (display name only) of a company's members? | Yes, through a view with display name only, not the full table. | M2 |
-| Q11 | Which branch is the base for M1: `main`, or `dev`? Dev has the newest plan, but CLAUDE.md says branch from main. | Decided: work from `dev`; merge dev into main per release. CLAUDE.md and PLAN.md updated. | M1 |
+| Q11 | Which branch is the base for M1: `main`, or `dev`? Dev has the newest plan, but CLAUDE.md says branch from main. | Decided: work from `dev`; merge dev into main per release. CLAUDE.md and PLAN.md updated. | Decided |
+| Q12 | What are the URLs of the 14 screens? PLAN.md is silent. | Decided: boards and cards use their database id (UUID), never a name. `/boards/:boardId`, `/boards/:boardId/list`, `/cards/:cardId`, `/settings/project`, `/companies/:companyId`, plus `/sign-in`, `/`, `/search`, `/notifications`, `/members`, `/labels`, `/profile`, `/companies`, `/usage`. | Decided |
 
 ## 4. Tickets
 
@@ -82,7 +83,7 @@ Prerequisite: the plan is reconciled on `dev` (I9). Q6, Q9 and Q11 are decided.
 | M1-1 | Fix the test runner (I15), then add a GitHub Actions workflow running `npm ci`, lint, typecheck and test. | Sonnet | S | `npm test` passes locally and CI is green on the PR. |
 | M1-2 | Tokens and fonts: copy the full token set from `design/tokens.css` (colours, radii, `--tap-min`, font families) and load DM Mono and Hanken Grotesk (I16). | Sonnet | S | Every token in tokens.css exists in `src/index.css`. Both fonts render. |
 | M1-3 | Router and 14 placeholder routes: sign-in, profile, home, board, card detail, board list, search, notifications, members, labels, project settings, companies, company detail, usage. | Sonnet | M | Each route loads and has an H1. An unknown route shows a 404. |
-| M1-4 | App shell: left nav with the prototype items, a reserved slot for the company switcher and the user footer. It collapses at phone width. Sign in renders without the shell. | Sonnet | M | The nav is keyboard-usable and the current page has `aria-current`. |
+| M1-4 | App shell: left nav with the prototype items, a reserved slot for the company switcher and the user footer. It collapses at phone width. Sign in renders without the shell. | Sonnet | M | The nav ispush keyboard-usable and the current page has `aria-current`. |
 | M1-5 | Route-table and shell tests. Open the app, visit every route and resize to phone width. Add CHANGELOG.md. | Haiku | S | The PR lists what was checked. |
 
 ### M2 Database, roles and isolation (`m2-database-roles-isolation`, v0.2.0)
