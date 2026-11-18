@@ -475,7 +475,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 - [x] Install Claude Code on your machine.
 - [ ] Install Docker and Node.js 20 or newer, so the local Supabase stack can run.
 - [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
-- [ ] Export the prototype screens as images or PDF into docs/prototype/, and save this plan as PLAN.md in the repo.
+- [ ] Save the prototype source and tokens into design/, and save this plan as PLAN.md in the repo.
 
 ## Kickoff prompt for Claude Code
 
@@ -484,7 +484,7 @@ Paste this into Claude Code from the root of this repository.
 ```text
 You are building Tazko, a kanban work tracker that one group runs for several of its companies.
 
-Source of truth: PLAN.md in this repository (20 small milestones, each one pull request and one release). Visual reference: the images in docs/prototype/.
+Source of truth: PLAN.md in this repository (20 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
 1. Read the milestone and the decisions G-1 to G-13 and UX-1 to UX-6.

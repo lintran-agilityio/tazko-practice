@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tazko: Prototype panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#1B1B2E}
+a{color:#4F52D9}a:hover{color:#3A3DB8}
+button:focus-visible,a:focus-visible{outline:3px solid #4F52D9;outline-offset:2px}
+</style>
+</helmet>
+<div style="display:flex;flex-wrap:wrap;min-height:900px;background:#F6F6FB">
+
+<aside aria-label="Prototype panel" style="flex:1 1 360px;max-width:440px;background:#fff;border-right:1px solid #E3E3EE;padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+<div>
+<a href="Board.dc.html" style="display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:500;color:#3A3DB8;text-decoration:none">Back to Board</a>
+<h1 style="margin:0;font-size:22px;line-height:1.2;font-weight:700">Prototype panel</h1>
+<p style="margin:6px 0 0;font-size:13px;color:#5B5B76">Pick a scenario, a latency and a fault. Every request below goes through one fake API.</p>
+</div>
+
+<section aria-labelledby="h-sc">
+<h2 id="h-sc" style="margin:0 0 8px;font-size:13px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Scenario</h2>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{scenarios}}" as="o" hint-placeholder-count="6">
+<button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}"><span style="display:block;font-size:14px;font-weight:600">{{o.label}}</span><span style="display:block;font-size:12px;color:#5B5B76;margin-top:2px">{{o.desc}}</span></button>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="h-la">
+<h2 id="h-la" style="margin:0 0 8px;font-size:13px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Latency</h2>
+<div style="display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:6px">
+<sc-for list="{{latencies}}" as="o" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}"><span style="display:block;font-size:14px;font-weight:600">{{o.label}}</span><span style="display:block;font-size:12px;color:#5B5B76;margin-top:2px;font-family:'DM Mono',ui-monospace,monospace">{{o.desc}}</span></button>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="h-fa">
+<h2 id="h-fa" style="margin:0 0 8px;font-size:13px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Fault</h2>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{faults}}" as="o" hint-placeholder-count="6">
+<button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}"><span style="display:block;font-size:14px;font-weight:600">{{o.label}}</span><span style="display:block;font-size:12px;color:#5B5B76;margin-top:2px">{{o.desc}}</span></button>
+</sc-for>
+</div>
+</section>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button type="button" onClick="{{reload}}" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;background:#4F52D9;color:#fff;font-weight:600;font-size:14px;border:0;cursor:pointer;font-family:inherit">Reload board</button>
+<button type="button" onClick="{{reset}}" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:8px;background:#fff;color:#1B1B2E;font-weight:500;font-size:14px;border:1px solid #8888A6;cursor:pointer;font-family:inherit">Reset panel</button>
+</div>
+</aside>
+
+<main style="flex:999 1 560px;min-width:0;padding:32px 40px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px">
+<div>
+<div style="font-size:13px;color:#5B5B76;margin-bottom:6px">Fake API preview</div>
+<h2 style="margin:0;font-size:24px;line-height:1.2;font-weight:700">{{projectName}}</h2>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600">{{userName}}</span><span style="display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;background:#ECECFD;color:#3A3DB8">{{roleName}}</span></div>
+</div>
+
+<section aria-labelledby="h-detail" style="background:#fff;border:1px solid #E3E3EE;border-radius:8px;padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:12px">
+<h2 id="h-detail" style="margin:0;font-size:16px">Scenario: {{sc.label}}</h2>
+<dl style="margin:0;display:grid;grid-template-columns:repeat(2, minmax(0, 1fr));gap:12px 24px">
+<div><dt style="font-size:12px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Who</dt><dd style="margin:4px 0 0;font-size:14px">{{sc.who}}</dd></div>
+<div><dt style="font-size:12px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Situation</dt><dd style="margin:4px 0 0;font-size:14px">{{sc.situation}}</dd></div>
+<div><dt style="font-size:12px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Data</dt><dd style="margin:4px 0 0;font-size:14px">{{sc.data}}</dd></div>
+<div><dt style="font-size:12px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Rule it proves</dt><dd style="margin:4px 0 0;font-size:14px">{{sc.rule}}</dd></div>
+</dl>
+<div>
+<h3 style="margin:0 0 6px;font-size:13px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Try this</h3>
+<ol style="margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px">
+<sc-for list="{{sc.steps}}" as="st" hint-placeholder-count="3"><li>{{st}}</li></sc-for>
+</ol>
+</div>
+<div style="padding:10px 14px;border-radius:8px;background:#ECECFD;color:#1B1B2E;font-size:14px"><strong style="color:#3A3DB8">Expected:</strong> {{sc.expected}}</div>
+</section>
+
+<sc-if value="{{hasBanner}}" hint-placeholder-val="{{ false }}">
+<div role="note" style="padding:12px 16px;border-radius:8px;background:#FFF1DB;border:1px solid #E0B66B;color:#5C3A00;font-size:14px">{{bannerText}}</div>
+</sc-if>
+
+<sc-if value="{{hasNotice}}" hint-placeholder-val="{{ false }}">
+<div role="alert" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:8px;background:#FDECEA;border:1px solid #E0A8A2;color:#8A1C12;font-size:14px"><span>{{noticeText}}</span><span style="display:flex;gap:8px"><sc-if value="{{noticeRetry}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{retry}}" style="min-height:44px;padding:0 16px;border-radius:8px;background:#fff;color:#B42318;font-weight:600;font-size:14px;border:1px solid #B42318;cursor:pointer;font-family:inherit">Retry</button></sc-if><sc-if value="{{noticeSignIn}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{signIn}}" style="min-height:44px;padding:0 16px;border-radius:8px;background:#B42318;color:#fff;font-weight:600;font-size:14px;border:0;cursor:pointer;font-family:inherit">Sign in again</button></sc-if></span></div>
+</sc-if>
+
+<div aria-live="polite">
+<sc-if value="{{isSaving}}" hint-placeholder-val="{{ false }}"><p role="status" style="margin:0 0 12px;font-size:13px;color:#5B5B76">Saving {{savingCount}} change(s)... The board already shows the change. It is undone if saving fails.</p></sc-if>
+<sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}">
+<div>
+<p style="margin:0 0 12px;font-size:14px;color:#5B5B76">Loading board... ({{latencyText}})</p>
+<div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:16px">
+<div style="background:#EDEDF5;border-radius:10px;height:200px"></div>
+<div style="background:#EDEDF5;border-radius:10px;height:150px"></div>
+<div style="background:#EDEDF5;border-radius:10px;height:100px"></div>
+<div style="background:#EDEDF5;border-radius:10px;height:150px"></div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isError}}" hint-placeholder-val="{{ false }}">
+<section style="background:#fff;border:1px solid #E0A8A2;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:12px;max-width:640px">
+<h3 style="margin:0;font-size:18px;color:#B42318">Could not load the board ({{errorCode}})</h3>
+<p style="margin:0;font-size:14px;color:#1B1B2E">{{errorText}}</p>
+<div><button type="button" onClick="{{reload}}" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;background:#fff;color:#B42318;font-weight:600;font-size:14px;border:1px solid #B42318;cursor:pointer;font-family:inherit">Try again</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isOffline}}" hint-placeholder-val="{{ false }}">
+<section style="background:#fff;border:1px solid #E0B66B;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:12px;max-width:640px">
+<h3 style="margin:0;font-size:18px;color:#7A4A00">You are offline</h3>
+<p style="margin:0;font-size:14px">Tazko cannot reach the server. Your boards are safe. Check your connection and try again.</p>
+<div><button type="button" onClick="{{reload}}" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;background:#fff;color:#7A4A00;font-weight:600;font-size:14px;border:1px solid #7A4A00;cursor:pointer;font-family:inherit">Try again</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isSession}}" hint-placeholder-val="{{ false }}">
+<section style="background:#fff;border:1px solid #E3E3EE;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:12px;max-width:640px">
+<h3 style="margin:0;font-size:18px">Your session has expired</h3>
+<p style="margin:0;font-size:14px">For your security you were signed out. Sign in again to keep working. Nothing was lost.</p>
+<div><button type="button" onClick="{{signIn}}" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;background:#4F52D9;color:#fff;font-weight:600;font-size:14px;border:0;cursor:pointer;font-family:inherit">Sign in again</button></div>
+</section>
+</sc-if>
+
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+<section style="background:#fff;border:1px dashed #8888A6;border-radius:8px;padding:32px;max-width:640px">
+<h3 style="margin:0 0 6px;font-size:18px">No cards yet</h3>
+<p style="margin:0;font-size:14px;color:#5B5B76">This project has columns but no cards. Owners and Members can add the first card.</p>
+</section>
+</sc-if>
+
+<sc-if value="{{hasBoard}}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:16px;overflow-x:auto;padding-bottom:8px">
+<sc-for list="{{columns}}" as="col" hint-placeholder-count="4">
+<section aria-label="{{col.name}}" style="flex:1 1 180px;min-width:180px;display:flex;flex-direction:column;gap:10px;background:#EDEDF5;border-radius:10px;padding:10px;box-sizing:border-box;align-self:flex-start">
+<h3 style="margin:0;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;padding:4px 4px 2px">{{col.name}}<span style="font-family:'DM Mono',ui-monospace,monospace;font-size:12px;font-weight:500;background:#fff;border:1px solid #E3E3EE;border-radius:999px;padding:0 8px">{{col.count}}</span></h3>
+<sc-for list="{{col.cards}}" as="card" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid #E3E3EE;border-radius:8px;padding:12px;box-sizing:border-box">
+<span style="font-size:14px;font-weight:500;line-height:1.35">{{card.title}}</span>
+<span style="display:flex;flex-direction:column;align-items:flex-start;gap:8px"><span style="font-size:12px;font-weight:600;background:#ECECFD;color:#3A3DB8;border-radius:6px;padding:1px 8px">{{card.label}}</span>
+<sc-if value="{{card.canMove}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{card.move}}" aria-label="Move card to next column" style="min-height:44px;width:100%;padding:0 12px;border-radius:8px;background:#fff;color:#3A3DB8;font-weight:600;font-size:13px;border:1px solid #8888A6;cursor:pointer;font-family:inherit">{{card.moveText}}</button></sc-if></span>
+</div>
+</sc-for>
+</section>
+</sc-for>
+</div>
+</sc-if>
+</div>
+
+<section style="background:#fff;border:1px solid #E3E3EE;border-radius:8px;padding:12px;box-sizing:border-box">
+<h2 style="margin:0 0 8px;font-size:16px;padding:0 4px">Request log</h2>
+<div style="overflow-x:auto">
+<table style="border-collapse:collapse;width:100%;min-width:520px">
+<thead><tr><th scope="col" style="text-align:left;font-size:12px;font-weight:600;color:#5B5B76;padding:8px 12px">#</th><th scope="col" style="text-align:left;font-size:12px;font-weight:600;color:#5B5B76;padding:8px 12px">Request</th><th scope="col" style="text-align:left;font-size:12px;font-weight:600;color:#5B5B76;padding:8px 12px">Status</th><th scope="col" style="text-align:left;font-size:12px;font-weight:600;color:#5B5B76;padding:8px 12px">Time</th></tr></thead>
+<tbody>
+<sc-for list="{{log}}" as="r" hint-placeholder-count="3">
+<tr><td style="padding:8px 12px;border-top:1px solid #E3E3EE;font-family:'DM Mono',ui-monospace,monospace;font-size:13px">{{r.n}}</td><td style="padding:8px 12px;border-top:1px solid #E3E3EE;font-family:'DM Mono',ui-monospace,monospace;font-size:13px">{{r.req}}</td><td style="padding:8px 12px;border-top:1px solid #E3E3EE;font-family:'DM Mono',ui-monospace,monospace;font-size:13px;font-weight:600;color:{{r.color}}">{{r.status}}</td><td style="padding:8px 12px;border-top:1px solid #E3E3EE;font-family:'DM Mono',ui-monospace,monospace;font-size:13px">{{r.ms}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+<sc-if value="{{logEmpty}}" hint-placeholder-val="{{ false }}"><p style="margin:8px 4px 4px;font-size:13px;color:#5B5B76">No requests yet.</p></sc-if>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  state = { saving: 0, noticeKind: '', scenario: 'normal', latency: 'fast', fault: 'none', status: 'idle', error: null, board: null, log: [], notice: '', loadedAt: 0 };
+
+  // ---- Options -------------------------------------------------------------
+  SCENARIOS = [
+    { id: 'normal', label: 'Normal day', desc: 'Minh (Owner) opens a busy board',
+      who: 'Minh, Owner of Harbor Logistics',
+      situation: 'Monday morning. Minh opens the Client portal board to plan the week.',
+      data: '4 columns and 7 cards: 2 in Backlog, 2 in In progress, 1 in Review, 2 in Done.',
+      rule: 'Owners and Members can move cards. Every change goes through the API.',
+      steps: ['Click "Move to In progress" on "Add invoice export".', 'Set the fault to Conflict and move another card. Watch it move, then come back.', 'Set latency to Slow and press Reload board.'],
+      expected: 'The first move shows at once and is saved (PATCH 200). With Conflict the card moves at once, then jumps back with a red banner and a Retry button. With Slow a skeleton shows for 1.5 seconds.' },
+    { id: 'empty', label: 'New company', desc: 'Northwind Foods, no cards yet',
+      who: 'Minh, Owner of Northwind Foods',
+      situation: 'A company that was created today. The Owner has not added any cards.',
+      data: '4 default columns and 0 cards.',
+      rule: 'An empty board is a normal state, not an error.',
+      steps: ['Press Reload board.', 'Set the fault to Server error and reload again.', 'Set the fault back to No fault and reload.'],
+      expected: 'First, a "No cards yet" message with GET 200. Then a 500 error screen with Try again. Then "No cards yet" again.' },
+    { id: 'observer', label: 'Observer view', desc: 'Khoa (Observer) can read only',
+      who: 'Khoa, Observer in Harbor Logistics',
+      situation: 'Khoa follows the project for updates and must not change anything.',
+      data: 'The same 7 cards as Normal day.',
+      rule: 'Observers can view and be assigned for follow-up, but cannot change cards (G-3).',
+      steps: ['Look for "Move to" buttons on the cards.', 'Read the banner above the board.', 'Check the request log for any PATCH request.'],
+      expected: 'A banner says Observers cannot change anything. There are no Move buttons and no PATCH requests. If one were sent, the API would answer 403.' },
+    { id: 'superadmin', label: 'Super admin opens as Owner', desc: 'Linh uses Open as Owner',
+      who: 'Linh, Super admin',
+      situation: 'Linh needs to help Harbor Logistics, so she uses Open as Owner on the company page.',
+      data: 'The same 7 cards as Normal day, shown as the Owner sees them.',
+      rule: 'Super admins see boards only through Open as Owner, with a banner, and every change is logged (G-6, G-14).',
+      steps: ['Read the banner above the board.', 'Move one card with "Move to In progress".', 'Check the request log for the PATCH request.'],
+      expected: 'The banner says she is viewing Harbor Logistics as its Owner and that changes are logged. The move works (PATCH 200).' },
+    { id: 'big', label: 'Big board', desc: '24 cards to test long columns',
+      who: 'Minh, Owner of Harbor Logistics',
+      situation: 'A project that has grown over a year and now holds many cards.',
+      data: '4 columns with 6 cards each, 24 cards in total.',
+      rule: 'Long columns must stay readable and fast.',
+      steps: ['Scroll through the board and read the count badges.', 'Set latency to Very slow and press Reload board.', 'Move a card from the last row of Backlog.'],
+      expected: 'Each column shows a count of 6 and the layout does not break. The skeleton shows for 4 seconds. The move still works and the counts change to 5 and 7.' },
+    { id: 'archived', label: 'Archived project', desc: 'Read-only, purged after 30 days',
+      who: 'Minh, Owner of Harbor Logistics',
+      situation: 'Minh archived the Client portal 5 days ago. It can still be restored for another 25 days.',
+      data: 'The same 7 cards as Normal day.',
+      rule: 'Archived projects are read-only and are purged automatically after 30 days. There is no Delete button (G-15).',
+      steps: ['Read the banner above the board.', 'Look for "Move to" buttons on the cards.', 'Check the request log for any PATCH request.'],
+      expected: 'A banner says the project is archived and read-only. There are no Move buttons and no PATCH requests. If one were sent, the API would answer 403.' }
+  ];
+  LATENCIES = [
+    { id: 'instant', label: 'Instant', ms: 0, desc: '0 ms' },
+    { id: 'fast', label: 'Fast', ms: 300, desc: '300 ms' },
+    { id: 'slow', label: 'Slow', ms: 1500, desc: '1500 ms' },
+    { id: 'crawl', label: 'Very slow', ms: 4000, desc: '4000 ms' }
+  ];
+  FAULTS = [
+    { id: 'none', label: 'No fault', desc: 'Every request succeeds' },
+    { id: 'network', label: 'Offline', desc: 'Status 0, the server cannot be reached' },
+    { id: 'server', label: 'Server error', desc: 'Status 500 on every request' },
+    { id: 'session', label: 'Session expired', desc: 'Status 401, the sign-in is no longer valid' },
+    { id: 'forbidden', label: 'Forbidden', desc: 'Status 403, blocked by row level security' },
+    { id: 'notfound', label: 'Not found', desc: 'Status 404, the project is gone' },
+    { id: 'conflict', label: 'Conflict', desc: 'Status 409 when moving a card' }
+  ];
+  COLUMNS = ['Backlog', 'In progress', 'Review', 'Done'];
+
+  componentDidMount() { this.cfg = { scenario: 'normal', latency: 'fast', fault: 'none' }; this.logArr = []; this.seq = 0; this.reload(); }
+
+  // ---- The one fake API ----------------------------------------------------
+  // Every screen action calls this single function. It waits for the chosen
+  // latency, applies the chosen fault, checks the role, then returns
+  // { status, message?, data? } and writes a line to the request log.
+  api(method, path, body) {
+    const cfg = this.cfg;
+    const ms = this.LATENCIES.find((l) => l.id === cfg.latency).ms;
+    const t0 = Date.now();
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const res = this.route(method, path, body, cfg);
+        this.seq += 1;
+        this.logArr = [{ n: this.seq, req: method + ' ' + path, status: String(res.status), ok: res.status === 200, ms: (Date.now() - t0) + ' ms' }].concat(this.logArr).slice(0, 8);
+        this.setState({ log: this.logArr });
+        resolve(res);
+      }, ms);
+    });
+  }
+
+  route(method, path, body, cfg) {
+    if (cfg.fault === 'network') return { status: 0, message: 'You are offline. Check your connection.' };
+    if (cfg.fault === 'session') return { status: 401, message: 'Your session has expired. Sign in again to continue.' };
+    if (cfg.fault === 'server') return { status: 500, message: 'Server error: something went wrong on our side. Try again in a moment.' };
+    if (cfg.fault === 'forbidden') return { status: 403, message: 'Forbidden: you are not a member of this company. The database blocked the request.' };
+    if (cfg.fault === 'notfound') return { status: 404, message: 'Not found: this project does not exist or was purged.' };
+    if (cfg.fault === 'conflict' && method === 'PATCH') return { status: 409, message: 'Conflict: someone else moved this card first. Reload to see the latest board.' };
+    const db = this.db;
+    if (method === 'GET' && path === '/projects/client-portal') return { status: 200, data: db };
+    if (method === 'PATCH' && path.indexOf('/cards/') === 0) {
+      if (db.role === 'Observer') return { status: 403, message: 'Observers can view cards but cannot change them.' };
+      if (db.archived) return { status: 403, message: 'This project is archived and read-only.' };
+      const id = path.split('/')[2];
+      let card = null;
+      db.columns.forEach((c) => { const i = c.cards.findIndex((x) => x.id === id); if (i >= 0) { card = c.cards.splice(i, 1)[0]; } });
+      const target = db.columns.find((c) => c.id === body.column);
+      if (!card || !target) return { status: 404, message: 'Not found: that card or column does not exist.' };
+      target.cards.push(card);
+      return { status: 200, data: card };
+    }
+    return { status: 404, message: 'Not found: unknown route.' };
+  }
+
+  // ---- Seed data per scenario ---------------------------------------------
+  seed(id) {
+    const titles = [['Add invoice export', 'Finance'], ['Refresh help center', 'Docs'], ['Redesign login page', 'Design'], ['Fix slow search', 'Bug'], ['Update API docs', 'Docs'], ['Set up staging', 'Ops'], ['Publish release notes', 'Docs']];
+    const cols = this.COLUMNS.map((n, i) => ({ id: 'c' + i, name: n, cards: [] }));
+    const put = [0, 0, 1, 1, 2, 3, 3];
+    if (id === 'big') {
+      for (let i = 0; i < 24; i++) { cols[i % 4].cards.push({ id: 'k' + i, title: 'Task ' + (i + 1) + ': ' + titles[i % 7][0], label: titles[i % 7][1] }); }
+    } else if (id !== 'empty') {
+      titles.forEach((t, i) => cols[put[i]].cards.push({ id: 'k' + i, title: t[0], label: t[1] }));
+    }
+    const people = { observer: ['Khoa', 'Observer'], superadmin: ['Linh', 'Super admin'] };
+    const who = people[id] || ['Minh', 'Owner'];
+    return { project: 'Client portal', company: id === 'empty' ? 'Northwind Foods' : 'Harbor Logistics', user: who[0], role: who[1], archived: id === 'archived', asOwner: id === 'superadmin', columns: cols };
+  }
+
+  // ---- Actions -------------------------------------------------------------
+  reload() {
+    this.db = this.seed(this.cfg.scenario);
+    this.pending = 0;
+    this.gen = (this.gen || 0) + 1;
+    const gen = this.gen;
+    this.setState({ status: 'loading', error: null, notice: '', noticeKind: '', board: null, saving: 0 });
+    this.api('GET', '/projects/client-portal').then((res) => {
+      if (gen !== this.gen) return;
+      if (res.status === 200) { this.setState({ status: 'ok', board: JSON.parse(JSON.stringify(res.data)) }); }
+      else { this.setState({ status: res.status === 0 ? 'offline' : res.status === 401 ? 'session' : 'error', error: res }); }
+    });
+  }
+
+  // Optimistic move: the card moves on screen at once. If the API fails, the
+  // card goes back to its original column and the user sees why, with Retry
+  // (or Sign in again when the session has expired).
+  relocate(board, cardId, toColId) {
+    const out = JSON.parse(JSON.stringify(board));
+    let card = null;
+    out.columns.forEach((c) => { const i = c.cards.findIndex((x) => x.id === cardId); if (i >= 0) card = c.cards.splice(i, 1)[0]; });
+    const to = out.columns.find((c) => c.id === toColId);
+    if (card && to) to.cards.push(card);
+    return out;
+  }
+
+  move(card, colIndex) {
+    const from = this.state.board.columns[colIndex];
+    const to = this.state.board.columns[colIndex + 1];
+    this.lastMove = { card, colIndex };
+    this.pending += 1;
+    this.setState({ board: this.relocate(this.state.board, card.id, to.id), notice: '', noticeKind: '', saving: this.pending });
+    const gen = this.gen;
+    this.api('PATCH', '/cards/' + card.id, { column: to.id }).then((res) => {
+      if (gen !== this.gen) return;
+      this.pending -= 1;
+      if (res.status === 200) { this.setState({ saving: this.pending }); return; }
+      const kind = res.status === 401 ? 'session' : 'retry';
+      this.setState({ board: this.relocate(this.state.board, card.id, from.id), saving: this.pending, notice: res.message + ' "' + card.title + '" was moved back to ' + from.name + '.', noticeKind: kind });
+    });
+  }
+
+  retry() { const m = this.lastMove; if (m) { this.move(m.card, m.colIndex); } }
+
+  signIn() {
+    this.cfg.fault = 'none';
+    this.setState({ fault: 'none' });
+    this.reload();
+  }
+
+  choose(key, id) {
+    this.cfg[key] = id;
+    this.setState({ [key]: id });
+    if (key === 'scenario') { this.logArr = []; this.seq = 0; this.setState({ log: [] }); this.reload(); }
+  }
+
+  reset() {
+    this.cfg = { scenario: 'normal', latency: 'fast', fault: 'none' };
+    this.logArr = []; this.seq = 0;
+    this.setState({ scenario: 'normal', latency: 'fast', fault: 'none', log: [] });
+    this.reload();
+  }
+
+  // ---- View values ---------------------------------------------------------
+  opts(list, key) {
+    const cur = this.state[key];
+    return list.map((o) => {
+      const on = o.id === cur;
+      return {
+        label: o.label, desc: o.desc, pressed: on ? 'true' : 'false',
+        style: 'text-align:left;min-height:48px;padding:8px 12px;border-radius:8px;cursor:pointer;font-family:inherit;color:#1B1B2E;box-sizing:border-box;width:100%;' + (on ? 'background:#ECECFD;border:2px solid #4F52D9;' : 'background:#fff;border:1px solid #8888A6;'),
+        pick: () => this.choose(key, o.id)
+      };
+    });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const b = s.board;
+    const total = b ? b.columns.reduce((n, c) => n + c.cards.length, 0) : 0;
+    const canEdit = b ? (b.role !== 'Observer' && !b.archived) : false;
+    const columns = b ? b.columns.map((c, ci) => ({
+      name: c.name, count: c.cards.length,
+      cards: c.cards.map((k) => ({
+        title: k.title, label: k.label,
+        canMove: canEdit && ci < b.columns.length - 1,
+        moveText: ci < b.columns.length - 1 ? 'Move to ' + b.columns[ci + 1].name : '',
+        move: () => this.move(k, ci)
+      }))
+    })) : [];
+    let banner = '';
+    if (b && b.asOwner) banner = 'Viewing ' + b.company + ' as its Owner. Every change you make is logged in Activity.';
+    if (b && b.archived) banner = 'This project is archived. It is read-only and is purged automatically after 30 days.';
+    if (b && b.role === 'Observer') banner = 'Observer: you can read this board but you cannot change anything.';
+    const lat = this.LATENCIES.find((l) => l.id === s.latency);
+    return {
+      scenarios: this.opts(this.SCENARIOS, 'scenario'),
+      latencies: this.opts(this.LATENCIES, 'latency'),
+      faults: this.opts(this.FAULTS, 'fault'),
+      sc: this.SCENARIOS.find((x) => x.id === s.scenario),
+      reload: () => this.reload(),
+      reset: () => this.reset(),
+      projectName: b ? b.company + ' / ' + b.project : 'Harbor Logistics / Client portal',
+      userName: b ? b.user : '...', roleName: b ? b.role : '...',
+      hasBanner: !!banner, bannerText: banner,
+      hasNotice: !!s.notice, noticeText: s.notice,
+      isLoading: s.status === 'loading',
+      isOffline: s.status === 'offline', isSession: s.status === 'session',
+      isSaving: s.saving > 0, savingCount: s.saving,
+      noticeRetry: s.noticeKind === 'retry', noticeSignIn: s.noticeKind === 'session',
+      retry: () => this.retry(), signIn: () => this.signIn(),
+      isError: s.status === 'error', errorCode: s.error ? s.error.status : '', errorText: s.error ? s.error.message : '',
+      isEmpty: s.status === 'ok' && total === 0,
+      hasBoard: s.status === 'ok' && total > 0,
+      latencyText: lat.desc,
+      columns,
+      log: s.log.map((r) => ({ n: r.n, req: r.req, status: r.status === '0' ? '0 (offline)' : r.status, ms: r.ms, color: r.ok ? '#14603A' : '#B42318' })),
+      logEmpty: s.log.length === 0
+    };
+  }
+}
+</script>
+</body>
+</html>
