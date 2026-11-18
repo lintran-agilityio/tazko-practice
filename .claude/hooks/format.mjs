@@ -19,17 +19,37 @@ if (rel.startsWith("..")) process.exit(0);
 if (rel.split(sep)[0] === "design") process.exit(0);
 
 const ext = extname(file).toLowerCase();
-const prettierExts = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json", ".css", ".html", ".md", ".yml", ".yaml"]);
+const prettierExts = new Set([
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".json",
+  ".css",
+  ".html",
+  ".md",
+  ".yml",
+  ".yaml",
+]);
 
+// Never use a shell: arguments stay a separate argv list, so a file name cannot become a command.
 function run(cmd, args) {
-  return spawnSync(cmd, args, { cwd: root, stdio: "ignore", shell: process.platform === "win32" });
+  return spawnSync(cmd, args, { cwd: root, stdio: "ignore", shell: false });
 }
 
+// Reject names that a Windows .cmd shim could misread as shell syntax.
+if (/[&|<>^%"`$;\r\n]/.test(file)) process.exit(0);
+const abs = resolve(file);
+
 if (ext === ".py") {
-  const r = run("ruff", ["format", file]);
-  if (r.status !== 0) run("uvx", ["ruff", "format", file]);
+  const r = run("ruff", ["format", "--", abs]);
+  if (r.status !== 0) run("uvx", ["ruff", "format", "--", abs]);
 } else if (prettierExts.has(ext)) {
-  // --no-install: use the project's prettier only, never download.
-  run("npx", ["--no-install", "prettier", "--write", file]);
+  // Run the project's own prettier through node (no npx, no .cmd shim, no download).
+  // Node refuses to spawn .cmd files without a shell, so call the JS entry point.
+  const prettier = resolve(root, "node_modules", "prettier", "bin", "prettier.cjs");
+  if (existsSync(prettier)) run(process.execPath, [prettier, "--write", "--", abs]);
 }
 process.exit(0);
