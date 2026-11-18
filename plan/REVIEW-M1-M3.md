@@ -62,10 +62,10 @@ Q1 to Q4 are unchanged. PLAN.md Q5 now means "can cards be removed, and what abo
 
 | Q | Question | Recommendation | Needed before |
 |---|---|---|---|
-| Q6 | Which router? | React Router 7 (new dependency, asks permission). | M1 |
+| Q6 | Which router? | Decided: React Router 7 (new dependency; installing it still asks permission). | Decided |
 | Q7 | Self-signup or invite-only? What does a signed-in user with no membership see? | Invite-only. Show a "No company yet" empty state. | M3 |
 | Q8 | How do DB tests run locally and in CI? | Vitest plus a pg client against `supabase start`. CI starts Supabase. | M2 |
-| Q9 | Self-host fonts with `@fontsource` or use the Google Fonts link? | Self-host. | M1 |
+| Q9 | Self-host fonts with `@fontsource` or use the Google Fonts link? | Decided: self-host with `@fontsource`. | Decided |
 | Q10 | May a Super admin read `profiles` (display name only) of a company's members? | Yes, through a view with display name only, not the full table. | M2 |
 | Q11 | Which branch is the base for M1: `main`, or `dev`? Dev has the newest plan, but CLAUDE.md says branch from main. | Decided: work from `dev`; merge dev into main per release. CLAUDE.md and PLAN.md updated. | M1 |
 
@@ -75,7 +75,7 @@ Sizes are S, M or L. One milestone is one branch, one PR and one tag.
 
 ### M1 Scaffold and app shell (`m1-scaffold-and-shell`, v0.1.0)
 
-Prerequisite: the plan is reconciled on `dev` (I9). Settle Q6 and Q9 (Q11 is decided).
+Prerequisite: the plan is reconciled on `dev` (I9). Q6, Q9 and Q11 are decided.
 
 | ID | Ticket | Model | Size | Acceptance |
 |---|---|---|---|---|

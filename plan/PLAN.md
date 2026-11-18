@@ -552,10 +552,10 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q3 | How do people move cards: a menu, drag and drop, or both? Recommended: a menu first because it is easier to make accessible. | Before M7 |
 | Q4 | Do invites and notifications send real email, or stay in the app only? Recommended: in the app only for this practice. | Before M13 |
 | Q5 | Can cards be removed, and what happens to a column that still has cards? Recommended: cards are archived rather than deleted, and a column that still has cards cannot be deleted. | Before M7 (cards), M15 (columns) |
-| Q6 | Which router for the 14 screens? Recommended: React Router 7 (a new dependency, needs approval). | Before M1 |
+| Q6 | Which router for the 14 screens? Decided: React Router 7. | Decided |
 | Q7 | Self-signup or invite-only? What does a signed-in user with no company see? Recommended: invite-only, with a "No company yet" empty state. | Before M3 |
 | Q8 | How do database tests run locally and in CI? Recommended: Vitest plus a pg client against `supabase start`; CI starts Supabase. | Before M2 |
-| Q9 | Self-host the fonts or use the Google Fonts link? Recommended: self-host with `@fontsource`. | Before M1 |
+| Q9 | Self-host the fonts or use the Google Fonts link? Decided: self-host with `@fontsource`. | Decided |
 | Q10 | May a Super admin read the display name of a company's members (G-14 says "people")? Recommended: yes, through a view with display name only, not the full profiles table. | Before M2 |
 | Q11 | Which branch is the base for milestones: `main` or `dev`? Decided: `dev` is the integration branch and is merged into `main` for each release (see "How to release and manage"). | Decided |
 
