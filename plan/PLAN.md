@@ -446,11 +446,11 @@ Each row is one pull request and one release.
 ## How to release and manage
 
 1. One milestone is one branch, one pull request and one release tag. The tag is named in the milestone, for example v0.7.0.
-2. The main branch must always work: merge only when typecheck, lint and all tests pass.
+2. The dev and main branches must always work: merge only when typecheck, lint and all tests pass.
 3. After each merge, add a line to CHANGELOG.md saying what changed, so the history is clear at a glance.
 4. Keep milestones small. If one grows past about five tasks, or needs more than one group of screens, split it before building.
 5. To track work on GitHub, create a GitHub milestone for each M and an issue for each task, or simply use the checklists on this page.
-6. Branches: main is the release branch. Cut each milestone branch from main, open the pull request back into main, and create the release tag on main after the merge.
+6. Branches: dev is the integration branch and main is the release branch. Cut each milestone branch from dev and open the pull request back into dev. After the merge, merge dev into main and create the release tag on main.
 
 ## Models and cost
 
@@ -557,7 +557,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q8 | How do database tests run locally and in CI? Recommended: Vitest plus a pg client against `supabase start`; CI starts Supabase. | Before M2 |
 | Q9 | Self-host the fonts or use the Google Fonts link? Recommended: self-host with `@fontsource`. | Before M1 |
 | Q10 | May a Super admin read the display name of a company's members (G-14 says "people")? Recommended: yes, through a view with display name only, not the full profiles table. | Before M2 |
-| Q11 | Which branch is the base for milestones: `main` or `dev`? Recommended: `dev` is the integration branch and is merged into `main` for each release. | Before M1 |
+| Q11 | Which branch is the base for milestones: `main` or `dev`? Decided: `dev` is the integration branch and is merged into `main` for each release (see "How to release and manage"). | Decided |
 
 ## Before the build
 
@@ -579,10 +579,10 @@ Source of truth: PLAN.md in this repository (20 small milestones, each one pull 
 
 Work one milestone at a time, starting with M1. For each milestone:
 1. Read the milestone and the decisions G-1 to G-13 and UX-1 to UX-6.
-2. Create a branch named mN-short-name from main.
+2. Create a branch named mN-short-name from dev.
 3. Implement the tasks.
 4. Run typecheck, lint and all tests, including the isolation tests. For screen changes, also open the app in a browser and use the feature, including error cases.
-5. Open a pull request into main that lists what you built, the assumptions you made and anything unfinished.
+5. Open a pull request into dev that lists what you built, the assumptions you made and anything unfinished.
 6. Stop and wait for my review.
 7. After I merge, tag the release named in the milestone and add a line to CHANGELOG.md.
 8. Do not start the next milestone until I say so.

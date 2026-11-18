@@ -1,14 +1,10 @@
-# Prototype screens
+# Prototype change log
 
-Put the exported prototype screens here (images or PDF), one file per screen, for example `board.png` or `card-detail.png`.
+What changed in the prototype after the first build plan. Visual reference: `design/` (read-only). Live prototype: https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
 
-They are the visual reference for every milestone in `../../plan/PLAN.md`.
+## v22: grill round 2 decisions
 
-Prototype: https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
-
-## Prototype changes (v22)
-
-The prototype was updated to match the grill round 2 decisions (G-14 to G-18) in `plan/PLAN.md`.
+The prototype was updated to match G-14 to G-18 in `plan/PLAN.md`.
 
 | Screen | Change | Decision |
 |---|---|---|
@@ -20,10 +16,10 @@ The prototype was updated to match the grill round 2 decisions (G-14 to G-18) in
 
 G-17 (description edits log who and when, not the text) affects the Activity log only and has no visible screen change.
 
-## Prototype panel (v24)
+## v24: prototype panel
 
-The `Prototype panel` artboard simulates the backend with one fake API: 6 scenarios, 4 latency levels and 5 faults, plus a request log. See the "Prototype panel" section in `../../plan/PLAN.md`.
+The `Prototype panel` artboard simulates the backend with one fake API: 6 scenarios, 4 latency levels and 5 faults, plus a request log. See the "Prototype panel" section in `plan/PLAN.md`.
 
-## Prototype panel (v26)
+## v26: optimistic updates and faults
 
 Changes are now optimistic with undo on failure, and the panel has 6 faults: Offline, Server error, Session expired, Forbidden, Not found and Conflict. Loading the board shows clear offline and session-expired screens.
