@@ -466,7 +466,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 1. Work only inside this repository. Never touch client code.
 2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-and-move-cards.
-3. Before starting a milestone, re-read it and the decisions G-1 to G-13 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
+3. Before starting a milestone, re-read it and the decisions G-1 to G-18 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
 4. The pull request lists what was built, the assumptions made and anything left unfinished. Then stop and wait for review.
 5. Once I merge, tag the release named in the milestone and add a line to CHANGELOG.md. Then wait for me to say go before starting the next milestone.
 6. If the plan is silent or two rules conflict, add the question to the open questions list and ask. Do not guess.
@@ -484,7 +484,7 @@ Three built-in lessons for the autonomous build. They apply to every milestone.
 Read this plan the way you would read a pull request before running anything from it.
 
 - For each milestone, list the commands it implies, the packages it installs and the places it writes files. Anything surprising is a bug in the plan.
-- Check that every task matches a decision (G-1 to G-13) and a rule in this file.
+- Check that every task matches a decision (G-1 to G-18) and a rule in this file.
 - Start Claude Code in plan mode first, so it proposes the steps and you approve them before any file changes.
 - Ask the advisor model (Opus) to review the plan or a risky milestone before it is built. It reviews and never writes code.
 
@@ -578,7 +578,7 @@ You are building Tazko, a kanban work tracker that one group runs for several of
 Source of truth: PLAN.md in this repository (20 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
-1. Read the milestone and the decisions G-1 to G-13 and UX-1 to UX-6.
+1. Read the milestone and the decisions G-1 to G-18 and UX-1 to UX-6.
 2. Create a branch named mN-short-name from dev.
 3. Implement the tasks.
 4. Run typecheck, lint and all tests, including the isolation tests. For screen changes, also open the app in a browser and use the feature, including error cases.
