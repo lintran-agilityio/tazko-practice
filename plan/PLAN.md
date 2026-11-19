@@ -1,6 +1,6 @@
 # Tazko build plan
 
-A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 22 small milestones (M2b and M14b are follow-ups to M2 and M14). Each milestone ends in one pull request and one release.
+A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 27 small milestones. The ones with a letter (M2b, M7b, M8b, M14b, M15b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
 - Prototype (14 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
 - Last updated: prototype Version 34. It now includes the UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
@@ -8,7 +8,7 @@ A step-by-step plan to build Tazko as a real app, based on the decisions from th
 
 ## How the work flows
 
-Seven phases made of 22 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
+Seven phases made of 27 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
 
 ```mermaid
 flowchart LR
@@ -145,8 +145,10 @@ Each row is one pull request and one release.
 | M4 | Company switcher and Profile | Profile | M3 | v0.4.0 |
 | M5 | Sign in with Google | Sign in | M3 | v0.5.0 |
 | M6 | Boards on screen | Home, Board | M4 | v0.6.0 |
-| M7 | Create and move cards | Board | M6 | v0.7.0 |
-| M8 | Card detail | Card detail | M7 | v0.8.0 |
+| M7 | Create cards | Board | M6 | v0.7.0 |
+| M7b | Move cards | Board | M7 | v0.7.1 |
+| M8 | Card detail | Card detail | M7b | v0.8.0 |
+| M8b | Checklist and links | Card detail | M8 | v0.8.1 |
 | M9 | Comments and Activity | Card detail | M8 | v0.9.0 |
 | M10 | Labels | Labels | M8 | v0.10.0 |
 | M11 | Board as list | Board as list | M7 | v0.11.0 |
@@ -155,11 +157,14 @@ Each row is one pull request and one release.
 | M14 | Members and roles | Members | M4 | v0.14.0 |
 | M14b | Invites and Accept invite | Members, Accept invite | M14, M3 | v0.14.1 |
 | M15 | Create and edit projects | Project settings | M7 | v0.15.0 |
+| M15b | Column menu and Add list | Board | M15 | v0.15.1 |
 | M16 | Archive project | Project settings | M15 | v0.16.0 |
 | M17 | Companies and Company detail | Companies, Company detail | M4, M14b | v0.17.0 |
 | M18 | Open as Owner | Company detail, banner on every screen | M9, M17 | v0.18.0 |
 | M19 | Usage | Usage | M9, M17 | v0.19.0 |
-| M20 | Polish and hand-off | All 14 screens | M1 to M19 | v1.0.0 |
+| M20 | Polish, phone width and accessibility | All 14 screens | M1 to M19 | v0.20.0 |
+| M20b | States and fault matrix | All 14 screens | M20 | v0.20.1 |
+| M20c | Hand-off | All 14 screens | M20b | v1.0.0 |
 
 ## Milestones
 
@@ -268,40 +273,61 @@ Each row is one pull request and one release.
 
 **Done when:** Every role sees only the current company’s boards, a Super admin sees none, and the tabs switch boards.
 
-#### M7: Create and move cards
+#### M7: Create cards
 
 - **Screens:** Board
 - **Depends on:** M6
 - **Release:** `v0.7.0`
-- **Models:** Sonnet builds
+- **Models:** Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] Settle open question Q5 for cards (archive rather than delete), then build it: Owners and Members can archive a card (G-19).
+- [ ] Add card as the single primary action on Board.
+- [ ] Hide create and archive controls from Observers, and block the same writes in the database (BR-3). A write refused by RLS changes 0 rows, so the screen treats 0 rows as Forbidden.
+- [ ] Tests through supabase-js: Hoa creates and archives a card, Khoa is refused, and a Harbor user cannot write into Northwind.
+
+**Done when:** Hoa can add and archive cards; Khoa sees no controls and the database refuses his writes.
+
+#### M7b: Move cards
+
+- **Screens:** Board
+- **Depends on:** M7
+- **Release:** `v0.7.1`
+- **Models:** Sonnet builds. The `security` agent runs on the diff.
 
 - [ ] Settle open question Q3 (how cards move), then build it.
-- [ ] Settle open question Q5 for cards (archive or delete), then build what it decides.
-- [ ] Add card as the single primary action on Board.
 - [ ] Moving a card changes its column and position on the same row, never copies it (BR-1). It goes through the `move_card` RPC, which reports a card that already moved or a column that is gone as a conflict (Q16).
-- [ ] Hide create and move controls from Observers, and block the same writes in the database (BR-3). A write refused by RLS changes 0 rows, so the screen treats 0 rows as Forbidden.
+- [ ] Hide move controls from Observers, and block moves in the database (BR-3).
 - [ ] Move optimistically: the card moves at once; if the API fails it goes back to its column with a message, and Retry (or Sign in again for a 401).
-- [ ] Ignore replies that belong to an older load, so a reload during a save cannot corrupt the "saving" count or roll back the new board.
+- [ ] Ignore replies that belong to an older load, so a reload during a save cannot corrupt the "saving" count or roll back the new board (TP-8).
 
-**Done when:** Hoa can add and move cards; Khoa sees no controls and the database refuses his writes. A reload while a move is saving leaves the board and the saving indicator correct.
+**Done when:** Hoa can move cards; Khoa sees no move controls and the database refuses his moves. A conflict shows the banner and Retry. A reload while a move is saving leaves the board and the saving indicator correct.
 
 #### M8: Card detail
 
 - **Screens:** Card detail
-- **Depends on:** M7
+- **Depends on:** M7b
 - **Release:** `v0.8.0`
 - **Models:** Sonnet builds
 
 - [ ] Card page with title, description editing, due date and column, and a link back to the board.
-- [ ] Assignees, Observers included, with a note that Observers follow the card but cannot edit it (G-3).
-- [ ] Observers see the page read-only.
-- [ ] Checklist (UX-3): migration for checklist_items, check and delete with Undo, hide checked items, and the checklist menu.
-- [ ] Links (UX-4): migration for card_links, add and remove, long URLs cut with an ellipsis.
-- [ ] Assignees picker with search by name or email (UX-5).
 - [ ] Description editing takes focus at once and saves with Ctrl+Enter or ⌘+Enter (UX-5).
+- [ ] Assignees, Observers included, with a note that Observers follow the card but cannot edit it (G-3), and a picker with search by name or email (UX-5). Only active members can be assigned.
+- [ ] Observers see the page read-only.
 
-**Done when:** Hoa can edit a card, use its checklist and links; Khoa can be assigned to it but cannot change anything. A 200-character URL does not stretch the page.
+**Done when:** Hoa can edit a card and assign people; Khoa can be assigned to it but cannot change anything (TP-6).
 
+#### M8b: Checklist and links
+
+- **Screens:** Card detail
+- **Depends on:** M8
+- **Release:** `v0.8.1`
+- **Models:** Sonnet builds
+
+- [ ] Checklist (UX-3): migration for checklist_items, check and archive with Undo, hide checked items with a count, and the checklist menu (uncheck all, archive the checklist with confirmation).
+- [ ] Links (UX-4): migration for card_links, add and archive, long URLs cut with an ellipsis, full URL in the tooltip and the accessible name.
+- [ ] Same write rules as the card: Observers see both read-only, and the database refuses their writes.
+
+**Done when:** Hoa can use the checklist and links; Khoa sees them and cannot change them. A 200-character URL does not stretch the page.
 #### M9: Comments and Activity
 
 - **Screens:** Card detail
@@ -314,7 +340,7 @@ Each row is one pull request and one release.
 - [ ] Add the acting_as_super_admin column now, ready for M18 (G-6). Activity triggers run as security definer, and app roles cannot insert into activity.
 - [ ] Activity list on Card detail showing who did what and when, with times in the mono face.
 
-**Done when:** Every action from M7 and M8 appears in Activity.
+**Done when:** Every action from M7, M7b and M8 appears in Activity.
 
 #### M10: Labels
 
@@ -401,6 +427,7 @@ Each row is one pull request and one release.
 - [ ] Check the whole path in a browser, from the invite email (Mailpit when local) to Home.
 
 **Done when:** An Owner invites a new email, the email arrives, the link opens Accept invite, and the new person lands on Home with the right role. Inviting an existing user adds them directly. A Member or Observer calling the function is refused. An expired or revoked link shows a clear message.
+
 #### M15: Create and edit projects
 
 - **Screens:** Project settings
@@ -408,16 +435,27 @@ Each row is one pull request and one release.
 - **Release:** `v0.15.0`
 - **Models:** Sonnet builds
 
-- [ ] Settle open question Q5 (cards and columns that are removed).
+- [ ] Settle open question Q5 for columns: a column that still has active cards cannot be archived.
 - [ ] New project action on the Boards page, for Owners only (G-16). It creates a project with the columns Backlog, In progress, Review and Done.
 - [ ] Edit a project’s name and description.
-- [ ] Add, rename and reorder columns.
-- [ ] Column menu on the Board (UX-1): Rename, Add card, Move list, and Archive list with confirmation; the menu stays inside its column.
+- [ ] Add, rename and reorder columns in Project settings.
+- [ ] Owners only, enforced in the database.
+
+**Done when:** An Owner creates a project and edits its name, description and columns, and changes show up on the board straight away. A Member cannot reach Project settings.
+
+#### M15b: Column menu and Add list
+
+- **Screens:** Board
+- **Depends on:** M15
+- **Release:** `v0.15.1`
+- **Models:** Sonnet builds
+
+- [ ] Column menu on the Board (UX-1): Rename, Add card, Move list and Archive list with confirmation. The menu stays fully inside its column.
 - [ ] "+ Add list" column at the end of the Board, focused name field, Enter to add and Esc to cancel (UX-2).
-- [ ] Owners only.
+- [ ] Archive list is refused for a list with active cards, with a clear message.
+- [ ] Owners only: the menu and the Add list column are hidden from Members and Observers, and the database refuses their writes.
 
-**Done when:** Changes show up on the board straight away, and an Owner can add, rename and archive a list from the Board itself.
-
+**Done when:** An Owner can add, rename, move and archive a list from the Board itself, using the keyboard as well as the mouse. The menu is not clipped at phone width.
 #### M16: Archive project
 
 - **Screens:** Project settings
@@ -476,24 +514,43 @@ Each row is one pull request and one release.
 
 ### Phase 7: Polish
 
-#### M20: Polish and hand-off
+#### M20: Polish, phone width and accessibility
 
 - **Screens:** All 14 screens
-- **Depends on:** M1 to M19
-- **Release:** `v1.0.0`
-- **Models:** Sonnet builds, Haiku writes docs
+- **Depends on:** M1 to M19, including M7b, M8b, M14b and M15b
+- **Release:** `v0.20.0`
+- **Models:** Sonnet builds
 
 - [ ] Check every screen at phone width and fix layout problems.
 - [ ] Accessibility pass: visible focus, labels on every input, and text contrast.
 - [ ] Empty, loading and error states for every list and form.
+
+**Done when:** Every screen works at desktop and phone width, can be used with the keyboard, and has empty, loading and error states.
+
+#### M20b: States and fault matrix
+
+- **Screens:** All 14 screens
+- **Depends on:** M20
+- **Release:** `v0.20.1`
+- **Models:** Sonnet builds
+
 - [ ] Make every change optimistic with undo on failure, and add clear error, session-expired and offline states.
 - [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 6 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict). Every combination must end in the right screen with no errors.
+
+**Done when:** Every combination in the matrix ends in the right screen with no errors.
+
+#### M20c: Hand-off
+
+- **Screens:** All 14 screens, plus Accept invite
+- **Depends on:** M20b
+- **Release:** `v1.0.0`
+- **Models:** Sonnet builds, Haiku writes docs. Gate: the owner decides on hosting (Q14).
+
 - [ ] Open the real app in a browser and run each menu, form and shortcut from UX-1 to UX-5 at desktop and phone width.
-- [ ] Write the README: setup, seed accounts, how to run the tests.
+- [ ] Write the README: setup, seed accounts, how to run the tests, and that data is never removed (G-19).
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
 
 **Done when:** All 14 screens match the prototype, the README works from a clean clone, and every test passes.
-
 ### Which milestone builds which screen
 
 | Screen | Built in |
@@ -501,8 +558,8 @@ Each row is one pull request and one release.
 | Sign in | M3, M5 |
 | Profile | M4 |
 | Home | M6 |
-| Board | M6, M7 |
-| Card detail | M8, M9 |
+| Board | M6, M7, M7b, M15b |
+| Card detail | M8, M8b, M9 |
 | Board as list | M11 |
 | Search | M12 |
 | Notifications | M13 |
@@ -570,7 +627,7 @@ Give Claude more freedom one rung at a time. Move up only when the previous rung
 | 3. Autonomous | M6 to M19, except M14b and M17 | Claude runs a whole milestone and stops at each pull request. |
 | 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
 
-The `security` agent runs on M2, M6, M7, M9, M14b, M16, M17, M18 and M19, at every rung.
+The `security` agent runs on M2, M6, M7, M7b, M9, M14b, M16, M17, M18 and M19, at every rung.
 
 An incident is any stop condition that fired unexpectedly, a secret that reached a tracked file, or a change outside this repository. After an incident, go back one rung.
 
@@ -622,7 +679,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 |---|---|---|
 | Q1 | How should Open as Owner work technically? Decided: an `admin_sessions` table that `has_company_access` checks, written only by RPC (see Q18). | Decided |
 | Q2 | How is the 30-day purge of archived projects run? Closed: there is no purge. After 30 days an archived project is locked and kept (G-19). | Closed |
-| Q3 | How do people move cards: a menu, drag and drop, or both? Recommended: a menu first because it is easier to make accessible. | Before M7 |
+| Q3 | How do people move cards: a menu, drag and drop, or both? Recommended: a menu first because it is easier to make accessible. | Before M7b |
 | Q4 | Do invites and notifications send real email? Decided: notifications stay in the app. Invites are sent as email through Auth (Mailpit when local). | Decided |
 | Q5 | Can cards be removed, and what happens to a column that still has cards? Recommended: cards are archived rather than deleted, and a column that still has active cards cannot be archived. | Before M7 (cards), M15 (columns) |
 | Q6 | Which router for the 14 screens? Decided: React Router 7. | Decided |
@@ -635,7 +692,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q13 | How do invited people get an account? Decided: `inviteUserByEmail` in an Edge Function; a membership starts only when the invited email is confirmed; public signup is off. | Decided (M14b) |
 | Q14 | Local or hosted? Decided: local until M19; hosting, and the SMTP for invites if hosted, are decided at the M20 gate. | Decided |
 | Q15 | Does Activity survive a purge? Closed: nothing is deleted (G-19). | Closed |
-| Q16 | How does a move work and report conflicts? Decided: the `move_card(card, to_column, expected_from_column)` RPC sets column and position (appended at the end) on the same row. A card that already moved, or a missing column, is a conflict. BR-1 now means "same row, never a copy". | Decided (M7) |
+| Q16 | How does a move work and report conflicts? Decided: the `move_card(card, to_column, expected_from_column)` RPC sets column and position (appended at the end) on the same row. A card that already moved, or a missing column, is a conflict. BR-1 now means "same row, never a copy". | Decided (M7b) |
 | Q17 | Who owns a company a Super admin creates? Decided: `create-company` invites the named Owner. The Super admin never becomes Owner. | Decided (M17) |
 | Q18 | How long does Open as Owner last? Decided: 2 hours, with an Extend button, one session per Super admin; access ends at expiry; Exit sets `ended_at` and the row is kept. | Decided (M18) |
 | Q19 | Can members be removed? Decided: they are archived and can be restored, never deleted. The last active Owner cannot be archived, and nobody archives themselves. | Decided (M14) |
@@ -655,7 +712,7 @@ Paste this into Claude Code from the root of this repository.
 ```text
 You are building Tazko, a kanban work tracker that one group runs for several of its companies.
 
-Source of truth: PLAN.md in this repository (22 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
+Source of truth: PLAN.md in this repository (27 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
 1. Read the milestone and the decisions G-1 to G-19 and UX-1 to UX-6.
