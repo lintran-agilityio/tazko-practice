@@ -1,6 +1,6 @@
 # Tazko
 
-Kanban work tracker for one group running several companies. Source of truth: [plan/PLAN.md](plan/PLAN.md) (20 milestones, decisions G-1..G-18, UX-1..UX-6, open questions Q1..Q11). Visual reference: `design/`.
+Kanban work tracker for one group running several companies. Source of truth: [plan/PLAN.md](plan/PLAN.md) (27 milestones, decisions G-1..G-19, UX-1..UX-6, questions Q1..Q19). Visual reference: `design/`.
 
 ## Stack
 
@@ -17,7 +17,7 @@ React 19 + TypeScript + Tailwind 4 (Vite); Supabase (Postgres, Auth, Row Level S
 
 1. Work only in this repo. Never touch client code.
 2. One milestone = one branch (`m7-create-and-move-cards`, from `dev`) = one PR into `dev` = one release tag (named in the milestone). `dev` is the integration branch; merge `dev` into `main` and tag on `main` for each release.
-3. Before starting, re-read the milestone and G-1..G-18, UX-1..UX-6. Keep milestones small (about 5 tasks max); split if larger.
+3. Before starting, re-read the milestone and G-1..G-19, UX-1..UX-6. Keep milestones small (about 5 tasks max); split if larger.
 4. Before saying done: run typecheck, lint, all tests; for screen changes open the app in a browser and use it (menus, forms, keyboard, error cases). Record what was checked in the PR. Never end with "not tested".
 5. PR lists what was built, assumptions, anything unfinished. Then stop and wait for review. After merge: tag release, add a line to CHANGELOG.md. Do not start the next milestone until told.
 6. If the plan is silent or rules conflict, add to the open questions and ask. Do not guess.
@@ -29,7 +29,8 @@ React 19 + TypeScript + Tailwind 4 (Vite); Supabase (Postgres, Auth, Row Level S
 
 - Company isolation is enforced by RLS in the database, not by screens (T-1).
 - Roles: Owner (manage everything in company), Member (create/edit/move cards, comment), Observer (read-only; can be assigned, G-3). Super admin reads all, manages companies/usage; Open as Owner via banner, logged with `acting_as_super_admin` (G-6).
-- Moving a card changes `column_id` only (BR-1). Archived project is read-only, restorable 30 days (BR-2). Archive/delete needs typing the project name (G-5).
+- Moving a card changes its column and position on the same row, never a copy (BR-1). An archived project leaves the boards, is restorable 30 days, then locked and kept (BR-2). Archiving needs typing the project name (G-5).
+- Nothing is permanently deleted in the database: `archived_at` everywhere, DELETE revoked, reads return active rows only (G-19).
 - Activity is written by DB triggers (G-4).
 - Observers: hide write controls AND block writes in the database (BR-3).
 
