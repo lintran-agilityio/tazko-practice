@@ -1,6 +1,6 @@
 # Tazko build plan
 
-A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 27 small milestones. The ones with a letter (M2b, M7b, M8b, M14b, M15b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
+A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
 - Prototype (14 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
 - Last updated: prototype Version 34. It now includes the UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
@@ -9,7 +9,7 @@ A step-by-step plan to build Tazko as a real app, based on the decisions from th
 
 ## How the work flows
 
-Seven phases made of 27 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
+Seven phases made of 29 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
 
 ```mermaid
 flowchart LR
@@ -145,8 +145,9 @@ Each row is one pull request and one release.
 | M3 | Sign in with email | Sign in | M2b | v0.3.0 | 18 |
 | M4 | Company switcher and Profile | Profile | M3 | v0.4.0 | 20 |
 | M5 | Sign in with Google | Sign in | M3 | v0.5.0 | 10 |
-| M6 | Boards on screen | Home, Board | M4 | v0.6.0 | 40 |
-| M7 | Create cards | Board | M6 | v0.7.0 | 18 |
+| M6 | Boards on screen | Board | M4 | v0.6.0 | 28 |
+| M6b | Home and isolation tests | Home | M6 | v0.6.1 | 14 |
+| M7 | Create cards | Board | M6b | v0.7.0 | 18 |
 | M7b | Move cards | Board | M7 | v0.7.1 | 28 |
 | M8 | Card detail | Card detail | M7b | v0.8.0 | 22 |
 | M8b | Checklist and links | Card detail | M8 | v0.8.1 | 16 |
@@ -161,13 +162,14 @@ Each row is one pull request and one release.
 | M15b | Column menu and Add list | Board | M15 | v0.15.1 | 18 |
 | M16 | Archive project | Project settings | M15 | v0.16.0 | 16 |
 | M17 | Companies and Company detail | Companies, Company detail | M4, M14b | v0.17.0 | 36 |
-| M18 | Open as Owner | Company detail, banner on every screen | M9, M17 | v0.18.0 | 35 |
+| M18 | Open as Owner sessions | None (database only) | M9, M17 | v0.18.0 | 28 |
+| M18b | Open as Owner screens | Company detail, banner on every screen | M18 | v0.18.1 | 9 |
 | M19 | Usage | Usage | M9, M17 | v0.19.0 | 15 |
 | M20 | Polish, phone width and accessibility | All 14 screens | M1 to M19 | v0.20.0 | 34 |
 | M20b | States and fault matrix | All 14 screens | M20 | v0.20.1 | 34 |
 | M20c | Hand-off | All 14 screens | M20b | v1.0.0 | 12 |
 
-Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 658 hours (about 82 days), or about 103 days with review rounds and gates. The GitHub issues carry the per-task estimates.
+Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 662 hours (about 83 days), or about 103 days with review rounds and gates. The GitHub issues carry the per-task estimates.
 
 ## Milestones
 
@@ -261,25 +263,33 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M6: Boards on screen
 
-- **Screens:** Home, Board
+- **Screens:** Board
 - **Depends on:** M4
 - **Release:** `v0.6.0`
 - **Models:** Sonnet builds, Haiku writes sample boards. The `security` agent runs on the diff.
 
 - [ ] Migrations for boards, columns and cards, and seed the four sample boards from the prototype.
-- [ ] Home: recent boards as tiles first, then what needs attention; tiles scroll sideways under 600px (DR-4).
+- [ ] Seed one board with a few cards for Northwind Foods too, so isolation tests have data on both sides (G-8).
 - [ ] Board screen: columns and cards, read-only, with tabs to switch between boards.
 - [ ] Empty state for a board with no cards.
 
-- [ ] Seed one board with a few cards for Northwind Foods too, so isolation tests have data on both sides (G-8).
+**Done when:** A person sees the current company’s boards and cards on the Board screen, the tabs switch boards, and an empty board shows its empty state.
+
+#### M6b: Home and isolation tests
+
+- **Screens:** Home
+- **Depends on:** M6
+- **Release:** `v0.6.1`
+- **Models:** Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] Home: recent boards as tiles first, then what needs attention; tiles scroll sideways under 600px (DR-4).
 - [ ] Tests: a user sees only their own company’s boards, and a Super admin sees no boards or cards (G-14).
 
-**Done when:** Every role sees only the current company’s boards, a Super admin sees none, and the tabs switch boards.
-
+**Done when:** Every role sees only the current company’s boards on Home and Board, and a Super admin sees none.
 #### M7: Create cards
 
 - **Screens:** Board
-- **Depends on:** M6
+- **Depends on:** M6b
 - **Release:** `v0.7.0`
 - **Models:** Sonnet builds. The `security` agent runs on the diff.
 
@@ -486,22 +496,31 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Only Super admins can write companies. Owners and Members can never see or reach the Super admin area, with tests.
 
 **Done when:** A Super admin sees both companies and their people and can create a company with its first Owner; nobody else can open these screens.
-#### M18: Open as Owner
+#### M18: Open as Owner sessions
 
-- **Screens:** Company detail, banner on every screen
+- **Screens:** None (database only)
 - **Depends on:** M9, M17
 - **Release:** `v0.18.0`
 - **Models:** Opus reviews the approach first, Sonnet builds. The `security` agent runs on the diff.
 
-- [ ] Build Open as Owner on the `admin_sessions` table (Q1, Q18): one live session per Super admin, 2 hours, with an Extend button. Access ends at expiry, and Exit sets `ended_at` and keeps the row.
-- [ ] Open as Owner action on Company detail.
-- [ ] Banner on every screen while it is active: Viewing as Owner of the company (G-6).
+- [ ] Build Open as Owner on the `admin_sessions` table (Q1, Q18) with the RPCs `open_as_owner`, `extend_owner` and `exit_owner`: one live session per Super admin, 2 hours, access ends at expiry, and Exit sets `ended_at` and keeps the row.
 - [ ] Set acting_as_super_admin on every change made in this mode, and show it in Activity.
+- [ ] Tests: outside Open as Owner a Super admin still cannot read boards, cards or Activity (G-14); inside a session only that company opens (TP-1, TP-7).
+
+**Done when:** The database lets a Super admin act as Owner of one company for 2 hours, Activity records who really acted, and outside a session nothing beyond company-level data is readable.
+
+#### M18b: Open as Owner screens
+
+- **Screens:** Company detail, banner on every screen
+- **Depends on:** M18
+- **Release:** `v0.18.1`
+- **Models:** Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] Open as Owner action on Company detail.
+- [ ] Banner on every screen while it is active: Viewing as Owner of the company (G-6), read from server state, with an Extend button.
 - [ ] Exit action that returns to Companies.
-- [ ] Test: outside Open as Owner a Super admin still cannot read boards, cards or Activity (G-14).
 
-**Done when:** A Super admin opens either company as Owner, the banner shows, and Activity shows who really acted.
-
+**Done when:** A Super admin opens either company as Owner, the banner shows on every screen, Extend and Exit work, and Activity shows who really acted.
 #### M19: Usage
 
 - **Screens:** Usage
@@ -520,7 +539,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 #### M20: Polish, phone width and accessibility
 
 - **Screens:** All 14 screens
-- **Depends on:** M1 to M19, including M7b, M8b, M14b and M15b
+- **Depends on:** M1 to M19, including M6b, M7b, M8b, M14b, M15b and M18b
 - **Release:** `v0.20.0`
 - **Models:** Sonnet builds
 
@@ -560,7 +579,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 |---|---|
 | Sign in | M3, M5 |
 | Profile | M4 |
-| Home | M6 |
+| Home | M6b |
 | Board | M6, M7, M7b, M15b |
 | Card detail | M8, M8b, M9 |
 | Board as list | M11 |
@@ -570,7 +589,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 | Labels | M10 |
 | Project settings | M15, M16 |
 | Companies | M17 |
-| Company detail | M17, M18 |
+| Company detail | M17, M18b |
 | Usage | M19 |
 | Accept invite (not in the prototype) | M14b |
 
@@ -630,7 +649,7 @@ Give Claude more freedom one rung at a time. Move up only when the previous rung
 | 3. Autonomous | M6 to M19, except M14b and M17 | Claude runs a whole milestone and stops at each pull request. |
 | 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
 
-The `security` agent runs on M2, M6, M7, M7b, M9, M14b, M16, M17, M18 and M19, at every rung.
+The `security` agent runs on M2, M6, M6b, M7, M7b, M9, M14b, M16, M17, M18, M18b and M19, at every rung.
 
 An incident is any stop condition that fired unexpectedly, a secret that reached a tracked file, or a change outside this repository. After an incident, go back one rung.
 
@@ -715,7 +734,7 @@ Paste this into Claude Code from the root of this repository.
 ```text
 You are building Tazko, a kanban work tracker that one group runs for several of its companies.
 
-Source of truth: PLAN.md in this repository (27 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
+Source of truth: PLAN.md in this repository (29 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
 1. Read the milestone and the decisions G-1 to G-19 and UX-1 to UX-6.
