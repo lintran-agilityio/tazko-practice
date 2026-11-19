@@ -80,6 +80,8 @@ Sizes are S, M or L. One milestone is one branch, one PR and one tag.
 
 Prerequisite: the plan is reconciled on `dev` (I9). Q6, Q9 and Q11 are decided.
 
+Update 2026-11-19: the GitHub issues follow the tasks in PLAN.md, not the ticket IDs below. Mapping: M1-1 (test runner) is PR #11, and its CI part is issue M1-2 (#13); M1-2 (tokens) is issue M1-4 (#15); M1-3 and M1-4 (routes and shell) are issue M1-3 (#14); M1-5 (tests and checks) is the Verify ticket (#16). Issue M1-1 (#12) confirms the scaffold.
+
 | ID | Ticket | Model | Size | Acceptance |
 |---|---|---|---|---|
 | M1-1 | Fix the test runner (I15) by trying `vitest@5.1.1` first (install asks permission); set `pool: 'vmThreads'` only if that still fails. Then add a GitHub Actions workflow running `npm ci`, lint, typecheck and test. | Sonnet | S | `npm test` passes locally and CI is green on the PR. |

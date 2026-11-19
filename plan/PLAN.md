@@ -1,14 +1,15 @@
 # Tazko build plan
 
-A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 27 small milestones. The ones with a letter (M2b, M7b, M8b, M14b, M15b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
+A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
 - Prototype (14 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
 - Last updated: prototype Version 34. It now includes the UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
-- Interactive plan page with checklists: https://claude.ai/artifact/1QfkQMLg4LNxHFmd4pPDEY
+- Delivery plan (milestones, owner gates, API surface, questions, risks): https://claude.ai/artifact/F4swGuTCXtSmSV7SnEk9rE
+- Blueprint (decisions, findings, requirements, tests, readiness): https://claude.ai/artifact/FHWvj1NtKMZX2nF22qfJeK
 
 ## How the work flows
 
-Seven phases made of 27 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
+Seven phases made of 29 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
 
 ```mermaid
 flowchart LR
@@ -31,7 +32,7 @@ These came from the interview and are the source of truth for the build.
 | G-8 | Sample data | 2 companies and 4 users: Linh (Super admin), Minh (Owner of both companies), Hoa (Member) and Khoa (Observer), both in Harbor Logistics. |
 | G-9 | Backend | A real backend with an API and a database from the start. |
 | G-10 | Stack | Supabase (Postgres and Auth) with a React and Tailwind front end. |
-| G-11 | Sign-in | Google plus email and password, so test accounts for each role are easy to create. |
+| G-11 | Sign-in | Google plus email and password. Accounts come from the seed or an invite, so test accounts for each role are easy to create (signup is off, Q13). |
 | G-12 | Build setup | The autonomous build runs in Claude Code on the developer's machine, in the dedicated repo `lintran-agilityio/tazko-practice`, apart from any client code. |
 | G-13 | Checkpoints | Claude stops after each milestone and opens a pull request for your review. |
 | G-14 | Permissions | By default a Super admin sees company-level figures only: the company list, people and counts. Boards and cards can be read only through Open as Owner, which shows a banner and is logged. |
@@ -52,8 +53,8 @@ These came from the interview and are the source of truth for the build.
 | Part | Choice |
 |---|---|
 | Front end | React, TypeScript and Tailwind, built with Vite. Look and feel follow the prototype (Tazko Indigo, Hanken Grotesk and DM Mono). |
-| Backend | Supabase: Postgres for data, Auth for sign-in, and Row Level Security to enforce company isolation and roles in the database. |
-| Sign-in | Google, and email with password for test accounts. |
+| Backend | Supabase: Postgres for data, Auth for sign-in, and Row Level Security to enforce company isolation and roles in the database. Edge Functions send invites and create companies. Docker runs the local stack, and Mailpit catches local email. |
+| Sign-in | Google, and email with password, for invited people only. Public signup is off (Q13). |
 | Tests | Vitest for the app, plus database tests that prove one company cannot see another company's data. |
 | Where it runs | Claude Code on the developer's machine, in the dedicated tazko-practice repo. |
 
@@ -136,35 +137,39 @@ Errors the screens must handle:
 
 Each row is one pull request and one release.
 
-| Milestone | Name | Screens | Depends on | Release |
-|---|---|---|---|---|
-| M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 |
-| M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 |
-| M2b | Seed and isolation tests | None (database only) | M2 | v0.2.1 |
-| M3 | Sign in with email | Sign in | M2b | v0.3.0 |
-| M4 | Company switcher and Profile | Profile | M3 | v0.4.0 |
-| M5 | Sign in with Google | Sign in | M3 | v0.5.0 |
-| M6 | Boards on screen | Home, Board | M4 | v0.6.0 |
-| M7 | Create cards | Board | M6 | v0.7.0 |
-| M7b | Move cards | Board | M7 | v0.7.1 |
-| M8 | Card detail | Card detail | M7b | v0.8.0 |
-| M8b | Checklist and links | Card detail | M8 | v0.8.1 |
-| M9 | Comments and Activity | Card detail | M8 | v0.9.0 |
-| M10 | Labels | Labels | M8 | v0.10.0 |
-| M11 | Board as list | Board as list | M7 | v0.11.0 |
-| M12 | Search | Search | M7 | v0.12.0 |
-| M13 | Notifications | Notifications | M9 | v0.13.0 |
-| M14 | Members and roles | Members | M4 | v0.14.0 |
-| M14b | Invites and Accept invite | Members, Accept invite | M14, M3 | v0.14.1 |
-| M15 | Create and edit projects | Project settings | M7 | v0.15.0 |
-| M15b | Column menu and Add list | Board | M15 | v0.15.1 |
-| M16 | Archive project | Project settings | M15 | v0.16.0 |
-| M17 | Companies and Company detail | Companies, Company detail | M4, M14b | v0.17.0 |
-| M18 | Open as Owner | Company detail, banner on every screen | M9, M17 | v0.18.0 |
-| M19 | Usage | Usage | M9, M17 | v0.19.0 |
-| M20 | Polish, phone width and accessibility | All 14 screens | M1 to M19 | v0.20.0 |
-| M20b | States and fault matrix | All 14 screens | M20 | v0.20.1 |
-| M20c | Hand-off | All 14 screens | M20b | v1.0.0 |
+| Milestone | Name | Screens | Depends on | Release | Hours |
+|---|---|---|---|---|---|
+| M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 | 27 |
+| M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 | 38 |
+| M2b | Seed and isolation tests | None (database only) | M2 | v0.2.1 | 30 |
+| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 18 |
+| M4 | Company switcher and Profile | Profile | M3 | v0.4.0 | 20 |
+| M5 | Sign in with Google | Sign in | M3 | v0.5.0 | 10 |
+| M6 | Boards on screen | Board | M4 | v0.6.0 | 28 |
+| M6b | Home and isolation tests | Home | M6 | v0.6.1 | 14 |
+| M7 | Create cards | Board | M6b | v0.7.0 | 18 |
+| M7b | Move cards | Board | M7 | v0.7.1 | 28 |
+| M8 | Card detail | Card detail | M7b | v0.8.0 | 22 |
+| M8b | Checklist and links | Card detail | M8 | v0.8.1 | 16 |
+| M9 | Comments and Activity | Card detail | M8 | v0.9.0 | 30 |
+| M10 | Labels | Labels | M8 | v0.10.0 | 16 |
+| M11 | Board as list | Board as list | M7 | v0.11.0 | 12 |
+| M12 | Search | Search | M7 | v0.12.0 | 16 |
+| M13 | Notifications | Notifications | M9 | v0.13.0 | 21 |
+| M14 | Members and roles | Members | M4 | v0.14.0 | 31 |
+| M14b | Invites and Accept invite | Members, Accept invite | M14, M3 | v0.14.1 | 46 |
+| M15 | Create and edit projects | Project settings | M7 | v0.15.0 | 19 |
+| M15b | Column menu and Add list | Board | M15 | v0.15.1 | 18 |
+| M16 | Archive project | Project settings | M15 | v0.16.0 | 16 |
+| M17 | Companies and Company detail | Companies, Company detail | M4, M14b | v0.17.0 | 36 |
+| M18 | Open as Owner sessions | None (database only) | M9, M17 | v0.18.0 | 28 |
+| M18b | Open as Owner screens | Company detail, banner on every screen | M18 | v0.18.1 | 9 |
+| M19 | Usage | Usage | M9, M17 | v0.19.0 | 15 |
+| M20 | Polish, phone width and accessibility | All 14 screens | M1 to M19 | v0.20.0 | 34 |
+| M20b | States and fault matrix | All 14 screens | M20 | v0.20.1 | 34 |
+| M20c | Hand-off | All 14 screens | M20b | v1.0.0 | 12 |
+
+Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 662 hours (about 83 days), or about 103 days with review rounds and gates. The GitHub issues carry the per-task estimates.
 
 ## Milestones
 
@@ -191,7 +196,7 @@ Each row is one pull request and one release.
 - **Screens:** None (database only)
 - **Depends on:** M1
 - **Release:** `v0.2.0`
-- **Models:** Opus reviews the schema first, Sonnet builds
+- **Models:** Opus reviews the schema first, Sonnet builds. The `security` agent runs on the diff.
 
 - [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder, an .env.example and the npm scripts db:start and db:reset. Turn public signup off in the Auth config (Q13).
 - [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, and `archived_at` and `archived_by` on memberships (G-19).
@@ -222,7 +227,7 @@ Each row is one pull request and one release.
 
 - [ ] Sign in screen with email and password, and a sign out action.
 - [ ] Create a profile row automatically when a user is created. Public signup is off, so users arrive through the seed or an invite (Q13).
-- [ ] Redirect signed-out visitors to Sign in from every other route.
+- [ ] Redirect signed-out visitors to Sign in from every other route, except `/accept-invite` (added in M14b).
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
 
 **Done when:** You can sign in as each seed user and sign out again.
@@ -258,25 +263,33 @@ Each row is one pull request and one release.
 
 #### M6: Boards on screen
 
-- **Screens:** Home, Board
+- **Screens:** Board
 - **Depends on:** M4
 - **Release:** `v0.6.0`
-- **Models:** Sonnet builds, Haiku writes sample boards
+- **Models:** Sonnet builds, Haiku writes sample boards. The `security` agent runs on the diff.
 
 - [ ] Migrations for boards, columns and cards, and seed the four sample boards from the prototype.
-- [ ] Home: recent boards as tiles first, then what needs attention; tiles scroll sideways under 600px (DR-4).
+- [ ] Seed one board with a few cards for Northwind Foods too, so isolation tests have data on both sides (G-8).
 - [ ] Board screen: columns and cards, read-only, with tabs to switch between boards.
 - [ ] Empty state for a board with no cards.
 
-- [ ] Seed one board with a few cards for Northwind Foods too, so isolation tests have data on both sides (G-8).
+**Done when:** A person sees the current company’s boards and cards on the Board screen, the tabs switch boards, and an empty board shows its empty state.
+
+#### M6b: Home and isolation tests
+
+- **Screens:** Home
+- **Depends on:** M6
+- **Release:** `v0.6.1`
+- **Models:** Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] Home: recent boards as tiles first, then what needs attention; tiles scroll sideways under 600px (DR-4).
 - [ ] Tests: a user sees only their own company’s boards, and a Super admin sees no boards or cards (G-14).
 
-**Done when:** Every role sees only the current company’s boards, a Super admin sees none, and the tabs switch boards.
-
+**Done when:** Every role sees only the current company’s boards on Home and Board, and a Super admin sees none.
 #### M7: Create cards
 
 - **Screens:** Board
-- **Depends on:** M6
+- **Depends on:** M6b
 - **Release:** `v0.7.0`
 - **Models:** Sonnet builds. The `security` agent runs on the diff.
 
@@ -333,7 +346,7 @@ Each row is one pull request and one release.
 - **Screens:** Card detail
 - **Depends on:** M8
 - **Release:** `v0.9.0`
-- **Models:** Opus reviews the trigger design first, Sonnet builds
+- **Models:** Opus reviews the trigger design first, Sonnet builds. The `security` agent runs on the diff.
 
 - [ ] Comments table and a comment box on Card detail; Ctrl+Enter or ⌘+Enter sends, with the matching hint (UX-5).
 - [ ] Activity table plus database triggers for comments, moves, assignments, due dates and description edits (G-4). A description edit records who and when, never the text (G-17).
@@ -461,7 +474,7 @@ Each row is one pull request and one release.
 - **Screens:** Project settings
 - **Depends on:** M15
 - **Release:** `v0.16.0`
-- **Models:** Sonnet builds, Haiku does the shared confirm component
+- **Models:** Sonnet builds, Haiku does the shared confirm component. The `security` agent runs on the diff.
 
 - [ ] A shared confirm-by-name component, used for archiving (G-5).
 - [ ] Archive removes the project from the boards and lists it in the Owner’s Archived list. It cannot be opened or written to while archived (BR-2, G-19).
@@ -483,28 +496,37 @@ Each row is one pull request and one release.
 - [ ] Only Super admins can write companies. Owners and Members can never see or reach the Super admin area, with tests.
 
 **Done when:** A Super admin sees both companies and their people and can create a company with its first Owner; nobody else can open these screens.
-#### M18: Open as Owner
+#### M18: Open as Owner sessions
 
-- **Screens:** Company detail, banner on every screen
+- **Screens:** None (database only)
 - **Depends on:** M9, M17
 - **Release:** `v0.18.0`
-- **Models:** Opus reviews the approach first, Sonnet builds
+- **Models:** Opus reviews the approach first, Sonnet builds. The `security` agent runs on the diff.
 
-- [ ] Build Open as Owner on the `admin_sessions` table (Q1, Q18): one live session per Super admin, 2 hours, with an Extend button. Access ends at expiry, and Exit sets `ended_at` and keeps the row.
-- [ ] Open as Owner action on Company detail.
-- [ ] Banner on every screen while it is active: Viewing as Owner of the company (G-6).
+- [ ] Build Open as Owner on the `admin_sessions` table (Q1, Q18) with the RPCs `open_as_owner`, `extend_owner` and `exit_owner`: one live session per Super admin, 2 hours, access ends at expiry, and Exit sets `ended_at` and keeps the row.
 - [ ] Set acting_as_super_admin on every change made in this mode, and show it in Activity.
+- [ ] Tests: outside Open as Owner a Super admin still cannot read boards, cards or Activity (G-14); inside a session only that company opens (TP-1, TP-7).
+
+**Done when:** The database lets a Super admin act as Owner of one company for 2 hours, Activity records who really acted, and outside a session nothing beyond company-level data is readable.
+
+#### M18b: Open as Owner screens
+
+- **Screens:** Company detail, banner on every screen
+- **Depends on:** M18
+- **Release:** `v0.18.1`
+- **Models:** Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] Open as Owner action on Company detail.
+- [ ] Banner on every screen while it is active: Viewing as Owner of the company (G-6), read from server state, with an Extend button.
 - [ ] Exit action that returns to Companies.
-- [ ] Test: outside Open as Owner a Super admin still cannot read boards, cards or Activity (G-14).
 
-**Done when:** A Super admin opens either company as Owner, the banner shows, and Activity shows who really acted.
-
+**Done when:** A Super admin opens either company as Owner, the banner shows on every screen, Extend and Exit work, and Activity shows who really acted.
 #### M19: Usage
 
 - **Screens:** Usage
 - **Depends on:** M9, M17
 - **Release:** `v0.19.0`
-- **Models:** Sonnet builds
+- **Models:** Sonnet builds. The `security` agent runs on the diff.
 
 - [ ] Compute active members per week and totals per company through a database function that returns counts only, so a Super admin never reads Activity rows (G-14).
 - [ ] Usage screen with a chart of active members per week and a table of totals.
@@ -517,7 +539,7 @@ Each row is one pull request and one release.
 #### M20: Polish, phone width and accessibility
 
 - **Screens:** All 14 screens
-- **Depends on:** M1 to M19, including M7b, M8b, M14b and M15b
+- **Depends on:** M1 to M19, including M6b, M7b, M8b, M14b, M15b and M18b
 - **Release:** `v0.20.0`
 - **Models:** Sonnet builds
 
@@ -557,7 +579,7 @@ Each row is one pull request and one release.
 |---|---|
 | Sign in | M3, M5 |
 | Profile | M4 |
-| Home | M6 |
+| Home | M6b |
 | Board | M6, M7, M7b, M15b |
 | Card detail | M8, M8b, M9 |
 | Board as list | M11 |
@@ -567,7 +589,7 @@ Each row is one pull request and one release.
 | Labels | M10 |
 | Project settings | M15, M16 |
 | Companies | M17 |
-| Company detail | M17, M18 |
+| Company detail | M17, M18b |
 | Usage | M19 |
 | Accept invite (not in the prototype) | M14b |
 
@@ -577,7 +599,7 @@ Each row is one pull request and one release.
 2. The dev and main branches must always work: merge only when typecheck, lint and all tests pass.
 3. After each merge, add a line to CHANGELOG.md saying what changed, so the history is clear at a glance.
 4. Keep milestones small. If one grows past about five tasks, or needs more than one group of screens, split it before building.
-5. To track work on GitHub, create a GitHub milestone for each M and an issue for each task, or simply use the checklists on this page.
+5. GitHub has one milestone for each M and one issue for each task, plus a Verify ticket per milestone, with estimates in hours (https://github.com/lintran-agilityio/tazko-practice/milestones). This plan wins; when it changes, update the issues to match.
 6. Branches: dev is the integration branch and main is the release branch. Cut each milestone branch from dev and open the pull request back into dev. After the merge, merge dev into main and create the release tag on main.
 
 ## Models and cost
@@ -593,7 +615,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 ## Rules for the autonomous build
 
 1. Work only inside this repository. Never touch client code.
-2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-and-move-cards.
+2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-cards.
 3. Before starting a milestone, re-read it and the decisions G-1 to G-19 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
 4. The pull request lists what was built, the assumptions made and anything left unfinished. Then stop and wait for review.
 5. Once I merge, tag the release named in the milestone and add a line to CHANGELOG.md. Then wait for me to say go before starting the next milestone.
@@ -627,7 +649,7 @@ Give Claude more freedom one rung at a time. Move up only when the previous rung
 | 3. Autonomous | M6 to M19, except M14b and M17 | Claude runs a whole milestone and stops at each pull request. |
 | 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
 
-The `security` agent runs on M2, M6, M7, M7b, M9, M14b, M16, M17, M18 and M19, at every rung.
+The `security` agent runs on M2, M6, M6b, M7, M7b, M9, M14b, M16, M17, M18, M18b and M19, at every rung.
 
 An incident is any stop condition that fired unexpectedly, a secret that reached a tracked file, or a change outside this repository. After an incident, go back one rung.
 
@@ -712,7 +734,7 @@ Paste this into Claude Code from the root of this repository.
 ```text
 You are building Tazko, a kanban work tracker that one group runs for several of its companies.
 
-Source of truth: PLAN.md in this repository (27 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
+Source of truth: PLAN.md in this repository (29 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
 1. Read the milestone and the decisions G-1 to G-19 and UX-1 to UX-6.
