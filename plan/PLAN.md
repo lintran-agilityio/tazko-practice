@@ -1,14 +1,14 @@
 # Tazko build plan
 
-A step-by-step plan to build Tazko as a real app, based on the 13 decisions from the interview and the 14-screen prototype. It is split into 20 small milestones. Each milestone ends in one pull request and one release.
+A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 22 small milestones (M2b and M14b are follow-ups to M2 and M14). Each milestone ends in one pull request and one release.
 
 - Prototype (14 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
-- Last updated: prototype Version 34. It now includes the 7 UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
+- Last updated: prototype Version 34. It now includes the UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
 - Interactive plan page with checklists: https://claude.ai/artifact/1QfkQMLg4LNxHFmd4pPDEY
 
 ## How the work flows
 
-Seven phases made of 20 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
+Seven phases made of 22 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
 
 ```mermaid
 flowchart LR
@@ -35,11 +35,12 @@ These came from the interview and are the source of truth for the build.
 | G-12 | Build setup | The autonomous build runs in Claude Code on the developer's machine, in the dedicated repo `lintran-agilityio/tazko-practice`, apart from any client code. |
 | G-13 | Checkpoints | Claude stops after each milestone and opens a pull request for your review. |
 | G-14 | Permissions | By default a Super admin sees company-level figures only: the company list, people and counts. Boards and cards can be read only through Open as Owner, which shows a banner and is logged. |
-| G-15 | Spec (BR-2) | A project is never deleted by hand. It can only be archived, and an archived project is purged automatically after 30 days. There is no Delete button. |
+| G-15 | Spec (BR-2) | A project is never deleted. It can only be archived. An Owner can restore it for 30 days; after that it is locked (the app cannot restore it) and it stays in the database (G-19). There is no Delete button and no purge job. |
 | G-16 | Permissions | Only Owners create projects. |
 | G-17 | Spec (Q-1) | When a description is edited, Activity records who and when, never the text. |
 | G-18 | Scope | Usage has no CSV export. |
-| UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list, Archive list and Delete list. Delete asks for confirmation. Owners only. The menu must stay fully inside its column (a prototype bug clipped it). |
+| G-19 | Data | Nothing is ever permanently deleted in the database. Every table that people can remove rows from has `archived_at` and `archived_by`. DELETE is revoked from all app roles, and reads return active rows only. Archived rows are listed and restored through Owner-only RPCs. In this plan "delete" for labels, checklist items, links, lists and members means archive. |
+| UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list and Archive list. Archive asks for confirmation, and a list that still has active cards cannot be archived (Q5). The prototype's separate Delete list is merged into Archive list (G-19). Owners only. The menu must stay fully inside its column (a prototype bug clipped it). |
 | UX-2 | Add list | A dashed "+ Add list" column ends each board. The name field has focus at once; Enter adds, Esc cancels. Owners only. |
 | UX-3 | Checklist | A card has a checklist: check, delete an item with Undo, a "Hide checked items" toggle that shows a count, and a menu to uncheck all or delete the whole checklist (confirmed). |
 | UX-4 | Links | A card has a Links list. Long URLs are cut with an ellipsis (domain and start of path), with the full URL in the tooltip and the accessible name. Long text in descriptions and comments wraps. |
@@ -64,10 +65,10 @@ Why Row Level Security matters here: the rule that each company sees only its ow
 |---|---|---|
 | companies | id, name, created_at | A tenant. Every board, card and member belongs to exactly one company (T-1). |
 | profiles | id (the auth user), display_name, is_super_admin, last_company_id | One row per signed-in person. last_company_id powers the company switcher (G-7). |
-| memberships | company_id, user_id, role (owner, member, observer) | Links people to companies. Unique per company and person. |
+| memberships | company_id, user_id, role (owner, member, observer), last_seen_at, archived_at, archived_by | Links people to companies. Unique per company and person. An archived membership loses all access at once, keeps its history, and can be restored. A company always keeps one active Owner. |
 | boards | id, company_id, name, description, archived_at | Called a project in settings (T-2). archived_at starts the 30-day restore window (BR-2). |
 | columns | id, board_id, name, position | The columns of a board. |
-| cards | id, company_id, board_id, column_id, title, description, due_date, position | A card lives on exactly one board and in one column; moving it changes column_id only (BR-1). |
+| cards | id, company_id, board_id, column_id, title, description, due_date, position, created_by, updated_at | A card lives on exactly one board and in one column; moving it changes column_id and position on the same row, never a copy (BR-1). |
 | card_assignees | card_id, user_id | Any role can be assigned, Observers included (G-3). |
 | checklist_items | id, card_id, text, done, position | The card checklist (UX-3). Same write rules as the card. |
 | card_links | id, card_id, url, position | Links on a card (UX-4). The full URL is stored; shortening is done on screen only. |
@@ -75,6 +76,10 @@ Why Row Level Security matters here: the rule that each company sees only its ow
 | comments | id, card_id, author_id, body, created_at | Shown in Activity. |
 | activity | id, company_id, card_id, actor_id, acting_as_super_admin, type, payload, created_at | Written by database triggers so nothing can skip it (G-4). acting_as_super_admin records the Open as Owner case (G-6). A description edit is an event with no text (G-17). |
 | notifications | id, user_id, activity_id, read_at | Generated from activity for assignments, comments and due dates. |
+| invites | id, company_id, email, role, token, expires_at, status | Pending, accepted, revoked or expired. Becomes a membership when the invited email is confirmed (Q13). |
+| admin_sessions | id, user_id, company_id, expires_at, ended_at | One live Open as Owner session per Super admin. Rows are kept as an audit trail (Q18). |
+
+Every table above except `activity`, `notifications` and `admin_sessions` also has `archived_at` and `archived_by` (G-19). `activity` is immutable.
 
 ### Who can do what
 
@@ -84,8 +89,48 @@ Why Row Level Security matters here: the rule that each company sees only its ow
 | Create, edit and move cards, comment | Owners and Members of that company. Observers cannot (BR-3). |
 | Manage labels, members and project settings | Owners of that company. Members can still apply existing labels to cards. |
 | Create a project | Owners only (G-16). |
-| Archive and restore a project | Owners only. An archived project is read-only, and it is purged automatically after 30 days (BR-2, G-15). |
-| Companies, usage, Open as Owner | Super admins only. Owners and Members never see this area. |
+| Archive and restore a project | Owners only. An archived project leaves the boards and appears in the Owner's Archived list, where it can be restored for 30 days. After that it is locked and kept (BR-2, G-15, G-19). |
+| Invite, change the role of, archive and restore members | Owners only. The last active Owner cannot be archived (Q19). |
+| Companies (including creating one), usage, Open as Owner | Super admins only. Owners and Members never see this area. |
+
+## API surface
+
+Supabase has no server of its own here. The API is tables behind Row Level Security, a few RPCs and two Edge Functions.
+
+Rules for every table:
+
+- No permanent delete (G-19): DELETE is revoked from all app roles, foreign keys use `ON DELETE RESTRICT`, and a test fails if any table grants DELETE.
+- Reads return active rows only: SELECT policies include `archived_at IS NULL`. Screens do not filter.
+- Archive, restore and archived lists go through RPCs (`archive_*`, `restore_*`, `list_archived_*`, Owners only), because a PATCH that hides its own row can fail under RLS (TP-9).
+- Unique keys are partial: `WHERE archived_at IS NULL`.
+- Every policy uses `has_company_access(company_id)`: an active member, or a live Open as Owner session (M18). It exists from M2, so later milestones do not rewrite policies.
+- Composite foreign keys tie child rows to their company, so a card cannot point at another company's board or column.
+
+| Name | Kind | Caller | Purpose | From |
+|---|---|---|---|---|
+| has_company_access, is_member, role_of, is_super_admin | SQL helpers | Policies | Ignore archived memberships | M2 |
+| company_people | View | Super admin | Display names only, for member companies (Q10) | M2 |
+| archive_*, restore_*, list_archived_* | RPC | Owners | One set per entity | M2 on |
+| guard_self_promotion | Trigger | Database | Nobody changes their own role or is_super_admin | M2 |
+| handle_new_user | Trigger | Auth | Creates the profile; turns an invite into a membership when the email is confirmed | M3, M14b |
+| move_card | RPC, security invoker | Owners, Members | Sets column and position; reports a conflict (Q16) | M7 |
+| Activity triggers | Triggers, security definer | Database | Actor is auth.uid(); acting_as_super_admin comes from admin_sessions, not the client | M9 |
+| search_cards | RPC | Active members | Current company only | M12 |
+| touch_last_seen, guard_last_owner | RPC, trigger | Members, database | Last seen; at least one active Owner | M14 |
+| invite-member | Edge Function | Owners | Invite by email, add an existing user, or restore an archived member | M14b |
+| create-company | Edge Function | Super admin | Create a company and invite its first Owner | M17 |
+| open_as_owner, extend_owner, exit_owner | RPC, security definer | Super admin | Manage admin_sessions | M18 |
+| usage_counts | RPC | Super admin | Counts only, never Activity rows | M19 |
+
+Errors the screens must handle:
+
+| What the database does | What the screen shows |
+|---|---|
+| Expired token (401) | "Your session has expired" with Sign in again |
+| INSERT refused by WITH CHECK (403) | Forbidden message, change rolled back |
+| UPDATE refused by RLS changes 0 rows, not 403 | Treated as Forbidden |
+| move_card reports a conflict | Conflict banner, card returns to its column, Retry |
+| Status 0 or a 5xx | Offline or server error with Try again |
 
 ## Release roadmap
 
@@ -95,7 +140,8 @@ Each row is one pull request and one release.
 |---|---|---|---|---|
 | M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 |
 | M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 |
-| M3 | Sign in with email | Sign in | M2 | v0.3.0 |
+| M2b | Seed and isolation tests | None (database only) | M2 | v0.2.1 |
+| M3 | Sign in with email | Sign in | M2b | v0.3.0 |
 | M4 | Company switcher and Profile | Profile | M3 | v0.4.0 |
 | M5 | Sign in with Google | Sign in | M3 | v0.5.0 |
 | M6 | Boards on screen | Home, Board | M4 | v0.6.0 |
@@ -106,10 +152,11 @@ Each row is one pull request and one release.
 | M11 | Board as list | Board as list | M7 | v0.11.0 |
 | M12 | Search | Search | M7 | v0.12.0 |
 | M13 | Notifications | Notifications | M9 | v0.13.0 |
-| M14 | Members and invites | Members | M4 | v0.14.0 |
+| M14 | Members and roles | Members | M4 | v0.14.0 |
+| M14b | Invites and Accept invite | Members, Accept invite | M14, M3 | v0.14.1 |
 | M15 | Create and edit projects | Project settings | M7 | v0.15.0 |
 | M16 | Archive project | Project settings | M15 | v0.16.0 |
-| M17 | Companies and Company detail | Companies, Company detail | M4 | v0.17.0 |
+| M17 | Companies and Company detail | Companies, Company detail | M4, M14b | v0.17.0 |
 | M18 | Open as Owner | Company detail, banner on every screen | M9, M17 | v0.18.0 |
 | M19 | Usage | Usage | M9, M17 | v0.19.0 |
 | M20 | Polish and hand-off | All 14 screens | M1 to M19 | v1.0.0 |
@@ -126,9 +173,9 @@ Each row is one pull request and one release.
 - **Models:** Sonnet builds, Haiku does scaffolding
 
 - [ ] Create the Vite, React, TypeScript and Tailwind project in the sandbox repo.
-- [ ] Add lint, typecheck and Vitest, plus a GitHub Actions workflow that runs all three.
+- [ ] Make `npm test` pass first (try vitest 5.1.1, else set `pool: 'vmThreads'`), then add a GitHub Actions workflow that runs lint, typecheck and tests.
 - [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens. At phone width the navigation becomes a drawer: a button opens it, Esc and choosing a page close it.
-- [ ] Add the Tazko Indigo design tokens: colours, Hanken Grotesk and DM Mono.
+- [ ] Add the full Tazko Indigo token set from design/tokens.css (colours, radii, tap size) and self-host Hanken Grotesk and DM Mono with `@fontsource`.
 
 **Done when:** npm run dev shows the shell, every route is reachable, and CI is green.
 
@@ -139,27 +186,37 @@ Each row is one pull request and one release.
 - **Screens:** None (database only)
 - **Depends on:** M1
 - **Release:** `v0.2.0`
-- **Models:** Opus reviews the schema first, Sonnet builds, Haiku writes seed data
+- **Models:** Opus reviews the schema first, Sonnet builds
 
-- [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder and an .env.example.
-- [ ] Migrations for companies, profiles and memberships, plus the role type and the is_super_admin flag.
-- [ ] Row Level Security helpers that answer: is this person a member, what is their role, are they a Super admin.
-- [ ] Let a Super admin read company-level tables (companies and memberships) only. Later tables stay closed to a Super admin outside Open as Owner (G-14).
-- [ ] Block a person from changing their own is_super_admin flag or role, in the database.
-- [ ] Seed the 2 companies and 4 users from G-8 with one command.
-- [ ] Tests that prove isolation: one company cannot read another company’s rows, an Observer cannot write, and nobody can promote themselves.
+- [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder, an .env.example and the npm scripts db:start and db:reset. Turn public signup off in the Auth config (Q13).
+- [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, and `archived_at` and `archived_by` on memberships (G-19).
+- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14).
+- [ ] Block a person from changing their own is_super_admin flag or role, in the database. Revoke DELETE from every app role, and add a test that fails if any table grants it (G-19).
+- [ ] Answer TP-9 on memberships: archive through an RPC, and record whether a plain PATCH of `archived_at` fails under an active-only SELECT policy.
 
-**Done when:** The seed loads with one command and every isolation test passes.
+**Done when:** A person cannot promote themselves, no table grants DELETE, an archived membership reads nothing, and TP-9 is answered. Opus has reviewed the schema and the `security` agent has run on the diff.
 
+#### M2b: Seed and isolation tests
+
+- **Screens:** None (database only)
+- **Depends on:** M2
+- **Release:** `v0.2.1`
+- **Models:** Haiku writes seed data, Sonnet builds the tests
+
+- [ ] Seed the 2 companies and 4 users from G-8 with one command. Users are created through the Auth admin API, with passwords from the local env (never committed).
+- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, and an archived member reads nothing. A write refused by RLS changes 0 rows, and the tests assert that.
+- [ ] CI starts Supabase and runs the database tests in their own Vitest project (TP-3).
+
+**Done when:** The seed loads with one command and every isolation test passes, locally and in CI.
 #### M3: Sign in with email
 
 - **Screens:** Sign in
-- **Depends on:** M2
+- **Depends on:** M2b
 - **Release:** `v0.3.0`
 - **Models:** Sonnet builds
 
 - [ ] Sign in screen with email and password, and a sign out action.
-- [ ] Create a profile row automatically when someone signs up.
+- [ ] Create a profile row automatically when a user is created. Public signup is off, so users arrive through the seed or an invite (Q13).
 - [ ] Redirect signed-out visitors to Sign in from every other route.
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
 
@@ -190,7 +247,7 @@ Each row is one pull request and one release.
 - [ ] Handle the callback and send the person to Home.
 - [ ] Document the Google setup in the README.
 
-**Done when:** A Google account can sign in and gets a profile row. If the Google credential is not ready, skip this milestone for now; nothing after it depends on it.
+**Done when:** A Google account that was invited can sign in (public signup is off) and gets a profile row. If the Google credential is not ready, skip this milestone for now; nothing after it depends on it.
 
 ### Phase 3: Daily flow
 
@@ -221,8 +278,8 @@ Each row is one pull request and one release.
 - [ ] Settle open question Q3 (how cards move), then build it.
 - [ ] Settle open question Q5 for cards (archive or delete), then build what it decides.
 - [ ] Add card as the single primary action on Board.
-- [ ] Moving a card changes its column only, never copies it (BR-1).
-- [ ] Hide create and move controls from Observers, and block the same writes in the database (BR-3).
+- [ ] Moving a card changes its column and position on the same row, never copies it (BR-1). It goes through the `move_card` RPC, which reports a card that already moved or a column that is gone as a conflict (Q16).
+- [ ] Hide create and move controls from Observers, and block the same writes in the database (BR-3). A write refused by RLS changes 0 rows, so the screen treats 0 rows as Forbidden.
 - [ ] Move optimistically: the card moves at once; if the API fails it goes back to its column with a message, and Retry (or Sign in again for a 401).
 - [ ] Ignore replies that belong to an older load, so a reload during a save cannot corrupt the "saving" count or roll back the new board.
 
@@ -254,7 +311,7 @@ Each row is one pull request and one release.
 
 - [ ] Comments table and a comment box on Card detail; Ctrl+Enter or ⌘+Enter sends, with the matching hint (UX-5).
 - [ ] Activity table plus database triggers for comments, moves, assignments, due dates and description edits (G-4). A description edit records who and when, never the text (G-17).
-- [ ] Add the acting_as_super_admin column now, ready for M18 (G-6).
+- [ ] Add the acting_as_super_admin column now, ready for M18 (G-6). Activity triggers run as security definer, and app roles cannot insert into activity.
 - [ ] Activity list on Card detail showing who did what and when, with times in the mono face.
 
 **Done when:** Every action from M7 and M8 appears in Activity.
@@ -267,7 +324,7 @@ Each row is one pull request and one release.
 - **Models:** Sonnet builds
 
 - [ ] Migrations for labels and card_labels.
-- [ ] Labels screen for Owners: create, edit and delete.
+- [ ] Labels screen for Owners: create, edit and archive (G-19).
 - [ ] Members and Owners can apply labels on Card detail; label chips show on board cards.
 
 **Done when:** An Owner manages labels, and labels show on cards across the company’s boards.
@@ -306,7 +363,7 @@ Each row is one pull request and one release.
 - **Release:** `v0.13.0`
 - **Models:** Sonnet builds
 
-- [ ] Settle open question Q4 (in-app only or real email).
+- [ ] Notifications stay in the app (Q4 decided). They are not created for archived members.
 - [ ] Notifications table filled from Activity for assignments and comments; work out due tomorrow when the list loads.
 - [ ] Notifications screen with All and Unread, and a Mark all as read action.
 - [ ] Unread count in the left navigation.
@@ -315,20 +372,35 @@ Each row is one pull request and one release.
 
 ### Phase 5: Company management
 
-#### M14: Members and invites
+#### M14: Members and roles
 
 - **Screens:** Members
 - **Depends on:** M4
 - **Release:** `v0.14.0`
 - **Models:** Sonnet builds
 
-- [ ] Members list with role chips and last seen in the mono face (DR-2).
-- [ ] Change a member’s role, for Owners only.
-- [ ] Invite someone by email, shown as a pending row until accepted.
-- [ ] Search by name or email, with a Clear button, a result count and an empty state; pending invites are searchable by email (UX-5).
+- [ ] Migration for `last_seen_at`, and a policy that lets members of a company read each other’s display names, archived members included, so old Activity keeps its names.
+- [ ] Members list with role chips and last seen in the mono face (DR-2), with archived members marked.
+- [ ] Owners change a member’s role, and archive and restore members (Q19). A trigger keeps at least one active Owner, and nobody can archive themselves.
+- [ ] Search by name or email, with a Clear button, a result count, an empty state and an Archived filter (UX-5).
+- [ ] Members and Observers cannot reach the screen.
 
-**Done when:** An Owner can invite someone and change their role; Members and Observers cannot reach the screen. Searching narrows the list and shows "No members match" when nothing fits.
+**Done when:** An Owner changes a role, archives and restores a member, and cannot archive the last Owner. An archived Khoa reads nothing in Harbor Logistics, and Hoa still sees his name in old Activity.
 
+#### M14b: Invites and Accept invite
+
+- **Screens:** Members (invites), Accept invite (not in the prototype)
+- **Depends on:** M14, M3
+- **Release:** `v0.14.1`
+- **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
+
+- [ ] Migration for `invites` (company, email, role, token, expires_at, status). A trigger turns an invite into a membership only when the invited email is confirmed.
+- [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company, then invites by email through the Auth admin API, adds an existing user directly, or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
+- [ ] Invite by email and role on Members. Pending rows have resend, revoke and expiry, and are searchable by email (UX-5).
+- [ ] Accept invite screen at `/accept-invite`, outside the app shell: set a password, with states for an expired link, a used link and offline. Then go to Home with the right role chip. The route guard from M3 lets this route through.
+- [ ] Check the whole path in a browser, from the invite email (Mailpit when local) to Home.
+
+**Done when:** An Owner invites a new email, the email arrives, the link opens Accept invite, and the new person lands on Home with the right role. Inviting an existing user adds them directly. A Member or Observer calling the function is refused. An expired or revoked link shows a clear message.
 #### M15: Create and edit projects
 
 - **Screens:** Project settings
@@ -340,11 +412,11 @@ Each row is one pull request and one release.
 - [ ] New project action on the Boards page, for Owners only (G-16). It creates a project with the columns Backlog, In progress, Review and Done.
 - [ ] Edit a project’s name and description.
 - [ ] Add, rename and reorder columns.
-- [ ] Column menu on the Board (UX-1): Rename, Add card, Move list, Archive list and Delete list with confirmation; the menu stays inside its column.
+- [ ] Column menu on the Board (UX-1): Rename, Add card, Move list, and Archive list with confirmation; the menu stays inside its column.
 - [ ] "+ Add list" column at the end of the Board, focused name field, Enter to add and Esc to cancel (UX-2).
 - [ ] Owners only.
 
-**Done when:** Changes show up on the board straight away, and an Owner can add, rename and delete a list from the Board itself.
+**Done when:** Changes show up on the board straight away, and an Owner can add, rename and archive a list from the Board itself.
 
 #### M16: Archive project
 
@@ -353,28 +425,26 @@ Each row is one pull request and one release.
 - **Release:** `v0.16.0`
 - **Models:** Sonnet builds, Haiku does the shared confirm component
 
-- [ ] Settle open question Q2 (how the 30-day purge runs).
 - [ ] A shared confirm-by-name component, used for archiving (G-5).
-- [ ] Archive makes a project read-only and restorable for 30 days; after that it is purged (BR-2).
-- [ ] No Delete button. An archived project is purged automatically after 30 days (G-15).
+- [ ] Archive removes the project from the boards and lists it in the Owner’s Archived list. It cannot be opened or written to while archived (BR-2, G-19).
+- [ ] Restore works for 30 days. After that the project is locked: the app refuses to restore it, and it stays in the database. No Delete button and no purge job (G-15).
 
-**Done when:** Archiving needs the typed name, an archived project restores within 30 days, and only Owners can do it.
-
+**Done when:** Archiving needs the typed name, restore works on day 29 and is refused on day 31, and only Owners can do it.
 ### Phase 6: Super admin
 
 #### M17: Companies and Company detail
 
 - **Screens:** Companies, Company detail
-- **Depends on:** M4
+- **Depends on:** M4, M14b
 - **Release:** `v0.17.0`
-- **Models:** Sonnet builds
+- **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
-- [ ] Companies screen: list companies and create a new one.
-- [ ] Company detail: people, counts and a link back to the list.
-- [ ] Make sure Owners and Members can never see or reach the Super admin area.
+- [ ] Companies screen: list companies with company-level counts.
+- [ ] Edge Function `create-company(name, owner_email)`, Super admin only. It creates the company and invites its first Owner with the invite logic from M14b, or adds an existing user. The Super admin never becomes an Owner (G-14).
+- [ ] Company detail: people (display names through the view, Q10), counts, a "pending owner" state, and a link back to the list.
+- [ ] Only Super admins can write companies. Owners and Members can never see or reach the Super admin area, with tests.
 
-**Done when:** A Super admin sees both companies and their people; nobody else can open these screens.
-
+**Done when:** A Super admin sees both companies and their people and can create a company with its first Owner; nobody else can open these screens.
 #### M18: Open as Owner
 
 - **Screens:** Company detail, banner on every screen
@@ -382,7 +452,7 @@ Each row is one pull request and one release.
 - **Release:** `v0.18.0`
 - **Models:** Opus reviews the approach first, Sonnet builds
 
-- [ ] Settle open question Q1 (how Open as Owner works technically).
+- [ ] Build Open as Owner on the `admin_sessions` table (Q1, Q18): one live session per Super admin, 2 hours, with an Extend button. Access ends at expiry, and Exit sets `ended_at` and keeps the row.
 - [ ] Open as Owner action on Company detail.
 - [ ] Banner on every screen while it is active: Viewing as Owner of the company (G-6).
 - [ ] Set acting_as_super_admin on every change made in this mode, and show it in Activity.
@@ -417,7 +487,7 @@ Each row is one pull request and one release.
 - [ ] Accessibility pass: visible focus, labels on every input, and text contrast.
 - [ ] Empty, loading and error states for every list and form.
 - [ ] Make every change optimistic with undo on failure, and add clear error, session-expired and offline states.
-- [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 7 faults (none, Offline, Server error, Session expired, Forbidden, Not found, Conflict). Every combination must end in the right screen with no errors.
+- [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 6 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict). Every combination must end in the right screen with no errors.
 - [ ] Open the real app in a browser and run each menu, form and shortcut from UX-1 to UX-5 at desktop and phone width.
 - [ ] Write the README: setup, seed accounts, how to run the tests.
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
@@ -436,12 +506,13 @@ Each row is one pull request and one release.
 | Board as list | M11 |
 | Search | M12 |
 | Notifications | M13 |
-| Members | M14 |
+| Members | M14, M14b |
 | Labels | M10 |
 | Project settings | M15, M16 |
 | Companies | M17 |
 | Company detail | M17, M18 |
 | Usage | M19 |
+| Accept invite (not in the prototype) | M14b |
 
 ## How to release and manage
 
@@ -458,7 +529,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 | Role | Model | Used for |
 |---|---|---|
-| Advisor | Opus | Reviews this plan, the schema and the access rules before M1 and before M5. Never writes code. |
+| Advisor | Opus | Reviews this plan before M1, and the schema, triggers and access rules before M2, M9, M14b, M17 and M18. Never writes code. |
 | Builder | Sonnet | All feature code, database migrations and tests. |
 | Mechanical | Haiku | Seed data, renames, formatting, boilerplate and small documentation fixes. |
 
@@ -466,7 +537,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 1. Work only inside this repository. Never touch client code.
 2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-and-move-cards.
-3. Before starting a milestone, re-read it and the decisions G-1 to G-18 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
+3. Before starting a milestone, re-read it and the decisions G-1 to G-19 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
 4. The pull request lists what was built, the assumptions made and anything left unfinished. Then stop and wait for review.
 5. Once I merge, tag the release named in the milestone and add a line to CHANGELOG.md. Then wait for me to say go before starting the next milestone.
 6. If the plan is silent or two rules conflict, add the question to the open questions list and ask. Do not guess.
@@ -484,7 +555,7 @@ Three built-in lessons for the autonomous build. They apply to every milestone.
 Read this plan the way you would read a pull request before running anything from it.
 
 - For each milestone, list the commands it implies, the packages it installs and the places it writes files. Anything surprising is a bug in the plan.
-- Check that every task matches a decision (G-1 to G-18) and a rule in this file.
+- Check that every task matches a decision (G-1 to G-19) and a rule in this file.
 - Start Claude Code in plan mode first, so it proposes the steps and you approve them before any file changes.
 - Ask the advisor model (Opus) to review the plan or a risky milestone before it is built. It reviews and never writes code.
 
@@ -495,9 +566,11 @@ Give Claude more freedom one rung at a time. Move up only when the previous rung
 | Rung | Milestones | How it runs |
 |---|---|---|
 | 1. Supervised | M1 | You approve every command and read every diff. No chained or batched commands. |
-| 2. Semi-supervised | M2 to M5 | Claude edits code freely. It asks first for migrations, package installs, and auth or Supabase configuration. |
-| 3. Autonomous | M6 to M19 | Claude runs a whole milestone and stops at each pull request. |
+| 2. Semi-supervised | M2 to M5, M14b and M17 | Claude edits code freely. It asks first for migrations, package installs, auth or Supabase configuration, and anything that reads the `service_role` key (Edge Functions). |
+| 3. Autonomous | M6 to M19, except M14b and M17 | Claude runs a whole milestone and stops at each pull request. |
 | 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
+
+The `security` agent runs on M2, M6, M7, M9, M14b, M16, M17, M18 and M19, at every rung.
 
 An incident is any stop condition that fired unexpectedly, a secret that reached a tracked file, or a change outside this repository. After an incident, go back one rung.
 
@@ -538,7 +611,7 @@ The request log clears when the scenario changes, so it only shows requests for 
 - Every change is optimistic: the card moves on screen at once and a "Saving..." note shows while the request is pending. If the request fails, the card goes back to its original column, a message explains why, and the user gets Retry (or Sign in again when the session has expired).
 - Loading the board has its own clear states: skeleton while loading, "You are offline" with Try again, "Your session has expired" with Sign in again, and a generic error with the status code.
 - All requests go through a single function, `api(method, path, body)`. It waits for the latency, applies the fault, checks the role, and writes a line to the request log.
-- Observers and archived projects get 403 on writes, matching the access rules above.
+- Observers get 403 on inserts. In the real database an UPDATE refused by RLS changes 0 rows instead, and the screen treats that as Forbidden. An archived project (G-19) is not shown as a read-only board: it is hidden and listed in the Owner's Archived list, so the panel's Archived project scenario becomes that list.
 - In the real app, the same states are covered by tests that stub the data layer with these scenarios, latencies and faults.
 
 ## Open questions
@@ -547,25 +620,31 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 
 |  | Question | Decide |
 |---|---|---|
-| Q1 | How should Open as Owner work technically? Recommended: a session flag that the database policies check, so no extra membership row is written. | Before M18 |
-| Q2 | How is the 30-day purge of archived projects run: a scheduled database job or a scheduled function? | Before M16 |
+| Q1 | How should Open as Owner work technically? Decided: an `admin_sessions` table that `has_company_access` checks, written only by RPC (see Q18). | Decided |
+| Q2 | How is the 30-day purge of archived projects run? Closed: there is no purge. After 30 days an archived project is locked and kept (G-19). | Closed |
 | Q3 | How do people move cards: a menu, drag and drop, or both? Recommended: a menu first because it is easier to make accessible. | Before M7 |
-| Q4 | Do invites and notifications send real email, or stay in the app only? Recommended: in the app only for this practice. | Before M13 |
-| Q5 | Can cards be removed, and what happens to a column that still has cards? Recommended: cards are archived rather than deleted, and a column that still has cards cannot be deleted. | Before M7 (cards), M15 (columns) |
+| Q4 | Do invites and notifications send real email? Decided: notifications stay in the app. Invites are sent as email through Auth (Mailpit when local). | Decided |
+| Q5 | Can cards be removed, and what happens to a column that still has cards? Recommended: cards are archived rather than deleted, and a column that still has active cards cannot be archived. | Before M7 (cards), M15 (columns) |
 | Q6 | Which router for the 14 screens? Decided: React Router 7. | Decided |
-| Q7 | Self-signup or invite-only? What does a signed-in user with no company see? Recommended: invite-only, with a "No company yet" empty state. | Before M3 |
-| Q8 | How do database tests run locally and in CI? Recommended: Vitest plus a pg client against `supabase start`; CI starts Supabase. | Before M2 |
+| Q7 | Self-signup or invite-only? Decided: invite-only, by turning public signup off (Q13). | Decided |
+| Q8 | How do database tests run locally and in CI? Recommended: Vitest through supabase-js with real signed-in users (a refused UPDATE changes 0 rows, not 403), against `supabase start`; CI starts Supabase. | Before M2 |
 | Q9 | Self-host the fonts or use the Google Fonts link? Decided: self-host with `@fontsource`. | Decided |
 | Q10 | May a Super admin read the display name of a company's members (G-14 says "people")? Recommended: yes, through a view with display name only, not the full profiles table. | Before M2 |
 | Q11 | Which branch is the base for milestones: `main` or `dev`? Decided: `dev` is the integration branch and is merged into `main` for each release (see "How to release and manage"). | Decided |
-| Q12 | What are the URLs of the 14 screens? Decided: boards and cards are addressed by their database id (UUID), never by name. `/sign-in`, `/` (Home), `/boards/:boardId`, `/boards/:boardId/list`, `/cards/:cardId`, `/search`, `/notifications`, `/members`, `/labels`, `/settings/project`, `/profile`, `/companies`, `/companies/:companyId`, `/usage`. | Decided |
-
+| Q12 | What are the URLs of the screens? Decided: boards and cards are addressed by their database id (UUID), never by name. `/sign-in`, `/` (Home), `/boards/:boardId`, `/boards/:boardId/list`, `/cards/:cardId`, `/search`, `/notifications`, `/members`, `/labels`, `/settings/project`, `/profile`, `/companies`, `/companies/:companyId`, `/usage`, plus `/accept-invite` (outside the shell, built in M14b). | Decided |
+| Q13 | How do invited people get an account? Decided: `inviteUserByEmail` in an Edge Function; a membership starts only when the invited email is confirmed; public signup is off. | Decided (M14b) |
+| Q14 | Local or hosted? Decided: local until M19; hosting, and the SMTP for invites if hosted, are decided at the M20 gate. | Decided |
+| Q15 | Does Activity survive a purge? Closed: nothing is deleted (G-19). | Closed |
+| Q16 | How does a move work and report conflicts? Decided: the `move_card(card, to_column, expected_from_column)` RPC sets column and position (appended at the end) on the same row. A card that already moved, or a missing column, is a conflict. BR-1 now means "same row, never a copy". | Decided (M7) |
+| Q17 | Who owns a company a Super admin creates? Decided: `create-company` invites the named Owner. The Super admin never becomes Owner. | Decided (M17) |
+| Q18 | How long does Open as Owner last? Decided: 2 hours, with an Extend button, one session per Super admin; access ends at expiry; Exit sets `ended_at` and the row is kept. | Decided (M18) |
+| Q19 | Can members be removed? Decided: they are archived and can be restored, never deleted. The last active Owner cannot be archived, and nobody archives themselves. | Decided (M14) |
 ## Before the build
 
 - [x] Use the dedicated repo `lintran-agilityio/tazko-practice` (practice only, no client code).
 - [x] Install Claude Code on your machine.
 - [ ] Review this plan like code (see Safety) before the first run, and start Claude Code in plan mode.
-- [ ] Install Docker and Node.js 20 or newer, so the local Supabase stack can run.
+- [ ] Install Docker and Node.js 20.19 or newer, so the local Supabase stack can run.
 - [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
 - [ ] Save the prototype source and tokens into design/, and save this plan as PLAN.md in the repo.
 
@@ -576,10 +655,10 @@ Paste this into Claude Code from the root of this repository.
 ```text
 You are building Tazko, a kanban work tracker that one group runs for several of its companies.
 
-Source of truth: PLAN.md in this repository (20 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
+Source of truth: PLAN.md in this repository (22 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
-1. Read the milestone and the decisions G-1 to G-18 and UX-1 to UX-6.
+1. Read the milestone and the decisions G-1 to G-19 and UX-1 to UX-6.
 2. Create a branch named mN-short-name from dev.
 3. Implement the tasks.
 4. Run typecheck, lint and all tests, including the isolation tests. For screen changes, also open the app in a browser and use the feature, including error cases.

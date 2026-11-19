@@ -6,6 +6,8 @@ Sources: `plan/PLAN.md` as it stands on `origin/dev` (includes grill round 2, sa
 
 Verified against the repo on 2026-11-18: typecheck passes, lint is clean, `npm test` fails (see I15). Every claim in section 2 was checked in the files or with git, as noted per row.
 
+> **Update 2026-11-19.** The planning review changed M2 and M3. M2 is split into M2 and M2b, signup is off (Q13), and G-19 (no permanent delete) applies from M2. PLAN.md has the current tasks, API surface and Q13 to Q19; the M2 and M3 tickets below are kept as history, with the changes noted per ticket.
+
 > **Source warning.** The link first given for this review (claude.ai/artifact/Cg4aNRWh4s3pfaZjFWGo15) is an empty public artifact titled "Mokio Prototype". It is not Tazko. The real prototype is Np7KMP6A6CyZXwkT5o23Vc. It was not fetched. This review reads its saved source in `design/`.
 
 ## 1. Requirements (M1 to M3)
@@ -63,8 +65,8 @@ Q1 to Q4 are unchanged. PLAN.md Q5 now means "can cards be removed, and what abo
 | Q | Question | Recommendation | Needed before |
 |---|---|---|---|
 | Q6 | Which router? | Decided: React Router 7 (new dependency; installing it still asks permission). | Decided |
-| Q7 | Self-signup or invite-only? What does a signed-in user with no membership see? | Invite-only. Show a "No company yet" empty state. | M3 |
-| Q8 | How do DB tests run locally and in CI? | Vitest plus a pg client against `supabase start`. CI starts Supabase. | M2 |
+| Q7 | Self-signup or invite-only? | Decided: invite-only, by turning public signup off (Q13 in PLAN.md). | Decided |
+| Q8 | How do DB tests run locally and in CI? | Vitest through supabase-js with real signed-in users against `supabase start`; a refused UPDATE changes 0 rows, not 403. CI starts Supabase. | M2 |
 | Q9 | Self-host fonts with `@fontsource` or use the Google Fonts link? | Decided: self-host with `@fontsource`. | Decided |
 | Q10 | May a Super admin read `profiles` (display name only) of a company's members? | Yes, through a view with display name only, not the full table. | M2 |
 | Q11 | Which branch is the base for M1: `main`, or `dev`? Dev has the newest plan, but CLAUDE.md says branch from main. | Decided: work from `dev`; merge dev into main per release. CLAUDE.md and PLAN.md updated. | Decided |
@@ -90,6 +92,8 @@ Prerequisite: the plan is reconciled on `dev` (I9). Q6, Q9 and Q11 are decided.
 
 Gate: Opus reviews the schema and policies first. Run the `security` agent on the diff. Settle Q8 and Q10.
 
+Update 2026-11-19: M2-4 (seed) and M2-5 (isolation tests) move to M2b (`m2b-seed-and-isolation-tests`, v0.2.1). M2 gains `archived_at` on memberships, the `has_company_access` helper, the no-DELETE guard and TP-9 (see PLAN.md). This resolves I14.
+
 | ID | Ticket | Model | Size | Acceptance |
 |---|---|---|---|---|
 | M2-1 | `supabase init` and `supabase start`. Migrations folder, `.env.example`, npm scripts `db:start`, `db:reset`, `db:seed`. Docker and Node 20 documented. CI starts Supabase. | Sonnet | M | A clean clone reaches a running DB with documented commands. |
@@ -100,7 +104,7 @@ Gate: Opus reviews the schema and policies first. Run the `security` agent on th
 
 ### M3 Sign in with email (`m3-sign-in-email`, v0.3.0)
 
-Settle Q7.
+Q7 is decided. M3 now depends on M2b. Public signup is off, so M3-2 covers users created by the seed or an invite, and its test creates users through the Auth admin API.
 
 | ID | Ticket | Model | Size | Acceptance |
 |---|---|---|---|---|
