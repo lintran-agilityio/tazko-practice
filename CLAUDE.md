@@ -39,8 +39,8 @@ Opus advises/reviews (never writes code), Sonnet builds, Haiku does mechanical w
 
 ## Agents
 
-Read-only subagents in `.claude/agents/`: `planner`, `reviewer`, `security`.
+Provided by the `tazko-workflow` plugin (`plugins/tazko-workflow/`, install via `.claude-plugin/marketplace.json`). Read-only subagents: `planner`, `reviewer`, `security`.
 
 ## Hooks
 
-`.claude/hooks/format.mjs` formats on edit (ruff for `.py`, prettier for web files); skips `design/`.
+Plugin hooks: `format.mjs` formats on edit (ruff for `.py`, prettier for web files); skips `design/`.
