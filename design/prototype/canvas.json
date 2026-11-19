@@ -1,0 +1,256 @@
+{
+ "v": 3,
+ "createdOnFiles": {
+  "v": 1,
+  "at": "2026-11-13T09:00:00Z"
+ },
+ "title": "Tazko Prototype",
+ "launch": {
+  "view": "canvas"
+ },
+ "pages": [],
+ "boards": {
+  "Main.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 760,
+   "title": "Sign in",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Profile.dc.html": {
+   "x": 1360,
+   "y": 0,
+   "w": 1280,
+   "h": 860,
+   "title": "Profile",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Home.dc.html": {
+   "x": 2720,
+   "y": 0,
+   "w": 1280,
+   "h": 860,
+   "title": "Home",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Board.dc.html": {
+   "x": 0,
+   "y": 1240,
+   "w": 1280,
+   "h": 860,
+   "title": "Board",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "CardDetail.dc.html": {
+   "x": 1360,
+   "y": 1240,
+   "w": 1280,
+   "h": 860,
+   "title": "Card detail",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "BoardList.dc.html": {
+   "x": 2720,
+   "y": 1240,
+   "w": 1280,
+   "h": 860,
+   "title": "Board as list",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Search.dc.html": {
+   "x": 0,
+   "y": 2480,
+   "w": 1280,
+   "h": 760,
+   "title": "Search",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Notifications.dc.html": {
+   "x": 1360,
+   "y": 2480,
+   "w": 1280,
+   "h": 760,
+   "title": "Notifications",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Members.dc.html": {
+   "x": 2720,
+   "y": 2480,
+   "w": 1280,
+   "h": 760,
+   "title": "Members",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Labels.dc.html": {
+   "x": 0,
+   "y": 3720,
+   "w": 1280,
+   "h": 760,
+   "title": "Labels",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "ProjectSettings.dc.html": {
+   "x": 1360,
+   "y": 3720,
+   "w": 1280,
+   "h": 860,
+   "title": "Project settings",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Companies.dc.html": {
+   "x": 0,
+   "y": 4960,
+   "w": 1280,
+   "h": 760,
+   "title": "Companies",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "CompanyDetail.dc.html": {
+   "x": 1360,
+   "y": 4960,
+   "w": 1280,
+   "h": 860,
+   "title": "Company detail",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "Usage.dc.html": {
+   "x": 2720,
+   "y": 4960,
+   "w": 1280,
+   "h": 860,
+   "title": "Usage",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "BoardFinance.dc.html": {
+   "x": 0,
+   "y": 6200,
+   "w": 1280,
+   "h": 860,
+   "title": "Finance ops",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "BoardPeople.dc.html": {
+   "x": 1360,
+   "y": 6200,
+   "w": 1280,
+   "h": 760,
+   "title": "People and onboarding",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "BoardWebsite.dc.html": {
+   "x": 2720,
+   "y": 6200,
+   "w": 1280,
+   "h": 860,
+   "title": "Website",
+   "expand": "fill",
+   "is_interactive": true
+  },
+  "PrototypePanel.dc.html": {
+   "x": 0,
+   "y": 7480,
+   "w": 1280,
+   "h": 900,
+   "title": "Prototype panel",
+   "expand": "fill",
+   "is_interactive": true
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Profile.dc.html",
+  "Home.dc.html",
+  "Board.dc.html",
+  "CardDetail.dc.html",
+  "BoardList.dc.html",
+  "Search.dc.html",
+  "Notifications.dc.html",
+  "Members.dc.html",
+  "Labels.dc.html",
+  "ProjectSettings.dc.html",
+  "Companies.dc.html",
+  "CompanyDetail.dc.html",
+  "Usage.dc.html",
+  "BoardFinance.dc.html",
+  "BoardPeople.dc.html",
+  "BoardWebsite.dc.html",
+  "PrototypePanel.dc.html"
+ ],
+ "notes": {
+  "t1": {
+   "x": 0,
+   "y": -300,
+   "text": "Access and Home",
+   "kind": "title1",
+   "maxW": 4000
+  },
+  "t2": {
+   "x": 0,
+   "y": 940,
+   "text": "Boards",
+   "kind": "title1",
+   "maxW": 4000
+  },
+  "t3": {
+   "x": 0,
+   "y": 2180,
+   "text": "Find and stay informed",
+   "kind": "title1",
+   "maxW": 4000
+  },
+  "t4": {
+   "x": 0,
+   "y": 3420,
+   "text": "Company settings",
+   "kind": "title1",
+   "maxW": 4000
+  },
+  "t5": {
+   "x": 0,
+   "y": 4660,
+   "text": "Super admin",
+   "kind": "title1",
+   "maxW": 4000
+  },
+  "s1": {
+   "x": 2720,
+   "y": 3720,
+   "w": 640,
+   "text": "Decisions applied in this prototype\n\nG-3  Observers can be assigned a card for follow-up, but still change nothing\nG-4  Activity logs everything, including description edits\nG-5  Archive and delete a project by typing its name\nG-6  Super admin opens a company as Owner: banner plus logged in Activity\nG-7  Company switcher at the top of the left navigation\nG-8  Sample data: 2 companies, 4 users (Linh, Minh, Hoa, Khoa)\nG-14  Super admin sees company-level figures only; boards and cards only via Open as Owner\nG-15  Projects are archived only, purged after 30 days, no Delete button\nG-16  Only Owners create projects\nG-17  Description edits log who and when, not the text\nG-18  No CSV export on Usage",
+   "fill": "blue",
+   "size": "m"
+  },
+  "t6": {
+   "x": 0,
+   "y": 5900,
+   "text": "More boards",
+   "kind": "title1",
+   "maxW": 4000
+  },
+  "t7": {
+   "x": 0,
+   "y": 7180,
+   "text": "Prototype tools",
+   "kind": "title1",
+   "maxW": 4000
+  }
+ },
+ "designSystems": []
+}
