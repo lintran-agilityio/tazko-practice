@@ -41,7 +41,7 @@ These came from the interview and are the source of truth for the build.
 | G-17 | Spec (Q-1) | When a description is edited, Activity records who and when, never the text. |
 | G-18 | Scope | Usage has no CSV export. |
 | G-19 | Data | Nothing is ever permanently deleted in the database. Every table that people can remove rows from has `archived_at` and `archived_by`. DELETE is revoked from all app roles, and reads return active rows only. Archived rows are listed and restored through Owner-only RPCs. In this plan "delete" for labels, checklist items, links, lists and members means archive. |
-| G-20 | Permissions | People can sign in, and be invited, only with an email address on an allowed company domain. Personal addresses (Gmail and the like) are refused for Google, for email sign-in and for invites. There is one allow-list for the whole group, kept in the database (`allowed_domains`, soft delete) and loaded by the seed from the `ALLOWED_EMAIL_DOMAINS` environment variable. The real domain is set in the local environment and is not written in the repo. The database refuses to create a user, or change a user's email, to any other domain, so no screen or provider setting can skip the rule. |
+| G-20 | Permissions | People can sign in, and be invited, only with an email address on an allowed company domain. Personal addresses (Gmail and the like) are refused for Google, for email sign-in and for invites. There is one allow-list for the whole group, kept in the database (`allowed_domains`, soft delete) and loaded by the seed from the `ALLOWED_EMAIL_DOMAINS` environment variable. The real domain is set in the local environment and is not written in the repo. The database refuses to create a user, or change a user's email, to any other domain, so no screen or provider setting can skip the rule. The rule is checked again at every sign-in and token refresh, and by the database policies on every read and write, so removing a domain locks out everyone on it at once. Their memberships are kept and work again if the domain is added back. This also stops someone who buys a dropped domain from signing in as a former user. |
 | UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list and Archive list. Archive asks for confirmation, and a list that still has active cards cannot be archived (Q5). The prototype's separate Delete list is merged into Archive list (G-19). Owners only. The menu must stay fully inside its column (a prototype bug clipped it). |
 | UX-2 | Add list | A dashed "+ Add list" column ends each board. The name field has focus at once; Enter adds, Esc cancels. Owners only. |
 | UX-3 | Checklist | A card has a checklist: check, delete an item with Undo, a "Hide checked items" toggle that shows a count, and a menu to uncheck all or delete the whole checklist (confirmed). |
@@ -117,6 +117,7 @@ Rules for every table:
 | archive_*, restore_*, list_archived_* | RPC | Owners | One set per entity | M2 on |
 | guard_self_promotion | Trigger | Database | Nobody changes their own role or is_super_admin | M2 |
 | is_company_email, guard_company_email | SQL helper, trigger on auth.users | Database | Refuse a new user, or an email change, outside allowed_domains, with a clear error (G-20) | M2 |
+| custom_access_token hook | Auth hook, Postgres function | Auth | Refuse sign-in and token refresh when the email is not on allowed_domains, with a clear error (G-20) | M3 |
 | handle_new_user | Trigger | Auth | Creates the profile; turns an invite into a membership when the email is confirmed | M3, M14b |
 | move_card | RPC, security invoker | Owners, Members | Sets column and position; reports a conflict (Q16) | M7 |
 | Activity triggers | Triggers, security definer | Database | Actor is auth.uid(); acting_as_super_admin comes from admin_sessions, not the client | M9 |
@@ -146,7 +147,7 @@ Each row is one pull request and one release.
 | M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 | 27 |
 | M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 | 50 |
 | M2b | Seed and isolation tests | None (database only) | M2 | v0.2.1 | 30 |
-| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 18 |
+| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 26 |
 | M4 | Company switcher and Profile | Profile | M3 | v0.4.0 | 20 |
 | M5 | Sign in with Google | Sign in | M3 | v0.5.0 | 10 |
 | M6 | Boards on screen | Board | M4 | v0.6.0 | 28 |
@@ -173,7 +174,7 @@ Each row is one pull request and one release.
 | M20b | States and fault matrix | All 14 screens | M20 | v0.20.1 | 34 |
 | M20c | Hand-off | All 14 screens | M20b | v1.0.0 | 12 |
 
-Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 674 hours (about 84 days), or about 105 days with review rounds and gates. The GitHub issues carry the per-task estimates.
+Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 682 hours (about 85 days), or about 107 days with review rounds and gates. The GitHub issues carry the per-task estimates.
 
 ## Milestones
 
@@ -204,7 +205,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder, an .env.example and the npm scripts db:start and db:reset. Turn public signup off in the Auth config (Q13).
 - [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, `archived_at` and `archived_by` on memberships (G-19), and the `allowed_domains` table (G-20).
-- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14).
+- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships, and they also require the signed-in email to be on `allowed_domains` (G-20), so a removed domain loses access at once. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14).
 - [ ] Block a person from changing their own is_super_admin flag or role, in the database. Revoke DELETE from every app role, and add a test that fails if any table grants it (G-19). Add the guard trigger on `auth.users` that refuses a new user, or an email change, outside `allowed_domains` (G-20), with a clear error message.
 - [ ] Answer TP-9 on memberships: archive through an RPC, and record whether a plain PATCH of `archived_at` fails under an active-only SELECT policy.
 
@@ -218,7 +219,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Haiku writes seed data, Sonnet builds the tests
 
 - [ ] Seed the 2 companies and 4 users from G-8 with one command. The seed first loads `allowed_domains` from `ALLOWED_EMAIL_DOMAINS` (`.env.example` has a placeholder domain), and the seed users use an allowed domain. Users are created through the Auth admin API, with passwords from the local env (never committed).
-- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, an archived member reads nothing, and a personal address (for example a Gmail address) cannot be created as a user. A write refused by RLS changes 0 rows, and the tests assert that.
+- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, an archived member reads nothing, a personal address (for example a Gmail address) cannot be created as a user, and a user whose domain is archived reads nothing. A write refused by RLS changes 0 rows, and the tests assert that.
 - [ ] CI starts Supabase and runs the database tests in their own Vitest project (TP-3).
 
 **Done when:** The seed loads with one command and every isolation test passes, locally and in CI.
@@ -233,8 +234,9 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Create a profile row automatically when a user is created. Public signup is off, so users arrive through the seed or an invite (Q13).
 - [ ] Redirect signed-out visitors to Sign in from every other route, except `/accept-invite` (added in M14b).
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
+- [ ] Custom access token hook that refuses sign-in and token refresh when the email is not on `allowed_domains`, with a clear error that Sign in shows (G-20, TP-13).
 
-**Done when:** You can sign in as each seed user and sign out again.
+**Done when:** You can sign in as each seed user and sign out again. A user whose domain is removed from the list is refused at sign in and at the next token refresh.
 
 #### M4: Company switcher and Profile
 
@@ -722,7 +724,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q17 | Who owns a company a Super admin creates? Decided: `create-company` invites the named Owner. The Super admin never becomes Owner. | Decided (M17) |
 | Q18 | How long does Open as Owner last? Decided: 2 hours, with an Extend button, one session per Super admin; access ends at expiry; Exit sets `ended_at` and the row is kept. | Decided (M18) |
 | Q19 | Can members be removed? Decided: they are archived and can be restored, never deleted. The last active Owner cannot be archived, and nobody archives themselves. | Decided (M14) |
-| Q20 | What happens to people already signed up when their domain is removed from `allowed_domains`? Recommended: nothing automatic; they keep access until an Owner archives them. | Before M2 |
+| Q20 | What happens to people already signed up when their domain is removed from `allowed_domains`? Decided: they are locked out at once. A custom access token hook refuses sign-in and token refresh, and the database helpers check the signed-in email on every read and write. Memberships are kept and work again if the domain is added back (G-20). | Decided (M2, M3) |
 ## Before the build
 
 - [x] Use the dedicated repo `lintran-agilityio/tazko-practice` (practice only, no client code).

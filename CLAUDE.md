@@ -33,7 +33,7 @@ React 19 + TypeScript + Tailwind 4 (Vite); Supabase (Postgres, Auth, Row Level S
 - Nothing is permanently deleted in the database: `archived_at` everywhere, DELETE revoked, reads return active rows only (G-19).
 - Activity is written by DB triggers (G-4).
 - Observers: hide write controls AND block writes in the database (BR-3).
-- Only company email addresses can sign in or be invited. The database refuses other addresses, and the real domain stays in the local environment, not in the repo (G-20).
+- Only company email addresses can sign in or be invited. The database refuses other addresses at creation, at every sign-in and token refresh, and on every read and write, so removing a domain locks its people out at once. The real domain stays in the local environment, not in the repo (G-20).
 
 ## Models
 
