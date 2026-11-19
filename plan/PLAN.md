@@ -127,7 +127,7 @@ Each row is one pull request and one release.
 
 - [ ] Create the Vite, React, TypeScript and Tailwind project in the sandbox repo.
 - [ ] Add lint, typecheck and Vitest, plus a GitHub Actions workflow that runs all three.
-- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens.
+- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens. At phone width the navigation becomes a drawer: a button opens it, Esc and choosing a page close it.
 - [ ] Add the Tazko Indigo design tokens: colours, Hanken Grotesk and DM Mono.
 
 **Done when:** npm run dev shows the shell, every route is reachable, and CI is green.
@@ -558,6 +558,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q9 | Self-host the fonts or use the Google Fonts link? Decided: self-host with `@fontsource`. | Decided |
 | Q10 | May a Super admin read the display name of a company's members (G-14 says "people")? Recommended: yes, through a view with display name only, not the full profiles table. | Before M2 |
 | Q11 | Which branch is the base for milestones: `main` or `dev`? Decided: `dev` is the integration branch and is merged into `main` for each release (see "How to release and manage"). | Decided |
+| Q12 | What are the URLs of the 14 screens? Decided: boards and cards are addressed by their database id (UUID), never by name. `/sign-in`, `/` (Home), `/boards/:boardId`, `/boards/:boardId/list`, `/cards/:cardId`, `/search`, `/notifications`, `/members`, `/labels`, `/settings/project`, `/profile`, `/companies`, `/companies/:companyId`, `/usage`. | Decided |
 
 ## Before the build
 

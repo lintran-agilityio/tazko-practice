@@ -1,0 +1,7 @@
+{
+  "name": "tazko-local",
+  "owner": { "name": "Lin Tran" },
+  "plugins": [
+    { "name": "tazko-workflow", "source": "./plugins/tazko-workflow", "description": "Tazko milestone workflow" }
+  ]
+}
