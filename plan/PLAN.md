@@ -1,6 +1,6 @@
 # Tazko build plan
 
-A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
+A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-20) and the 14-screen prototype. It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
 - Prototype (14 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
 - Last updated: prototype Version 34. It now includes the UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
@@ -41,6 +41,7 @@ These came from the interview and are the source of truth for the build.
 | G-17 | Spec (Q-1) | When a description is edited, Activity records who and when, never the text. |
 | G-18 | Scope | Usage has no CSV export. |
 | G-19 | Data | Nothing is ever permanently deleted in the database. Every table that people can remove rows from has `archived_at` and `archived_by`. DELETE is revoked from all app roles, and reads return active rows only. Archived rows are listed and restored through Owner-only RPCs. In this plan "delete" for labels, checklist items, links, lists and members means archive. |
+| G-20 | Permissions | People can sign in, and be invited, only with an email address on an allowed company domain. Personal addresses (Gmail and the like) are refused for Google, for email sign-in and for invites. There is one allow-list for the whole group, kept in the database (`allowed_domains`, soft delete) and loaded by the seed from the `ALLOWED_EMAIL_DOMAINS` environment variable. The real domain is set in the local environment and is not written in the repo. The database refuses to create a user, or change a user's email, to any other domain, so no screen or provider setting can skip the rule. |
 | UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list and Archive list. Archive asks for confirmation, and a list that still has active cards cannot be archived (Q5). The prototype's separate Delete list is merged into Archive list (G-19). Owners only. The menu must stay fully inside its column (a prototype bug clipped it). |
 | UX-2 | Add list | A dashed "+ Add list" column ends each board. The name field has focus at once; Enter adds, Esc cancels. Owners only. |
 | UX-3 | Checklist | A card has a checklist: check, delete an item with Undo, a "Hide checked items" toggle that shows a count, and a menu to uncheck all or delete the whole checklist (confirmed). |
@@ -79,6 +80,7 @@ Why Row Level Security matters here: the rule that each company sees only its ow
 | notifications | id, user_id, activity_id, read_at | Generated from activity for assignments, comments and due dates. |
 | invites | id, company_id, email, role, token, expires_at, status | Pending, accepted, revoked or expired. Becomes a membership when the invited email is confirmed (Q13). |
 | admin_sessions | id, user_id, company_id, expires_at, ended_at | One live Open as Owner session per Super admin. Rows are kept as an audit trail (Q18). |
+| allowed_domains | domain, archived_at, archived_by | The one group-wide allow-list of company email domains (G-20). Loaded by the seed. No screen edits it. |
 
 Every table above except `activity`, `notifications` and `admin_sessions` also has `archived_at` and `archived_by` (G-19). `activity` is immutable.
 
@@ -93,6 +95,7 @@ Every table above except `activity`, `notifications` and `admin_sessions` also h
 | Archive and restore a project | Owners only. An archived project leaves the boards and appears in the Owner's Archived list, where it can be restored for 30 days. After that it is locked and kept (BR-2, G-15, G-19). |
 | Invite, change the role of, archive and restore members | Owners only. The last active Owner cannot be archived (Q19). |
 | Companies (including creating one), usage, Open as Owner | Super admins only. Owners and Members never see this area. |
+| Sign in, or be invited | Only with an email on an allowed company domain. Personal addresses are refused (G-20). |
 
 ## API surface
 
@@ -113,13 +116,14 @@ Rules for every table:
 | company_people | View | Super admin | Display names only, for member companies (Q10) | M2 |
 | archive_*, restore_*, list_archived_* | RPC | Owners | One set per entity | M2 on |
 | guard_self_promotion | Trigger | Database | Nobody changes their own role or is_super_admin | M2 |
+| is_company_email, guard_company_email | SQL helper, trigger on auth.users | Database | Refuse a new user, or an email change, outside allowed_domains, with a clear error (G-20) | M2 |
 | handle_new_user | Trigger | Auth | Creates the profile; turns an invite into a membership when the email is confirmed | M3, M14b |
 | move_card | RPC, security invoker | Owners, Members | Sets column and position; reports a conflict (Q16) | M7 |
 | Activity triggers | Triggers, security definer | Database | Actor is auth.uid(); acting_as_super_admin comes from admin_sessions, not the client | M9 |
 | search_cards | RPC | Active members | Current company only | M12 |
 | touch_last_seen, guard_last_owner | RPC, trigger | Members, database | Last seen; at least one active Owner | M14 |
-| invite-member | Edge Function | Owners | Invite by email, add an existing user, or restore an archived member | M14b |
-| create-company | Edge Function | Super admin | Create a company and invite its first Owner | M17 |
+| invite-member | Edge Function | Owners | Check the address is a company address, then invite by email, add an existing user, or restore an archived member | M14b |
+| create-company | Edge Function | Super admin | Create a company and invite its first Owner (company address only) | M17 |
 | open_as_owner, extend_owner, exit_owner | RPC, security definer | Super admin | Manage admin_sessions | M18 |
 | usage_counts | RPC | Super admin | Counts only, never Activity rows | M19 |
 
@@ -140,7 +144,7 @@ Each row is one pull request and one release.
 | Milestone | Name | Screens | Depends on | Release | Hours |
 |---|---|---|---|---|---|
 | M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 | 27 |
-| M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 | 38 |
+| M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 | 50 |
 | M2b | Seed and isolation tests | None (database only) | M2 | v0.2.1 | 30 |
 | M3 | Sign in with email | Sign in | M2b | v0.3.0 | 18 |
 | M4 | Company switcher and Profile | Profile | M3 | v0.4.0 | 20 |
@@ -169,7 +173,7 @@ Each row is one pull request and one release.
 | M20b | States and fault matrix | All 14 screens | M20 | v0.20.1 | 34 |
 | M20c | Hand-off | All 14 screens | M20b | v1.0.0 | 12 |
 
-Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 662 hours (about 83 days), or about 103 days with review rounds and gates. The GitHub issues carry the per-task estimates.
+Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 674 hours (about 84 days), or about 105 days with review rounds and gates. The GitHub issues carry the per-task estimates.
 
 ## Milestones
 
@@ -199,12 +203,12 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Opus reviews the schema first, Sonnet builds. The `security` agent runs on the diff.
 
 - [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder, an .env.example and the npm scripts db:start and db:reset. Turn public signup off in the Auth config (Q13).
-- [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, and `archived_at` and `archived_by` on memberships (G-19).
+- [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, `archived_at` and `archived_by` on memberships (G-19), and the `allowed_domains` table (G-20).
 - [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14).
-- [ ] Block a person from changing their own is_super_admin flag or role, in the database. Revoke DELETE from every app role, and add a test that fails if any table grants it (G-19).
+- [ ] Block a person from changing their own is_super_admin flag or role, in the database. Revoke DELETE from every app role, and add a test that fails if any table grants it (G-19). Add the guard trigger on `auth.users` that refuses a new user, or an email change, outside `allowed_domains` (G-20), with a clear error message.
 - [ ] Answer TP-9 on memberships: archive through an RPC, and record whether a plain PATCH of `archived_at` fails under an active-only SELECT policy.
 
-**Done when:** A person cannot promote themselves, no table grants DELETE, an archived membership reads nothing, and TP-9 is answered. Opus has reviewed the schema and the `security` agent has run on the diff.
+**Done when:** A person cannot promote themselves, no table grants DELETE, an archived membership reads nothing, a personal address cannot become a user, and TP-9 is answered. Opus has reviewed the schema and the `security` agent has run on the diff.
 
 #### M2b: Seed and isolation tests
 
@@ -213,8 +217,8 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.2.1`
 - **Models:** Haiku writes seed data, Sonnet builds the tests
 
-- [ ] Seed the 2 companies and 4 users from G-8 with one command. Users are created through the Auth admin API, with passwords from the local env (never committed).
-- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, and an archived member reads nothing. A write refused by RLS changes 0 rows, and the tests assert that.
+- [ ] Seed the 2 companies and 4 users from G-8 with one command. The seed first loads `allowed_domains` from `ALLOWED_EMAIL_DOMAINS` (`.env.example` has a placeholder domain), and the seed users use an allowed domain. Users are created through the Auth admin API, with passwords from the local env (never committed).
+- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, an archived member reads nothing, and a personal address (for example a Gmail address) cannot be created as a user. A write refused by RLS changes 0 rows, and the tests assert that.
 - [ ] CI starts Supabase and runs the database tests in their own Vitest project (TP-3).
 
 **Done when:** The seed loads with one command and every isolation test passes, locally and in CI.
@@ -225,7 +229,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.3.0`
 - **Models:** Sonnet builds
 
-- [ ] Sign in screen with email and password, and a sign out action.
+- [ ] Sign in screen with email and password, and a sign out action. An address outside the allowed domains shows "Use your company account" (G-20).
 - [ ] Create a profile row automatically when a user is created. Public signup is off, so users arrive through the seed or an invite (Q13).
 - [ ] Redirect signed-out visitors to Sign in from every other route, except `/accept-invite` (added in M14b).
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
@@ -252,9 +256,9 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.5.0`
 - **Models:** Sonnet builds
 
-- [ ] Configure the Google provider locally: client ID in the config file, secret in the environment.
+- [ ] Configure the Google provider locally: client ID in the config file, secret in the environment. The Google OAuth app is already set up on Google Cloud, and a real check accepted a company account and refused a personal Gmail.
 - [ ] Add Continue with Google as the single primary action on Sign in.
-- [ ] Handle the callback and send the person to Home.
+- [ ] Handle the callback and send the person to Home. A refused address returns to Sign in with "Use your company account". The Google side (consent screen, domain hint) only helps; the database rule (G-20) is what enforces it.
 - [ ] Document the Google setup in the README.
 
 **Done when:** A Google account that was invited can sign in (public signup is off) and gets a profile row. If the Google credential is not ready, skip this milestone for now; nothing after it depends on it.
@@ -434,8 +438,8 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
 - [ ] Migration for `invites` (company, email, role, token, expires_at, status). A trigger turns an invite into a membership only when the invited email is confirmed.
-- [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company, then invites by email through the Auth admin API, adds an existing user directly, or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
-- [ ] Invite by email and role on Members. Pending rows have resend, revoke and expiry, and are searchable by email (UX-5).
+- [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company and that the address is on an allowed company domain (a personal address gets a clear refusal, G-20), then invites by email through the Auth admin API, adds an existing user directly, or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
+- [ ] Invite by email and role on Members, with a clear message when the address is not a company address (G-20). Pending rows have resend, revoke and expiry, and are searchable by email (UX-5).
 - [ ] Accept invite screen at `/accept-invite`, outside the app shell: set a password, with states for an expired link, a used link and offline. Then go to Home with the right role chip. The route guard from M3 lets this route through.
 - [ ] Check the whole path in a browser, from the invite email (Mailpit when local) to Home.
 
@@ -491,7 +495,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
 - [ ] Companies screen: list companies with company-level counts.
-- [ ] Edge Function `create-company(name, owner_email)`, Super admin only. It creates the company and invites its first Owner with the invite logic from M14b, or adds an existing user. The Super admin never becomes an Owner (G-14).
+- [ ] Edge Function `create-company(name, owner_email)`, Super admin only. The owner address must be a company address (G-20). It creates the company and invites its first Owner with the invite logic from M14b, or adds an existing user. The Super admin never becomes an Owner (G-14).
 - [ ] Company detail: people (display names through the view, Q10), counts, a "pending owner" state, and a link back to the list.
 - [ ] Only Super admins can write companies. Owners and Members can never see or reach the Super admin area, with tests.
 
@@ -616,7 +620,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 1. Work only inside this repository. Never touch client code.
 2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-cards.
-3. Before starting a milestone, re-read it and the decisions G-1 to G-19 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
+3. Before starting a milestone, re-read it and the decisions G-1 to G-20 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
 4. The pull request lists what was built, the assumptions made and anything left unfinished. Then stop and wait for review.
 5. Once I merge, tag the release named in the milestone and add a line to CHANGELOG.md. Then wait for me to say go before starting the next milestone.
 6. If the plan is silent or two rules conflict, add the question to the open questions list and ask. Do not guess.
@@ -634,7 +638,7 @@ Three built-in lessons for the autonomous build. They apply to every milestone.
 Read this plan the way you would read a pull request before running anything from it.
 
 - For each milestone, list the commands it implies, the packages it installs and the places it writes files. Anything surprising is a bug in the plan.
-- Check that every task matches a decision (G-1 to G-19) and a rule in this file.
+- Check that every task matches a decision (G-1 to G-20) and a rule in this file.
 - Start Claude Code in plan mode first, so it proposes the steps and you approve them before any file changes.
 - Ask the advisor model (Opus) to review the plan or a risky milestone before it is built. It reviews and never writes code.
 
@@ -718,6 +722,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q17 | Who owns a company a Super admin creates? Decided: `create-company` invites the named Owner. The Super admin never becomes Owner. | Decided (M17) |
 | Q18 | How long does Open as Owner last? Decided: 2 hours, with an Extend button, one session per Super admin; access ends at expiry; Exit sets `ended_at` and the row is kept. | Decided (M18) |
 | Q19 | Can members be removed? Decided: they are archived and can be restored, never deleted. The last active Owner cannot be archived, and nobody archives themselves. | Decided (M14) |
+| Q20 | What happens to people already signed up when their domain is removed from `allowed_domains`? Recommended: nothing automatic; they keep access until an Owner archives them. | Before M2 |
 ## Before the build
 
 - [x] Use the dedicated repo `lintran-agilityio/tazko-practice` (practice only, no client code).
@@ -737,7 +742,7 @@ You are building Tazko, a kanban work tracker that one group runs for several of
 Source of truth: PLAN.md in this repository (29 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
-1. Read the milestone and the decisions G-1 to G-19 and UX-1 to UX-6.
+1. Read the milestone and the decisions G-1 to G-20 and UX-1 to UX-6.
 2. Create a branch named mN-short-name from dev.
 3. Implement the tasks.
 4. Run typecheck, lint and all tests, including the isolation tests. For screen changes, also open the app in a browser and use the feature, including error cases.
