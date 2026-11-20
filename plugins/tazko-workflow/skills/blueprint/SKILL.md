@@ -1,6 +1,6 @@
 ---
 name: blueprint
-description: Turn one milestone from plan/PLAN.md into an implementation blueprint (scope, files, steps, tests, risks, open questions) before any code. Use when asked to blueprint, plan or scope a milestone, or as the plan step before ticket-to-pr.
+description: Turn one milestone from plan/PLAN.md into an implementation blueprint (scope, files, steps, tests, risks, open questions) before any code. Use when asked to blueprint, plan or scope a milestone, or as the plan step before product-flow:ticket-flow.
 ---
 
 # Blueprint
@@ -20,7 +20,7 @@ Read-only. Produces a plan; writes no code and edits no files.
    - **Invariants touched**: which G/UX/BR decisions apply and how they are respected.
    - **Risks**.
    - **Open questions**: anything the plan is silent on or conflicting. List it; do not guess (add to PLAN.md open questions after the human answers).
-5. **Stop.** Wait for the human to approve. Hand off to `ticket-to-pr` only when told.
+5. **Stop.** Wait for the human to approve. Hand off to `product-flow:ticket-flow` only when told.
 
 ## Rules
 
