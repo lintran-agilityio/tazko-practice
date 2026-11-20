@@ -265,7 +265,7 @@ class Component extends DCLogic {
     if (cfg.fault === 'server') return { status: 500, message: 'Server error: something went wrong on our side. Try again in a moment.' };
     if (cfg.fault === 'forbidden') return { status: 403, message: 'Forbidden: you are not a member of this company. The database blocked the request.' };
     if (cfg.fault === 'notfound') return { status: 404, message: 'Not found: this project does not exist.' };
-    if (cfg.fault === 'badrequest' && method !== 'GET') return { status: 400, message: 'Bad request: the card position is not valid. Check the value and try again. Your input is kept.' };
+    if (cfg.fault === 'badrequest' && method !== 'GET') return { status: 400, message: 'Bad request: the server refused this move as invalid. The card went back. Clear the fault or pick another column and try again.' };
     if (cfg.fault === 'conflict' && method === 'PATCH') return { status: 409, message: 'Conflict: someone else moved this card first. Reload to see the latest board.' };
     const db = this.db;
     if (method === 'GET' && path === '/projects/client-portal') return { status: 200, data: db };

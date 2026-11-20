@@ -173,8 +173,8 @@
    "is_interactive": true
   },
   "AcceptInvite.dc.html": {
-   "x": 2720,
-   "y": 3720,
+   "x": 4080,
+   "y": 0,
    "w": 1280,
    "h": 760,
    "title": "Accept invite",
@@ -243,7 +243,7 @@
    "x": 2720,
    "y": 3720,
    "w": 640,
-   "text": "Decisions applied in this prototype\n\nG-3  Observers can be assigned a card for follow-up, but still change nothing\nG-4  Activity logs everything, including description edits\nG-5  Archive and delete a project by typing its name\nG-6  Super admin opens a company as Owner: banner plus logged in Activity\nG-7  Company switcher at the top of the left navigation\nG-8  Sample data: 2 companies, 4 users (Linh, Minh, Hoa, Khoa)\nG-14  Super admin sees company-level figures only; boards and cards only via Open as Owner\nG-15  Projects are archived only, purged after 30 days, no Delete button\nG-16  Only Owners create projects\nG-17  Description edits log who and when, not the text\nG-18  No CSV export on Usage\nG-20  Company email addresses only; a removed domain locks its people out\nG-21  Inputs checked in the browser and again on the server: 400 for a bad field, 409 for a duplicate or stale edit",
+   "text": "Decisions applied in this prototype\n\nG-3  Observers can be assigned a card for follow-up, but still change nothing\nG-4  Activity logs everything, including description edits\nG-5  Archive a project by typing its name\nG-6  Super admin opens a company as Owner: banner plus logged in Activity\nG-7  Company switcher at the top of the left navigation\nG-8  Sample data: 2 companies, 4 users (Linh, Minh, Hoa, Khoa)\nG-14  Super admin sees company-level figures only; boards and cards only via Open as Owner\nG-15  Projects are archived only, locked after 30 days and kept (G-19), no Delete button\nG-16  Only Owners create projects\nG-17  Description edits log who and when, not the text\nG-18  No CSV export on Usage\nG-20  Company email addresses only; a removed domain locks its people out\nG-21  Inputs checked in the browser and again on the server: 400 for a bad field, 409 for a duplicate or stale edit",
    "fill": "blue",
    "size": "m"
   },

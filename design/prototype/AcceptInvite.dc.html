@@ -21,8 +21,8 @@ a{color:#4F52D9}a:hover{color:#3A3DB8}
 <sc-if value="{{ isReady }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:16px">
 <div><h1 style="margin:0;font-size:24px;line-height:1.2;font-weight:700">Accept your invite</h1><p style="margin:6px 0 0;font-size:14px;color:#5B5B76">Minh invited you to <b>Harbor Logistics</b> as <b>Member</b>.</p></div>
 <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600">Email</span><div style="min-height:44px;display:flex;align-items:center;padding:0 12px;border-radius:8px;background:#F6F6FB;border:1px solid #E3E3EE;font-size:14px;color:#5B5B76">hoa@harbor-logistics.example</div></div>
-<div style="display:flex;flex-direction:column;gap:6px"><label for="pw" style="font-size:13px;font-weight:600">Create a password</label><input id="pw" type="password" value="{{ pw }}" onInput="{{ onPw }}" aria-invalid="{{ pwInvalid }}" style="{{ pwStyle }}"><sc-if value="{{ pwErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#8A1F14">{{ pwErr }}</div></sc-if><div style="font-size:12px;color:#5B5B76">At least 8 characters.</div></div>
-<div style="display:flex;flex-direction:column;gap:6px"><label for="pw2" style="font-size:13px;font-weight:600">Repeat the password</label><input id="pw2" type="password" value="{{ pw2 }}" onInput="{{ onPw2 }}" aria-invalid="{{ pw2Invalid }}" style="{{ pw2Style }}"><sc-if value="{{ pw2Err }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#8A1F14">{{ pw2Err }}</div></sc-if></div>
+<div style="display:flex;flex-direction:column;gap:6px"><label for="pw" style="font-size:13px;font-weight:600">Create a password</label><input id="pw" type="password" value="{{ pw }}" onInput="{{ onPw }}" aria-invalid="{{ pwInvalid }}" aria-describedby="{{ pwDesc }}" style="{{ pwStyle }}"><sc-if value="{{ pwErr }}" hint-placeholder-val="{{ false }}"><div id="pw-err" role="alert" style="font-size:12px;color:#8A1F14">{{ pwErr }}</div></sc-if><div style="font-size:12px;color:#5B5B76">At least 8 characters.</div></div>
+<div style="display:flex;flex-direction:column;gap:6px"><label for="pw2" style="font-size:13px;font-weight:600">Repeat the password</label><input id="pw2" type="password" value="{{ pw2 }}" onInput="{{ onPw2 }}" aria-invalid="{{ pw2Invalid }}" aria-describedby="{{ pw2Desc }}" style="{{ pw2Style }}"><sc-if value="{{ pw2Err }}" hint-placeholder-val="{{ false }}"><div id="pw2-err" role="alert" style="font-size:12px;color:#8A1F14">{{ pw2Err }}</div></sc-if></div>
 <button type="button" onClick="{{ submit }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;font-weight:600;font-size:14px;font-family:inherit;box-sizing:border-box;width:100%;cursor:pointer;background:#4F52D9;color:#fff;border:0">{{ btnLabel }}</button>
 <p style="margin:0;font-size:12px;color:#5B5B76">Prototype tip: the password <span style="font-family:'DM Mono',monospace">password123</span> is refused by the server as too common.</p>
 </div></sc-if>
@@ -53,7 +53,7 @@ const base='min-height:44px;padding:0 12px;border-radius:8px;font-family:inherit
 return{
 isReady:st.view==='ready',isProblem:st.view!=='ready',pTitle:cur.title||'',pText:cur.text||'',pAction:cur.action||'',
 pw:st.pw,pw2:st.pw2,pwErr:st.pwErr,pw2Err:st.pw2Err,
-pwInvalid:st.pwErr?'true':'false',pw2Invalid:st.pw2Err?'true':'false',
+pwDesc:st.pwErr?'pw-err':'',pw2Desc:st.pw2Err?'pw2-err':'',pwInvalid:st.pwErr?'true':'false',pw2Invalid:st.pw2Err?'true':'false',
 pwStyle:base+(st.pwErr?bad:ok),pw2Style:base+(st.pw2Err?bad:ok),
 btnLabel:st.busy?'Creating your account...':'Create account and continue',
 onPw:(e)=>this.setState({pw:e.target.value,pwErr:''}),
@@ -69,10 +69,10 @@ const pw=this.state.pw,pw2=this.state.pw2;
 let pwErr='',pw2Err='';
 if(!pw)pwErr='Password is required.';else if(pw.length<8)pwErr='Use at least 8 characters.';
 if(!pw2)pw2Err='Repeat the password.';else if(pw2!==pw)pw2Err='The two passwords do not match.';
-if(pwErr||pw2Err){this.setState({pwErr,pw2Err});return;}
+if(pwErr||pw2Err){this.setState({pwErr,pw2Err},()=>{const el=document.getElementById(pwErr?'pw':'pw2');if(el)el.focus();});return;}
 this.setState({busy:true});
 setTimeout(()=>{
-if(pw==='password123'){this.setState({busy:false,pwErr:'This password is too common. Choose another one.'});return;}
+if(pw==='password123'){this.setState({busy:false,pwErr:'This password is too common. Choose another one.'},()=>{const el=document.getElementById('pw');if(el)el.focus();});return;}
 window.location.href='Home.dc.html';
 },400);
 }
