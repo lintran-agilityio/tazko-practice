@@ -12,7 +12,7 @@ This is a practice project built with Claude from a prototype. It contains no re
 | `design/` | Prototype source (`prototype/`), `tokens.css` and a screen index: the visual reference |
 | `src/` | The React app |
 
-Prototype: https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
+Prototype: https://claude.ai/artifact/Ha2bdKWHPDVHFZVPLcqXxF
 
 ## Stack
 
