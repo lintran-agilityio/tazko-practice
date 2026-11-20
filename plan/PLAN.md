@@ -1,6 +1,6 @@
 # Tazko build plan
 
-A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-21) and the 15-screen prototype (14 screens plus Accept invite). It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
+A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-21) and the 15-screen prototype (14 screens plus Accept invite). It is split into 31 small milestones. The ones with a letter (M2b, M3b, M6b, M7b, M8b, M14b, M14c, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
 - Prototype (15 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
 - Last updated: prototype Version 35 source is saved in `design/` (Accept invite, the G-20 Sign in states, the 400 fault, and the Archived project scenario reworded for G-19). The live artifact is still Version 34 until the files are loaded into Design again. Version 34 added the UX fixes (UX-1 to UX-5) and the reload race fix, checked in Chrome.
@@ -9,7 +9,7 @@ A step-by-step plan to build Tazko as a real app, based on the decisions from th
 
 ## How the work flows
 
-Seven phases made of 29 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
+Seven phases made of 31 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
 
 ```mermaid
 flowchart LR
@@ -118,8 +118,8 @@ Rules for every table:
 | archive_*, restore_*, list_archived_* | RPC | Owners | One set per entity | M2 on |
 | guard_self_promotion | Trigger | Database | Nobody changes their own role or is_super_admin | M2 |
 | is_company_email, guard_company_email | SQL helper, trigger on auth.users | Database | Refuse a new user, or an email change, outside allowed_domains, with a clear error (G-20) | M2 |
-| custom_access_token hook | Auth hook, Postgres function | Auth | Refuse sign-in and token refresh when the email is not on allowed_domains, with a clear error (G-20) | M3 |
-| handle_new_user | Trigger | Auth | Creates the profile; turns an invite into a membership when the email is confirmed | M3, M14b |
+| custom_access_token hook | Auth hook, Postgres function | Auth | Refuse sign-in and token refresh when the email is not on allowed_domains, with a clear error (G-20) | M3, M3b |
+| handle_new_user | Trigger | Auth | Creates the profile; turns an invite into a membership when the email is confirmed | M3, M14b, M14c |
 | move_card | RPC, security invoker | Owners, Members | Sets column and position; reports a conflict (Q16) | M7 |
 | Activity triggers | Triggers, security definer | Database | Actor is auth.uid(); acting_as_super_admin comes from admin_sessions, not the client | M9 |
 | search_cards | RPC | Active members | Current company only | M12 |
@@ -148,8 +148,9 @@ Each row is one pull request and one release.
 | M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 | 27 |
 | M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 | 50 |
 | M2b | Seed and isolation tests | None (database only) | M2 | v0.2.1 | 30 |
-| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 26 |
-| M4 | Company switcher and Profile | Profile | M3 | v0.4.0 | 20 |
+| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 16 |
+| M3b | Sign in states and hardening | Sign in | M3 | v0.3.1 | 16 |
+| M4 | Company switcher and Profile | Profile | M3b | v0.4.0 | 20 |
 | M5 | Sign in with Google | Sign in | M3 | v0.5.0 | 10 |
 | M6 | Boards on screen | Board | M4 | v0.6.0 | 28 |
 | M6b | Home and isolation tests | Home | M6 | v0.6.1 | 14 |
@@ -163,11 +164,12 @@ Each row is one pull request and one release.
 | M12 | Search | Search | M7 | v0.12.0 | 16 |
 | M13 | Notifications | Notifications | M9 | v0.13.0 | 21 |
 | M14 | Members and roles | Members | M4 | v0.14.0 | 31 |
-| M14b | Invites and Accept invite | Members, Accept invite | M14, M3 | v0.14.1 | 46 |
+| M14b | Invites and Accept invite | Members, Accept invite | M14, M3b | v0.14.1 | 34 |
+| M14c | Invite token hardening | Accept invite | M14b | v0.14.2 | 18 |
 | M15 | Create and edit projects | Project settings | M7 | v0.15.0 | 19 |
 | M15b | Column menu and Add list | Board | M15 | v0.15.1 | 18 |
 | M16 | Archive project | Project settings | M15 | v0.16.0 | 16 |
-| M17 | Companies and Company detail | Companies, Company detail | M4, M14b | v0.17.0 | 36 |
+| M17 | Companies and Company detail | Companies, Company detail | M4, M14c | v0.17.0 | 36 |
 | M18 | Open as Owner sessions | None (database only) | M9, M17 | v0.18.0 | 28 |
 | M18b | Open as Owner screens | Company detail, banner on every screen | M18 | v0.18.1 | 9 |
 | M19 | Usage | Usage | M9, M17 | v0.19.0 | 15 |
@@ -175,7 +177,7 @@ Each row is one pull request and one release.
 | M20b | States and fault matrix | All 15 screens | M20 | v0.20.1 | 34 |
 | M20c | Hand-off | All 15 screens | M20b | v1.0.0 | 12 |
 
-Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 682 hours (about 85 days), or about 107 days with review rounds and gates. The GitHub issues carry the per-task estimates.
+Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 694 hours (about 87 days), or about 109 days with review rounds and gates. The GitHub issues carry the per-task estimates.
 
 ## Milestones
 
@@ -232,20 +234,33 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.3.0`
 - **Models:** Sonnet builds
 
-- [ ] Sign in screen with email and password, and a sign out action. The browser checks the address first, and an address outside the allowed domains shows "Use your company account" at the email field (G-20, G-21). The database refuses it again.
-- [ ] Sign in states: wrong password, offline, session expired, and "Your company domain is no longer allowed. Contact your Owner" for a locked-out person (G-20, Q20). Each keeps the typed email and offers a way forward.
+- [ ] Sign in screen with email and password, and a sign out action. The browser checks the address first as a hint only: an address outside the current allowed domains shows "Use your company account" at the email field (G-20, G-21). The database refuses it again, so the browser check is never the rule.
 - [ ] Create a profile row automatically when a user is created. Public signup is off, so users arrive through the seed or an invite (Q13).
 - [ ] Redirect signed-out visitors to Sign in from every other route, except `/accept-invite` (added in M14b).
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
-- [ ] Custom access token hook that refuses sign-in and token refresh when the email is not on `allowed_domains`, with a clear error that Sign in shows (G-20, TP-13).
-- [ ] Set the Auth password rules in `config.toml` and the hosted project: a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21). Add rate limits for sign-in attempts. The domain-removed message appears only after the password verifies; before that, a refused sign-in always says "The email or password is not right", so nobody can probe which domains were removed.
+- [ ] Custom access token hook that refuses sign-in and token refresh when the email is not on `allowed_domains` (G-20, TP-13). The hook runs only after the credentials verify, so it never answers a caller who has not proved the password. Its error is mapped in M3b.
 
 **Done when:** You can sign in as each seed user and sign out again. A user whose domain is removed from the list is refused at sign in and at the next token refresh.
+
+#### M3b: Sign in states and hardening
+
+- **Screens:** Sign in
+- **Depends on:** M3
+- **Release:** `v0.3.1`
+- **Models:** Opus reviews how the hook errors are mapped, Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] Sign in states: wrong password, offline and session expired. Each keeps the typed email and offers a way forward. A refused token refresh (no password involved) sends the person to Sign in with "Your session has expired".
+- [ ] Map the access token hook error: "Your company domain is no longer allowed. Contact your Owner" appears only when the password verified and the domain is gone (G-20, Q20). For an unverified caller, a wrong password and a removed domain give the same message, "The email or password is not right", so nobody can probe which domains were removed. The hook error text is never sent to the browser as is.
+- [ ] Set the Auth password rules in `config.toml` and the hosted project: a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21).
+- [ ] Rate limits on sign-in attempts, per email and per IP address, with the numbers written in the config and in the README.
+- [ ] Tests: wrong password with a removed domain gives the generic message; a refused refresh lands on Sign in; a direct API call with a short password, and with a leaked one, is refused; the rate limit blocks the next attempt.
+
+**Done when:** A removed domain shows its own message only to a person who proved the password. A wrong password never reveals the domain state, and weak passwords and repeated attempts are refused by the server.
 
 #### M4: Company switcher and Profile
 
 - **Screens:** Profile
-- **Depends on:** M3
+- **Depends on:** M3b
 - **Release:** `v0.4.0`
 - **Models:** Sonnet builds
 
@@ -440,19 +455,31 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 #### M14b: Invites and Accept invite
 
 - **Screens:** Members (invites), Accept invite (added to the prototype flow, Q21)
-- **Depends on:** M14, M3
+- **Depends on:** M14, M3b
 - **Release:** `v0.14.1`
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
-- [ ] Migration for `invites` (company, email, role, token, expires_at, status). A trigger turns an invite into a membership only when the invited email is confirmed.
-- [ ] The invite `token` is long and random, stored hashed, single-use, and bound to the invited email. The invite-to-membership trigger and `handle_new_user` check `is_company_email` again at accept time, and the existing-user path of `invite-member` does too. Accept invite shows the "used" or "existing account" states only to the holder of a valid token, and attaches an existing account only when the signed-in email equals the invited email. Resend has a rate limit.
-- [ ] Test: invite an address, remove its domain, accept the invite, and expect a refusal with no membership.
-- [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company and that the address is on an allowed company domain (a personal address gets a clear refusal, G-20), then invites by email through the Auth admin API, adds an existing user directly, or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
+- [ ] Migration for `invites` (company, email, role, token, expires_at, status). A trigger turns an invite into a membership only when the invited email is confirmed. The trigger and `handle_new_user` check `is_company_email` again at accept time (G-20).
+- [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company and that the address is on an allowed company domain (a personal address gets a clear refusal, G-20), then invites by email through the Auth admin API, adds an existing user directly (checking the domain again), or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
 - [ ] Invite by email and role on Members, with a clear message when the address is not a company address (G-20). Pending rows have resend, revoke and expiry, and are searchable by email (UX-5).
 - [ ] Accept invite screen at `/accept-invite`, outside the app shell: set a password (checked in the browser and again on the server, G-21), with states for an expired link, a used link, a revoked link, an address whose domain was removed since the invite, an existing account (go to Sign in instead) and offline. Then go to Home with the right role chip. The route guard from M3 lets this route through.
 - [ ] Check the whole path in a browser, from the invite email (Mailpit when local) to Home.
 
 **Done when:** An Owner invites a new email, the email arrives, the link opens Accept invite, and the new person lands on Home with the right role. Inviting an existing user adds them directly. A Member or Observer calling the function is refused. An expired or revoked link shows a clear message.
+
+#### M14c: Invite token hardening
+
+- **Screens:** Accept invite
+- **Depends on:** M14b
+- **Release:** `v0.14.2`
+- **Models:** Opus reviews the token design first, Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] The invite `token` is long and random, stored hashed, single-use, and bound to the invited email.
+- [ ] Every Accept invite state, including "used", "existing account" and "domain removed", is returned only after the token is validated. An invalid, unknown or malformed token always gets the same generic error, so a link cannot be used to learn whether an account or a domain exists. An existing account is attached only when the signed-in email equals the invited email.
+- [ ] Rate limits for token checks (per token and per IP address), accepting an invite, and Resend (per invite and per Owner), with the numbers written in the config.
+- [ ] Tests: invite an address, remove its domain, accept the invite, and expect a refusal with no membership; a random token gives the generic error; a used token cannot be used twice; a token cannot be accepted by another email; each rate limit blocks the next attempt.
+
+**Done when:** A token works once, for one email, and every bad token looks the same. Removing a domain between the invite and the accept leaves no membership, and the limits block guessing and resend floods.
 
 #### M15: Create and edit projects
 
@@ -499,7 +526,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 #### M17: Companies and Company detail
 
 - **Screens:** Companies, Company detail
-- **Depends on:** M4, M14b
+- **Depends on:** M4, M14c
 - **Release:** `v0.17.0`
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
@@ -552,7 +579,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 #### M20: Polish, phone width and accessibility
 
 - **Screens:** All 15 screens
-- **Depends on:** M1 to M19, including M6b, M7b, M8b, M14b, M15b and M18b
+- **Depends on:** M1 to M19, including M3b, M6b, M7b, M8b, M14b, M14c, M15b and M18b
 - **Release:** `v0.20.0`
 - **Models:** Sonnet builds
 
@@ -591,7 +618,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 | Screen | Built in |
 |---|---|
-| Sign in | M3, M5 |
+| Sign in | M3, M3b, M5 |
 | Profile | M4 |
 | Home | M6b |
 | Board | M6, M7, M7b, M15b |
@@ -605,7 +632,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 | Companies | M17 |
 | Company detail | M17, M18b |
 | Usage | M19 |
-| Accept invite | M14b |
+| Accept invite | M14b, M14c |
 
 ## How to release and manage
 
@@ -622,7 +649,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 | Role | Model | Used for |
 |---|---|---|
-| Advisor | Opus | Reviews this plan before M1, and the schema, triggers and access rules before M2, M9, M14b, M17 and M18. Never writes code. |
+| Advisor | Opus | Reviews this plan before M1, and the schema, triggers and access rules before M2, M3b, M9, M14b, M14c, M17 and M18. Never writes code. |
 | Builder | Sonnet | All feature code, database migrations and tests. |
 | Mechanical | Haiku | Seed data, renames, formatting, boilerplate and small documentation fixes. |
 
@@ -659,11 +686,11 @@ Give Claude more freedom one rung at a time. Move up only when the previous rung
 | Rung | Milestones | How it runs |
 |---|---|---|
 | 1. Supervised | M1 | You approve every command and read every diff. No chained or batched commands. |
-| 2. Semi-supervised | M2 to M5, M14b and M17 | Claude edits code freely. It asks first for migrations, package installs, auth or Supabase configuration, and anything that reads the `service_role` key (Edge Functions). |
-| 3. Autonomous | M6 to M19, except M14b and M17 | Claude runs a whole milestone and stops at each pull request. |
+| 2. Semi-supervised | M2 to M5, M14b, M14c and M17 | Claude edits code freely. It asks first for migrations, package installs, auth or Supabase configuration, and anything that reads the `service_role` key (Edge Functions). |
+| 3. Autonomous | M6 to M19, except M14b, M14c and M17 | Claude runs a whole milestone and stops at each pull request. |
 | 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
 
-The `security` agent runs on M2, M6, M6b, M7, M7b, M9, M14b, M16, M17, M18, M18b and M19, at every rung.
+The `security` agent runs on M2, M3b, M6, M6b, M7, M7b, M9, M14b, M14c, M16, M17, M18, M18b and M19, at every rung.
 
 An incident is any stop condition that fired unexpectedly, a secret that reached a tracked file, or a change outside this repository. After an incident, go back one rung.
 
@@ -753,7 +780,7 @@ Paste this into Claude Code from the root of this repository.
 ```text
 You are building Tazko, a kanban work tracker that one group runs for several of its companies.
 
-Source of truth: PLAN.md in this repository (29 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
+Source of truth: PLAN.md in this repository (31 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
 1. Read the milestone and the decisions G-1 to G-21 and UX-1 to UX-6.

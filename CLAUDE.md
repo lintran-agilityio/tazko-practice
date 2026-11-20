@@ -1,6 +1,6 @@
 # Tazko
 
-Kanban work tracker for one group running several companies. Source of truth: [plan/PLAN.md](plan/PLAN.md) (29 milestones, decisions G-1..G-21, UX-1..UX-6, questions Q1..Q21). Visual reference: `design/`.
+Kanban work tracker for one group running several companies. Source of truth: [plan/PLAN.md](plan/PLAN.md) (31 milestones, decisions G-1..G-21, UX-1..UX-6, questions Q1..Q21). Visual reference: `design/`.
 
 ## Stack
 
