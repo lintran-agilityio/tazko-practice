@@ -183,14 +183,14 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M1: Scaffold and app shell
 
-- **Screens:** Placeholders for all 14
+- **Screens:** Placeholders for the 14 screens, plus an Accept invite placeholder outside the shell
 - **Depends on:** None
 - **Release:** `v0.1.0`
 - **Models:** Sonnet builds, Haiku does scaffolding
 
 - [ ] Create the Vite, React, TypeScript and Tailwind project in the sandbox repo.
 - [ ] Make `npm test` pass first (try vitest 5.1.1, else set `pool: 'vmThreads'`), then add a GitHub Actions workflow that runs lint, typecheck and tests.
-- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens. At phone width the navigation becomes a drawer: a button opens it, Esc and choosing a page close it.
+- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens, and an `/accept-invite` placeholder outside the shell. At phone width the navigation becomes a drawer: a button opens it, Esc and choosing a page close it.
 - [ ] Add the full Tazko Indigo token set from design/tokens.css (colours, radii, tap size) and self-host Hanken Grotesk and DM Mono with `@fontsource`.
 
 **Done when:** npm run dev shows the shell, every route is reachable, and CI is green.
@@ -224,6 +224,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] CI starts Supabase and runs the database tests in their own Vitest project (TP-3).
 
 **Done when:** The seed loads with one command and every isolation test passes, locally and in CI.
+
 #### M3: Sign in with email
 
 - **Screens:** Sign in
@@ -238,7 +239,6 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
 - [ ] Custom access token hook that refuses sign-in and token refresh when the email is not on `allowed_domains`, with a clear error that Sign in shows (G-20, TP-13).
 - [ ] Set the Auth password rules in `config.toml` and the hosted project: a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21). Add rate limits for sign-in attempts. The domain-removed message appears only after the password verifies; before that, a refused sign-in always says "The email or password is not right", so nobody can probe which domains were removed.
-- [ ] Tests: Google sign-in with a non-allowed domain creates no `auth.users` row and no session. Google sign-in with an allowed email that already has a password account does not link silently (the person signs in with their password first). A direct API call with a short password, and with a leaked one, is refused.
 
 **Done when:** You can sign in as each seed user and sign out again. A user whose domain is removed from the list is refused at sign in and at the next token refresh.
 
@@ -265,6 +265,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Configure the Google provider locally: client ID in the config file, secret in the environment. The Google OAuth app is already set up on Google Cloud, and a real check accepted a company account and refused a personal Gmail.
 - [ ] Add Continue with Google as the single primary action on Sign in.
 - [ ] Handle the callback and send the person to Home. A refused address returns to Sign in with "Use your company account". The Google side (consent screen, domain hint) only helps; the database rule (G-20) is what enforces it.
+- [ ] Turn off automatic linking of identities by email in the Auth config, so a Google sign-in never attaches itself to an existing password account (the person signs in with their password first). Tests: a Google account on a non-allowed domain creates no `auth.users` row and no session; a Google account with an allowed email that already has a password account is not linked silently (G-20).
 - [ ] Document the Google setup in the README.
 
 **Done when:** A Google account that was invited can sign in (public signup is off) and gets a profile row. If the Google credential is not ready, skip this milestone for now; nothing after it depends on it.
@@ -733,6 +734,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q19 | Can members be removed? Decided: they are archived and can be restored, never deleted. The last active Owner cannot be archived, and nobody archives themselves. | Decided (M14) |
 | Q20 | What happens to people already signed up when their domain is removed from `allowed_domains`? Decided: they are locked out at once. A custom access token hook refuses sign-in and token refresh, and the database helpers check the signed-in email on every read and write. Memberships are kept and work again if the domain is added back (G-20). | Decided (M2, M3) |
 | Q21 | How does the prototype show the invite flow? Decided: it gets an Accept invite screen, and Sign in shows the G-20 states (company address only, domain removed). Checks run in the browser first and again in the database: a bad field gives 400, a duplicate or stale edit gives 409. Each error appears at its field and keeps the user's input. | Decided (M14b, M20b) |
+
 ## Before the build
 
 - [x] Use the dedicated repo `lintran-agilityio/tazko-practice` (practice only, no client code).

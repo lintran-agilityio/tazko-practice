@@ -10,7 +10,7 @@ Read-only. Produces a plan; writes no code and edits no files.
 ## Steps
 
 1. **Pick one milestone.** If none is named, ask. Never blueprint more than one.
-2. **Delegate** to the `planner` agent with the milestone id. It reads the milestone, its dependencies, G-1..G-18, UX-1..UX-6, relevant open questions, and the current code.
+2. **Delegate** to the `planner` agent with the milestone id. It reads the milestone, its dependencies, G-1..G-21, UX-1..UX-6, relevant open questions, and the current code.
 3. **Size check.** More than about 5 tasks: propose a split into smaller milestones instead of one big blueprint.
 4. **Return the blueprint** in this shape:
    - **Goal**: one line, plus acceptance criteria from the milestone.
