@@ -1,9 +1,9 @@
 # Tazko build plan
 
-A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-20) and the 14-screen prototype. It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
+A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-21) and the 15-screen prototype (14 screens plus Accept invite). It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
-- Prototype (14 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
-- Last updated: prototype Version 34. It now includes the UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
+- Prototype (15 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
+- Last updated: prototype Version 34 has the UX fixes (UX-1 to UX-5) and the reload race fix, checked in Chrome. Version 35 is still to be built (see Before the build): Accept invite, the G-20 Sign in states, the Archived list and the 400 fault (Q21, G-21).
 - Delivery plan (milestones, owner gates, API surface, questions, risks): https://claude.ai/artifact/F4swGuTCXtSmSV7SnEk9rE
 - Blueprint (decisions, findings, requirements, tests, readiness): https://claude.ai/artifact/FHWvj1NtKMZX2nF22qfJeK
 
@@ -23,7 +23,7 @@ These came from the interview and are the source of truth for the build.
 | Code | Area | Decision |
 |---|---|---|
 | G-1 | Goal | Build one practice project and apply what was learned; practise using claude.ai. |
-| G-2 | Scope | All 14 screens of the prototype, with sample data seeded into the database. |
+| G-2 | Scope | All 15 screens of the prototype (14 plus Accept invite), with sample data seeded into the database. |
 | G-3 | Spec (Q-2) | A card can be assigned to an Observer so they can follow it. Observers still cannot edit, move or archive anything. |
 | G-4 | Spec (Q-1) | Activity logs everything: comments, column moves, assignments, due dates and description edits. |
 | G-5 | Spec (DR-3) | Archiving a project requires typing the project name. |
@@ -42,6 +42,7 @@ These came from the interview and are the source of truth for the build.
 | G-18 | Scope | Usage has no CSV export. |
 | G-19 | Data | Nothing is ever permanently deleted in the database. Every table that people can remove rows from has `archived_at` and `archived_by`. DELETE is revoked from all app roles, and reads return active rows only. Archived rows are listed and restored through Owner-only RPCs. In this plan "delete" for labels, checklist items, links, lists and members means archive. |
 | G-20 | Permissions | People can sign in, and be invited, only with an email address on an allowed company domain. Personal addresses (Gmail and the like) are refused for Google, for email sign-in and for invites. There is one allow-list for the whole group, kept in the database (`allowed_domains`, soft delete) and loaded by the seed from the `ALLOWED_EMAIL_DOMAINS` environment variable. The real domain is set in the local environment and is not written in the repo. The database refuses to create a user, or change a user's email, to any other domain, so no screen or provider setting can skip the rule. The rule is checked again at every sign-in and token refresh, and by the database policies on every read and write, so removing a domain locks out everyone on it at once. Their memberships are kept and work again if the domain is added back. This also stops someone who buys a dropped domain from signing in as a former user. |
+| G-21 | Validation | Every input is checked twice: in the browser first, for fast feedback, and again on the server and in the database, which never trust the browser. A rejected field gives 400 and a duplicate or stale edit gives 409. The screen shows the message at that field and keeps what the person typed. Nothing invalid reaches the database, even when the API is called directly. |
 | UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list and Archive list. Archive asks for confirmation, and a list that still has active cards cannot be archived (Q5). The prototype's separate Delete list is merged into Archive list (G-19). Owners only. The menu must stay fully inside its column (a prototype bug clipped it). |
 | UX-2 | Add list | A dashed "+ Add list" column ends each board. The name field has focus at once; Enter adds, Esc cancels. Owners only. |
 | UX-3 | Checklist | A card has a checklist: check, delete an item with Undo, a "Hide checked items" toggle that shows a count, and a menu to uncheck all or delete the whole checklist (confirmed). |
@@ -170,9 +171,9 @@ Each row is one pull request and one release.
 | M18 | Open as Owner sessions | None (database only) | M9, M17 | v0.18.0 | 28 |
 | M18b | Open as Owner screens | Company detail, banner on every screen | M18 | v0.18.1 | 9 |
 | M19 | Usage | Usage | M9, M17 | v0.19.0 | 15 |
-| M20 | Polish, phone width and accessibility | All 14 screens | M1 to M19 | v0.20.0 | 34 |
-| M20b | States and fault matrix | All 14 screens | M20 | v0.20.1 | 34 |
-| M20c | Hand-off | All 14 screens | M20b | v1.0.0 | 12 |
+| M20 | Polish, phone width and accessibility | All 15 screens | M1 to M19 | v0.20.0 | 34 |
+| M20b | States and fault matrix | All 15 screens | M20 | v0.20.1 | 34 |
+| M20c | Hand-off | All 15 screens | M20b | v1.0.0 | 12 |
 
 Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 682 hours (about 85 days), or about 107 days with review rounds and gates. The GitHub issues carry the per-task estimates.
 
@@ -230,7 +231,8 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.3.0`
 - **Models:** Sonnet builds
 
-- [ ] Sign in screen with email and password, and a sign out action. An address outside the allowed domains shows "Use your company account" (G-20).
+- [ ] Sign in screen with email and password, and a sign out action. The browser checks the address first, and an address outside the allowed domains shows "Use your company account" at the email field (G-20, G-21). The database refuses it again.
+- [ ] Sign in states: wrong password, offline, session expired, and "Your company domain is no longer allowed. Contact your Owner" for a locked-out person (G-20, Q20). Each keeps the typed email and offers a way forward.
 - [ ] Create a profile row automatically when a user is created. Public signup is off, so users arrive through the seed or an invite (Q13).
 - [ ] Redirect signed-out visitors to Sign in from every other route, except `/accept-invite` (added in M14b).
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
@@ -442,7 +444,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Migration for `invites` (company, email, role, token, expires_at, status). A trigger turns an invite into a membership only when the invited email is confirmed.
 - [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company and that the address is on an allowed company domain (a personal address gets a clear refusal, G-20), then invites by email through the Auth admin API, adds an existing user directly, or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
 - [ ] Invite by email and role on Members, with a clear message when the address is not a company address (G-20). Pending rows have resend, revoke and expiry, and are searchable by email (UX-5).
-- [ ] Accept invite screen at `/accept-invite`, outside the app shell: set a password, with states for an expired link, a used link and offline. Then go to Home with the right role chip. The route guard from M3 lets this route through.
+- [ ] Accept invite screen at `/accept-invite`, outside the app shell: set a password (checked in the browser and again on the server, G-21), with states for an expired link, a used link, a revoked link, an address whose domain was removed since the invite, an existing account (go to Sign in instead) and offline. Then go to Home with the right role chip. The route guard from M3 lets this route through.
 - [ ] Check the whole path in a browser, from the invite email (Mailpit when local) to Home.
 
 **Done when:** An Owner invites a new email, the email arrives, the link opens Accept invite, and the new person lands on Home with the right role. Inviting an existing user adds them directly. A Member or Observer calling the function is refused. An expired or revoked link shows a clear message.
@@ -544,7 +546,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M20: Polish, phone width and accessibility
 
-- **Screens:** All 14 screens
+- **Screens:** All 15 screens
 - **Depends on:** M1 to M19, including M6b, M7b, M8b, M14b, M15b and M18b
 - **Release:** `v0.20.0`
 - **Models:** Sonnet builds
@@ -557,19 +559,20 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M20b: States and fault matrix
 
-- **Screens:** All 14 screens
+- **Screens:** All 15 screens
 - **Depends on:** M20
 - **Release:** `v0.20.1`
 - **Models:** Sonnet builds
 
 - [ ] Make every change optimistic with undo on failure, and add clear error, session-expired and offline states.
+- [ ] One error mapper turns every API and database error into the screen's wording: 400 to a message at the field, 409 to a message with Reload or Keep mine, and an update refused by RLS (0 rows) to Forbidden (G-21).
 - [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 7 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict, Bad request). Every combination must end in the right screen with no errors.
 
 **Done when:** Every combination in the matrix ends in the right screen with no errors.
 
 #### M20c: Hand-off
 
-- **Screens:** All 14 screens, plus Accept invite
+- **Screens:** All 15 screens
 - **Depends on:** M20b
 - **Release:** `v1.0.0`
 - **Models:** Sonnet builds, Haiku writes docs. Gate: the owner decides on hosting (Q14).
@@ -578,7 +581,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Write the README: setup, seed accounts, how to run the tests, and that data is never removed (G-19).
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
 
-**Done when:** All 14 screens match the prototype, the README works from a clean clone, and every test passes.
+**Done when:** All 15 screens match the prototype, the README works from a clean clone, and every test passes.
 ### Which milestone builds which screen
 
 | Screen | Built in |
@@ -597,7 +600,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 | Companies | M17 |
 | Company detail | M17, M18b |
 | Usage | M19 |
-| Accept invite (added to the prototype flow, Q21) | M14b |
+| Accept invite | M14b |
 
 ## How to release and manage
 
@@ -622,7 +625,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 1. Work only inside this repository. Never touch client code.
 2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-cards.
-3. Before starting a milestone, re-read it and the decisions G-1 to G-20 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
+3. Before starting a milestone, re-read it and the decisions G-1 to G-21 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
 4. The pull request lists what was built, the assumptions made and anything left unfinished. Then stop and wait for review.
 5. Once I merge, tag the release named in the milestone and add a line to CHANGELOG.md. Then wait for me to say go before starting the next milestone.
 6. If the plan is silent or two rules conflict, add the question to the open questions list and ask. Do not guess.
@@ -640,7 +643,7 @@ Three built-in lessons for the autonomous build. They apply to every milestone.
 Read this plan the way you would read a pull request before running anything from it.
 
 - For each milestone, list the commands it implies, the packages it installs and the places it writes files. Anything surprising is a bug in the plan.
-- Check that every task matches a decision (G-1 to G-20) and a rule in this file.
+- Check that every task matches a decision (G-1 to G-21) and a rule in this file.
 - Start Claude Code in plan mode first, so it proposes the steps and you approve them before any file changes.
 - Ask the advisor model (Opus) to review the plan or a risky milestone before it is built. It reviews and never writes code.
 
@@ -710,7 +713,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q3 | How do people move cards: a menu, drag and drop, or both? Recommended: a menu first because it is easier to make accessible. | Before M7b |
 | Q4 | Do invites and notifications send real email? Decided: notifications stay in the app. Invites are sent as email through Auth (Mailpit when local). | Decided |
 | Q5 | Can cards be removed, and what happens to a column that still has cards? Recommended: cards are archived rather than deleted, and a column that still has active cards cannot be archived. | Before M7 (cards), M15 (columns) |
-| Q6 | Which router for the 14 screens? Decided: React Router 7. | Decided |
+| Q6 | Which router for the 15 screens? Decided: React Router 7. | Decided |
 | Q7 | Self-signup or invite-only? Decided: invite-only, by turning public signup off (Q13). | Decided |
 | Q8 | How do database tests run locally and in CI? Recommended: Vitest through supabase-js with real signed-in users (a refused UPDATE changes 0 rows, not 403), against `supabase start`; CI starts Supabase. | Before M2 |
 | Q9 | Self-host the fonts or use the Google Fonts link? Decided: self-host with `@fontsource`. | Decided |
@@ -734,6 +737,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 - [ ] Install Docker and Node.js 20.19 or newer, so the local Supabase stack can run.
 - [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
 - [ ] Save the prototype source and tokens into design/, and save this plan as PLAN.md in the repo.
+- [ ] Build prototype Version 35 and save it into design/: the Accept invite screen, the G-20 states on Sign in, the Archived list in place of the Archived scenario, and the 400 fault (Q21, G-21). Update design/README.md and the prototype link above.
 
 ## Kickoff prompt for Claude Code
 
@@ -745,7 +749,7 @@ You are building Tazko, a kanban work tracker that one group runs for several of
 Source of truth: PLAN.md in this repository (29 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
-1. Read the milestone and the decisions G-1 to G-20 and UX-1 to UX-6.
+1. Read the milestone and the decisions G-1 to G-21 and UX-1 to UX-6.
 2. Create a branch named mN-short-name from dev.
 3. Implement the tasks.
 4. Run typecheck, lint and all tests, including the isolation tests. For screen changes, also open the app in a browser and use the feature, including error cases.

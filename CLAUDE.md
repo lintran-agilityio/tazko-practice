@@ -1,6 +1,6 @@
 # Tazko
 
-Kanban work tracker for one group running several companies. Source of truth: [plan/PLAN.md](plan/PLAN.md) (29 milestones, decisions G-1..G-20, UX-1..UX-6, questions Q1..Q20). Visual reference: `design/`.
+Kanban work tracker for one group running several companies. Source of truth: [plan/PLAN.md](plan/PLAN.md) (29 milestones, decisions G-1..G-21, UX-1..UX-6, questions Q1..Q20). Visual reference: `design/`.
 
 ## Stack
 
@@ -17,7 +17,7 @@ React 19 + TypeScript + Tailwind 4 (Vite); Supabase (Postgres, Auth, Row Level S
 
 1. Work only in this repo. Never touch client code.
 2. One milestone = one branch (`m7-create-cards`, from `dev`) = one PR into `dev` = one release tag (named in the milestone). `dev` is the integration branch; merge `dev` into `main` and tag on `main` for each release.
-3. Before starting, re-read the milestone and G-1..G-20, UX-1..UX-6. Keep milestones small (about 5 tasks max); split if larger.
+3. Before starting, re-read the milestone and G-1..G-21, UX-1..UX-6. Keep milestones small (about 5 tasks max); split if larger.
 4. Before saying done: run typecheck, lint, all tests; for screen changes open the app in a browser and use it (menus, forms, keyboard, error cases). Record what was checked in the PR. Never end with "not tested".
 5. PR lists what was built, assumptions, anything unfinished. Then stop and wait for review. After merge: tag release, add a line to CHANGELOG.md. Do not start the next milestone until told.
 6. If the plan is silent or rules conflict, add to the open questions and ask. Do not guess.
@@ -34,6 +34,7 @@ React 19 + TypeScript + Tailwind 4 (Vite); Supabase (Postgres, Auth, Row Level S
 - Activity is written by DB triggers (G-4).
 - Observers: hide write controls AND block writes in the database (BR-3).
 - Only company email addresses can sign in or be invited. The database refuses other addresses at creation, at every sign-in and token refresh, and on every read and write, so removing a domain locks its people out at once. The real domain stays in the local environment, not in the repo (G-20).
+- Every input is validated in the browser and again on the server and in the database: bad field gives 400, duplicate or stale edit gives 409, shown at the field with the user's input kept (G-21).
 
 ## Models
 
