@@ -1,15 +1,15 @@
 # Tazko build plan
 
-A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-19) and the 14-screen prototype. It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
+A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-21) and the 15-screen prototype (14 screens plus Accept invite). It is split into 31 small milestones. The ones with a letter (M2b, M3b, M6b, M7b, M8b, M14b, M14c, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
-- Prototype (14 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
-- Last updated: prototype Version 34. It now includes the UX fixes (decisions UX-1 to UX-5 below) and the reload race fix, all checked in Chrome.
+- Prototype (15 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Ha2bdKWHPDVHFZVPLcqXxF
+- Last updated: prototype Version 35 source is saved in `design/` (Accept invite, the G-20 Sign in states, the 400 fault, and the Archived project scenario reworded for G-19). The live artifact is the new Design canvas "Tazko Prototype v35", linked above (the old Version 34 canvas is retired). Version 34 added the UX fixes (UX-1 to UX-5) and the reload race fix, checked in Chrome.
 - Delivery plan (milestones, owner gates, API surface, questions, risks): https://claude.ai/artifact/F4swGuTCXtSmSV7SnEk9rE
 - Blueprint (decisions, findings, requirements, tests, readiness): https://claude.ai/artifact/FHWvj1NtKMZX2nF22qfJeK
 
 ## How the work flows
 
-Seven phases made of 29 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
+Seven phases made of 31 small milestones. Every milestone ends with a pull request you review, a merge and a release tag, so the app is always in a working state.
 
 ```mermaid
 flowchart LR
@@ -23,7 +23,7 @@ These came from the interview and are the source of truth for the build.
 | Code | Area | Decision |
 |---|---|---|
 | G-1 | Goal | Build one practice project and apply what was learned; practise using claude.ai. |
-| G-2 | Scope | All 14 screens of the prototype, with sample data seeded into the database. |
+| G-2 | Scope | All 15 screens of the prototype (14 plus Accept invite), with sample data seeded into the database. |
 | G-3 | Spec (Q-2) | A card can be assigned to an Observer so they can follow it. Observers still cannot edit, move or archive anything. |
 | G-4 | Spec (Q-1) | Activity logs everything: comments, column moves, assignments, due dates and description edits. |
 | G-5 | Spec (DR-3) | Archiving a project requires typing the project name. |
@@ -41,6 +41,8 @@ These came from the interview and are the source of truth for the build.
 | G-17 | Spec (Q-1) | When a description is edited, Activity records who and when, never the text. |
 | G-18 | Scope | Usage has no CSV export. |
 | G-19 | Data | Nothing is ever permanently deleted in the database. Every table that people can remove rows from has `archived_at` and `archived_by`. DELETE is revoked from all app roles, and reads return active rows only. Archived rows are listed and restored through Owner-only RPCs. In this plan "delete" for labels, checklist items, links, lists and members means archive. |
+| G-20 | Permissions | People can sign in, and be invited, only with an email address on an allowed company domain. Personal addresses (Gmail and the like) are refused for Google, for email sign-in and for invites. There is one allow-list for the whole group, kept in the database (`allowed_domains`, soft delete) and loaded by the seed from the `ALLOWED_EMAIL_DOMAINS` environment variable. The real domain is set in the local environment and is not written in the repo. The database refuses to create a user, or change a user's email, to any other domain, so no screen or provider setting can skip the rule. The rule is checked again at every sign-in and token refresh, and by the database policies on every read and write, so removing a domain locks out everyone on it at once. Their memberships are kept and work again if the domain is added back. This also stops someone who buys a dropped domain from signing in as a former user. |
+| G-21 | Validation | Every input is checked twice: in the browser first, for fast feedback, and again on the server and in the database, which never trust the browser. A rejected field gives 400 and a duplicate or stale edit gives 409. The screen shows the message at that field and keeps what the person typed. Nothing invalid reaches the database, even when the API is called directly. |
 | UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list and Archive list. Archive asks for confirmation, and a list that still has active cards cannot be archived (Q5). The prototype's separate Delete list is merged into Archive list (G-19). Owners only. The menu must stay fully inside its column (a prototype bug clipped it). |
 | UX-2 | Add list | A dashed "+ Add list" column ends each board. The name field has focus at once; Enter adds, Esc cancels. Owners only. |
 | UX-3 | Checklist | A card has a checklist: check, delete an item with Undo, a "Hide checked items" toggle that shows a count, and a menu to uncheck all or delete the whole checklist (confirmed). |
@@ -79,6 +81,7 @@ Why Row Level Security matters here: the rule that each company sees only its ow
 | notifications | id, user_id, activity_id, read_at | Generated from activity for assignments, comments and due dates. |
 | invites | id, company_id, email, role, token, expires_at, status | Pending, accepted, revoked or expired. Becomes a membership when the invited email is confirmed (Q13). |
 | admin_sessions | id, user_id, company_id, expires_at, ended_at | One live Open as Owner session per Super admin. Rows are kept as an audit trail (Q18). |
+| allowed_domains | domain, archived_at, archived_by | The one group-wide allow-list of company email domains (G-20). Loaded by the seed. No screen edits it. |
 
 Every table above except `activity`, `notifications` and `admin_sessions` also has `archived_at` and `archived_by` (G-19). `activity` is immutable.
 
@@ -93,6 +96,7 @@ Every table above except `activity`, `notifications` and `admin_sessions` also h
 | Archive and restore a project | Owners only. An archived project leaves the boards and appears in the Owner's Archived list, where it can be restored for 30 days. After that it is locked and kept (BR-2, G-15, G-19). |
 | Invite, change the role of, archive and restore members | Owners only. The last active Owner cannot be archived (Q19). |
 | Companies (including creating one), usage, Open as Owner | Super admins only. Owners and Members never see this area. |
+| Sign in, or be invited | Only with an email on an allowed company domain. Personal addresses are refused (G-20). |
 
 ## API surface
 
@@ -113,13 +117,15 @@ Rules for every table:
 | company_people | View | Super admin | Display names only, for member companies (Q10) | M2 |
 | archive_*, restore_*, list_archived_* | RPC | Owners | One set per entity | M2 on |
 | guard_self_promotion | Trigger | Database | Nobody changes their own role or is_super_admin | M2 |
-| handle_new_user | Trigger | Auth | Creates the profile; turns an invite into a membership when the email is confirmed | M3, M14b |
+| is_company_email, guard_company_email | SQL helper, trigger on auth.users | Database | Refuse a new user, or an email change, outside allowed_domains, with a clear error (G-20) | M2 |
+| custom_access_token hook | Auth hook, Postgres function | Auth | Refuse sign-in and token refresh when the email is not on allowed_domains, with a clear error (G-20) | M3, M3b |
+| handle_new_user | Trigger | Auth | Creates the profile; turns an invite into a membership when the email is confirmed | M3, M14b, M14c |
 | move_card | RPC, security invoker | Owners, Members | Sets column and position; reports a conflict (Q16) | M7 |
 | Activity triggers | Triggers, security definer | Database | Actor is auth.uid(); acting_as_super_admin comes from admin_sessions, not the client | M9 |
 | search_cards | RPC | Active members | Current company only | M12 |
 | touch_last_seen, guard_last_owner | RPC, trigger | Members, database | Last seen; at least one active Owner | M14 |
-| invite-member | Edge Function | Owners | Invite by email, add an existing user, or restore an archived member | M14b |
-| create-company | Edge Function | Super admin | Create a company and invite its first Owner | M17 |
+| invite-member | Edge Function | Owners | Check the address is a company address, then invite by email, add an existing user, or restore an archived member | M14b |
+| create-company | Edge Function | Super admin | Create a company and invite its first Owner (company address only) | M17 |
 | open_as_owner, extend_owner, exit_owner | RPC, security definer | Super admin | Manage admin_sessions | M18 |
 | usage_counts | RPC | Super admin | Counts only, never Activity rows | M19 |
 
@@ -140,10 +146,11 @@ Each row is one pull request and one release.
 | Milestone | Name | Screens | Depends on | Release | Hours |
 |---|---|---|---|---|---|
 | M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 | 27 |
-| M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 | 38 |
+| M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 | 50 |
 | M2b | Seed and isolation tests | None (database only) | M2 | v0.2.1 | 30 |
-| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 18 |
-| M4 | Company switcher and Profile | Profile | M3 | v0.4.0 | 20 |
+| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 26 |
+| M3b | Sign in states and hardening | Sign in | M3 | v0.3.1 | 16 |
+| M4 | Company switcher and Profile | Profile | M3b | v0.4.0 | 20 |
 | M5 | Sign in with Google | Sign in | M3 | v0.5.0 | 10 |
 | M6 | Boards on screen | Board | M4 | v0.6.0 | 28 |
 | M6b | Home and isolation tests | Home | M6 | v0.6.1 | 14 |
@@ -157,19 +164,20 @@ Each row is one pull request and one release.
 | M12 | Search | Search | M7 | v0.12.0 | 16 |
 | M13 | Notifications | Notifications | M9 | v0.13.0 | 21 |
 | M14 | Members and roles | Members | M4 | v0.14.0 | 31 |
-| M14b | Invites and Accept invite | Members, Accept invite | M14, M3 | v0.14.1 | 46 |
+| M14b | Invites and Accept invite | Members, Accept invite | M14, M3b | v0.14.1 | 46 |
+| M14c | Invite token hardening | Accept invite | M14b | v0.14.2 | 18 |
 | M15 | Create and edit projects | Project settings | M7 | v0.15.0 | 19 |
 | M15b | Column menu and Add list | Board | M15 | v0.15.1 | 18 |
 | M16 | Archive project | Project settings | M15 | v0.16.0 | 16 |
-| M17 | Companies and Company detail | Companies, Company detail | M4, M14b | v0.17.0 | 36 |
+| M17 | Companies and Company detail | Companies, Company detail | M4, M14c | v0.17.0 | 36 |
 | M18 | Open as Owner sessions | None (database only) | M9, M17 | v0.18.0 | 28 |
 | M18b | Open as Owner screens | Company detail, banner on every screen | M18 | v0.18.1 | 9 |
 | M19 | Usage | Usage | M9, M17 | v0.19.0 | 15 |
-| M20 | Polish, phone width and accessibility | All 14 screens | M1 to M19 | v0.20.0 | 34 |
-| M20b | States and fault matrix | All 14 screens | M20 | v0.20.1 | 34 |
-| M20c | Hand-off | All 14 screens | M20b | v1.0.0 | 12 |
+| M20 | Polish, phone width and accessibility | All 15 screens | M1 to M19 | v0.20.0 | 34 |
+| M20b | States and fault matrix | All 15 screens | M20 | v0.20.1 | 34 |
+| M20c | Hand-off | All 15 screens | M20b | v1.0.0 | 12 |
 
-Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 662 hours (about 83 days), or about 103 days with review rounds and gates. The GitHub issues carry the per-task estimates.
+Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 716 hours (about 90 days), or about 113 days with review rounds and gates. The GitHub issues carry the per-task estimates.
 
 ## Milestones
 
@@ -177,14 +185,14 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M1: Scaffold and app shell
 
-- **Screens:** Placeholders for all 14
+- **Screens:** Placeholders for the 14 screens, plus an Accept invite placeholder outside the shell
 - **Depends on:** None
 - **Release:** `v0.1.0`
 - **Models:** Sonnet builds, Haiku does scaffolding
 
 - [ ] Create the Vite, React, TypeScript and Tailwind project in the sandbox repo.
 - [ ] Make `npm test` pass first (try vitest 5.1.1, else set `pool: 'vmThreads'`), then add a GitHub Actions workflow that runs lint, typecheck and tests.
-- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens. At phone width the navigation becomes a drawer: a button opens it, Esc and choosing a page close it.
+- [ ] Build the app shell: side navigation and a placeholder route for each of the 14 screens, and an `/accept-invite` placeholder outside the shell. At phone width the navigation becomes a drawer: a button opens it, Esc and choosing a page close it.
 - [ ] Add the full Tazko Indigo token set from design/tokens.css (colours, radii, tap size) and self-host Hanken Grotesk and DM Mono with `@fontsource`.
 
 **Done when:** npm run dev shows the shell, every route is reachable, and CI is green.
@@ -199,12 +207,12 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Opus reviews the schema first, Sonnet builds. The `security` agent runs on the diff.
 
 - [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder, an .env.example and the npm scripts db:start and db:reset. Turn public signup off in the Auth config (Q13).
-- [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, and `archived_at` and `archived_by` on memberships (G-19).
-- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14).
-- [ ] Block a person from changing their own is_super_admin flag or role, in the database. Revoke DELETE from every app role, and add a test that fails if any table grants it (G-19).
+- [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, `archived_at` and `archived_by` on memberships (G-19), and the `allowed_domains` table (G-20).
+- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships, and they also require the signed-in email to be on `allowed_domains` (G-20), so a removed domain loses access at once. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14).
+- [ ] Block a person from changing their own is_super_admin flag or role, in the database. Revoke DELETE from every app role, and add a test that fails if any table grants it (G-19). Add the guard trigger on `auth.users` that refuses a new user, or an email change, outside `allowed_domains` (G-20), with a clear error message.
 - [ ] Answer TP-9 on memberships: archive through an RPC, and record whether a plain PATCH of `archived_at` fails under an active-only SELECT policy.
 
-**Done when:** A person cannot promote themselves, no table grants DELETE, an archived membership reads nothing, and TP-9 is answered. Opus has reviewed the schema and the `security` agent has run on the diff.
+**Done when:** A person cannot promote themselves, no table grants DELETE, an archived membership reads nothing, a personal address cannot become a user, and TP-9 is answered. Opus has reviewed the schema and the `security` agent has run on the diff.
 
 #### M2b: Seed and isolation tests
 
@@ -213,11 +221,12 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.2.1`
 - **Models:** Haiku writes seed data, Sonnet builds the tests
 
-- [ ] Seed the 2 companies and 4 users from G-8 with one command. Users are created through the Auth admin API, with passwords from the local env (never committed).
-- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, and an archived member reads nothing. A write refused by RLS changes 0 rows, and the tests assert that.
+- [ ] Seed the 2 companies and 4 users from G-8 with one command. The seed first loads `allowed_domains` from `ALLOWED_EMAIL_DOMAINS` (`.env.example` has a placeholder domain), and the seed users use an allowed domain. Users are created through the Auth admin API, with passwords from the local env (never committed).
+- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, an archived member reads nothing, a personal address (for example a Gmail address) cannot be created as a user, and a user whose domain is archived reads nothing. A write refused by RLS changes 0 rows, and the tests assert that.
 - [ ] CI starts Supabase and runs the database tests in their own Vitest project (TP-3).
 
 **Done when:** The seed loads with one command and every isolation test passes, locally and in CI.
+
 #### M3: Sign in with email
 
 - **Screens:** Sign in
@@ -225,17 +234,33 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.3.0`
 - **Models:** Sonnet builds
 
-- [ ] Sign in screen with email and password, and a sign out action.
+- [ ] Sign in screen with email and password, and a sign out action. The browser checks the address first as a hint only: an address outside the current allowed domains shows "Use your company account" at the email field (G-20, G-21). The database refuses it again, so the browser check is never the rule.
 - [ ] Create a profile row automatically when a user is created. Public signup is off, so users arrive through the seed or an invite (Q13).
 - [ ] Redirect signed-out visitors to Sign in from every other route, except `/accept-invite` (added in M14b).
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
+- [ ] Custom access token hook that refuses sign-in and token refresh when the email is not on `allowed_domains` (G-20, TP-13). The hook runs only after the credentials verify, so it never answers a caller who has not proved the password. Its error is mapped in M3b.
 
-**Done when:** You can sign in as each seed user and sign out again.
+**Done when:** You can sign in as each seed user and sign out again. A user whose domain is removed from the list is refused at sign in and at the next token refresh.
+
+#### M3b: Sign in states and hardening
+
+- **Screens:** Sign in
+- **Depends on:** M3
+- **Release:** `v0.3.1`
+- **Models:** Opus reviews how the hook errors are mapped, Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] Sign in states: wrong password, offline and session expired. Each keeps the typed email and offers a way forward. A refused token refresh (no password involved) sends the person to Sign in with "Your session has expired".
+- [ ] Map the access token hook error: "Your company domain is no longer allowed. Contact your Owner" appears only when the password verified and the domain is gone (G-20, Q20). For an unverified caller, a wrong password and a removed domain give the same message, "The email or password is not right", so nobody can probe which domains were removed. The hook error text is never sent to the browser as is.
+- [ ] Set the Auth password rules in `config.toml` and the hosted project: a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21).
+- [ ] Rate limits on sign-in attempts, per email and per IP address, with the numbers written in the config and in the README.
+- [ ] Tests: wrong password with a removed domain gives the generic message; a refused refresh lands on Sign in; a direct API call with a short password, and with a leaked one, is refused; the rate limit blocks the next attempt.
+
+**Done when:** A removed domain shows its own message only to a person who proved the password. A wrong password never reveals the domain state, and weak passwords and repeated attempts are refused by the server.
 
 #### M4: Company switcher and Profile
 
 - **Screens:** Profile
-- **Depends on:** M3
+- **Depends on:** M3b
 - **Release:** `v0.4.0`
 - **Models:** Sonnet builds
 
@@ -252,9 +277,10 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.5.0`
 - **Models:** Sonnet builds
 
-- [ ] Configure the Google provider locally: client ID in the config file, secret in the environment.
+- [ ] Configure the Google provider locally: client ID in the config file, secret in the environment. The Google OAuth app is already set up on Google Cloud, and a real check accepted a company account and refused a personal Gmail.
 - [ ] Add Continue with Google as the single primary action on Sign in.
-- [ ] Handle the callback and send the person to Home.
+- [ ] Handle the callback and send the person to Home. A refused address returns to Sign in with "Use your company account". The Google side (consent screen, domain hint) only helps; the database rule (G-20) is what enforces it.
+- [ ] Turn off automatic linking of identities by email in the Auth config, so a Google sign-in never attaches itself to an existing password account (the person signs in with their password first). Tests: a Google account on a non-allowed domain creates no `auth.users` row and no session; a Google account with an allowed email that already has a password account is not linked silently (G-20).
 - [ ] Document the Google setup in the README.
 
 **Done when:** A Google account that was invited can sign in (public signup is off) and gets a profile row. If the Google credential is not ready, skip this milestone for now; nothing after it depends on it.
@@ -428,18 +454,32 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M14b: Invites and Accept invite
 
-- **Screens:** Members (invites), Accept invite (not in the prototype)
-- **Depends on:** M14, M3
+- **Screens:** Members (invites), Accept invite (added to the prototype flow, Q21)
+- **Depends on:** M14, M3b
 - **Release:** `v0.14.1`
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
-- [ ] Migration for `invites` (company, email, role, token, expires_at, status). A trigger turns an invite into a membership only when the invited email is confirmed.
-- [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company, then invites by email through the Auth admin API, adds an existing user directly, or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
-- [ ] Invite by email and role on Members. Pending rows have resend, revoke and expiry, and are searchable by email (UX-5).
-- [ ] Accept invite screen at `/accept-invite`, outside the app shell: set a password, with states for an expired link, a used link and offline. Then go to Home with the right role chip. The route guard from M3 lets this route through.
+- [ ] Migration for `invites` (company, email, role, token, expires_at, status). A trigger turns an invite into a membership only when the invited email is confirmed. The trigger and `handle_new_user` check `is_company_email` again at accept time (G-20).
+- [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company and that the address is on an allowed company domain (a personal address gets a clear refusal, G-20), then invites by email through the Auth admin API, adds an existing user directly (checking the domain again), or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
+- [ ] Invite by email and role on Members, with a clear message when the address is not a company address (G-20). Pending rows have resend, revoke and expiry, and are searchable by email (UX-5).
+- [ ] Accept invite screen at `/accept-invite`, outside the app shell: set a password (checked in the browser and again on the server, G-21), with states for an expired link, a used link, a revoked link, an address whose domain was removed since the invite, an existing account (go to Sign in instead) and offline. Then go to Home with the right role chip. The route guard from M3 lets this route through.
 - [ ] Check the whole path in a browser, from the invite email (Mailpit when local) to Home.
 
 **Done when:** An Owner invites a new email, the email arrives, the link opens Accept invite, and the new person lands on Home with the right role. Inviting an existing user adds them directly. A Member or Observer calling the function is refused. An expired or revoked link shows a clear message.
+
+#### M14c: Invite token hardening
+
+- **Screens:** Accept invite
+- **Depends on:** M14b
+- **Release:** `v0.14.2`
+- **Models:** Opus reviews the token design first, Sonnet builds. The `security` agent runs on the diff.
+
+- [ ] The invite `token` is long and random, stored hashed, single-use, and bound to the invited email.
+- [ ] Every Accept invite state, including "used", "existing account" and "domain removed", is returned only after the token is validated. An invalid, unknown or malformed token always gets the same generic error, so a link cannot be used to learn whether an account or a domain exists. An existing account is attached only when the signed-in email equals the invited email.
+- [ ] Rate limits for token checks (per token and per IP address), accepting an invite, and Resend (per invite and per Owner), with the numbers written in the config.
+- [ ] Tests: invite an address, remove its domain, accept the invite, and expect a refusal with no membership; a random token gives the generic error; a used token cannot be used twice; a token cannot be accepted by another email; each rate limit blocks the next attempt.
+
+**Done when:** A token works once, for one email, and every bad token looks the same. Removing a domain between the invite and the accept leaves no membership, and the limits block guessing and resend floods.
 
 #### M15: Create and edit projects
 
@@ -486,12 +526,12 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 #### M17: Companies and Company detail
 
 - **Screens:** Companies, Company detail
-- **Depends on:** M4, M14b
+- **Depends on:** M4, M14c
 - **Release:** `v0.17.0`
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
 - [ ] Companies screen: list companies with company-level counts.
-- [ ] Edge Function `create-company(name, owner_email)`, Super admin only. It creates the company and invites its first Owner with the invite logic from M14b, or adds an existing user. The Super admin never becomes an Owner (G-14).
+- [ ] Edge Function `create-company(name, owner_email)`, Super admin only. The owner address must be a company address (G-20). It creates the company and invites its first Owner with the invite logic from M14b, or adds an existing user. The Super admin never becomes an Owner (G-14).
 - [ ] Company detail: people (display names through the view, Q10), counts, a "pending owner" state, and a link back to the list.
 - [ ] Only Super admins can write companies. Owners and Members can never see or reach the Super admin area, with tests.
 
@@ -538,8 +578,8 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M20: Polish, phone width and accessibility
 
-- **Screens:** All 14 screens
-- **Depends on:** M1 to M19, including M6b, M7b, M8b, M14b, M15b and M18b
+- **Screens:** All 15 screens
+- **Depends on:** M1 to M19, including M3b, M6b, M7b, M8b, M14b, M14c, M15b and M18b
 - **Release:** `v0.20.0`
 - **Models:** Sonnet builds
 
@@ -551,19 +591,20 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M20b: States and fault matrix
 
-- **Screens:** All 14 screens
+- **Screens:** All 15 screens
 - **Depends on:** M20
 - **Release:** `v0.20.1`
 - **Models:** Sonnet builds
 
 - [ ] Make every change optimistic with undo on failure, and add clear error, session-expired and offline states.
-- [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 6 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict). Every combination must end in the right screen with no errors.
+- [ ] One error mapper turns every API and database error into the screen's wording: 400 to a message at the field, 409 to a message with Reload or Keep mine, and an update refused by RLS (0 rows) to Forbidden (G-21).
+- [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 7 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict, Bad request). Every combination must end in the right screen with no errors.
 
 **Done when:** Every combination in the matrix ends in the right screen with no errors.
 
 #### M20c: Hand-off
 
-- **Screens:** All 14 screens, plus Accept invite
+- **Screens:** All 15 screens
 - **Depends on:** M20b
 - **Release:** `v1.0.0`
 - **Models:** Sonnet builds, Haiku writes docs. Gate: the owner decides on hosting (Q14).
@@ -572,12 +613,12 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Write the README: setup, seed accounts, how to run the tests, and that data is never removed (G-19).
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
 
-**Done when:** All 14 screens match the prototype, the README works from a clean clone, and every test passes.
+**Done when:** All 15 screens match the prototype, the README works from a clean clone, and every test passes.
 ### Which milestone builds which screen
 
 | Screen | Built in |
 |---|---|
-| Sign in | M3, M5 |
+| Sign in | M3, M3b, M5 |
 | Profile | M4 |
 | Home | M6b |
 | Board | M6, M7, M7b, M15b |
@@ -591,7 +632,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 | Companies | M17 |
 | Company detail | M17, M18b |
 | Usage | M19 |
-| Accept invite (not in the prototype) | M14b |
+| Accept invite | M14b, M14c |
 
 ## How to release and manage
 
@@ -608,7 +649,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 | Role | Model | Used for |
 |---|---|---|
-| Advisor | Opus | Reviews this plan before M1, and the schema, triggers and access rules before M2, M9, M14b, M17 and M18. Never writes code. |
+| Advisor | Opus | Reviews this plan before M1, and the schema, triggers and access rules before M2, M3b, M9, M14b, M14c, M17 and M18. Never writes code. |
 | Builder | Sonnet | All feature code, database migrations and tests. |
 | Mechanical | Haiku | Seed data, renames, formatting, boilerplate and small documentation fixes. |
 
@@ -616,7 +657,7 @@ To keep usage cost down, the expensive model advises and the cheaper ones do the
 
 1. Work only inside this repository. Never touch client code.
 2. One milestone is one branch, one pull request and one release. Name the branch like m7-create-cards.
-3. Before starting a milestone, re-read it and the decisions G-1 to G-19 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
+3. Before starting a milestone, re-read it and the decisions G-1 to G-21 and UX-1 to UX-6. After finishing, run typecheck, lint and every test, including the isolation tests.
 4. The pull request lists what was built, the assumptions made and anything left unfinished. Then stop and wait for review.
 5. Once I merge, tag the release named in the milestone and add a line to CHANGELOG.md. Then wait for me to say go before starting the next milestone.
 6. If the plan is silent or two rules conflict, add the question to the open questions list and ask. Do not guess.
@@ -634,7 +675,7 @@ Three built-in lessons for the autonomous build. They apply to every milestone.
 Read this plan the way you would read a pull request before running anything from it.
 
 - For each milestone, list the commands it implies, the packages it installs and the places it writes files. Anything surprising is a bug in the plan.
-- Check that every task matches a decision (G-1 to G-19) and a rule in this file.
+- Check that every task matches a decision (G-1 to G-21) and a rule in this file.
 - Start Claude Code in plan mode first, so it proposes the steps and you approve them before any file changes.
 - Ask the advisor model (Opus) to review the plan or a risky milestone before it is built. It reviews and never writes code.
 
@@ -645,11 +686,11 @@ Give Claude more freedom one rung at a time. Move up only when the previous rung
 | Rung | Milestones | How it runs |
 |---|---|---|
 | 1. Supervised | M1 | You approve every command and read every diff. No chained or batched commands. |
-| 2. Semi-supervised | M2 to M5, M14b and M17 | Claude edits code freely. It asks first for migrations, package installs, auth or Supabase configuration, and anything that reads the `service_role` key (Edge Functions). |
-| 3. Autonomous | M6 to M19, except M14b and M17 | Claude runs a whole milestone and stops at each pull request. |
+| 2. Semi-supervised | M2 to M5, M14b, M14c and M17 | Claude edits code freely. It asks first for migrations, package installs, auth or Supabase configuration, and anything that reads the `service_role` key (Edge Functions). |
+| 3. Autonomous | M6 to M19, except M14b, M14c and M17 | Claude runs a whole milestone and stops at each pull request. |
 | 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
 
-The `security` agent runs on M2, M6, M6b, M7, M7b, M9, M14b, M16, M17, M18, M18b and M19, at every rung.
+The `security` agent runs on M2, M3b, M6, M6b, M7, M7b, M9, M14b, M14c, M16, M17, M18, M18b and M19, at every rung.
 
 An incident is any stop condition that fired unexpectedly, a secret that reached a tracked file, or a change outside this repository. After an incident, go back one rung.
 
@@ -672,7 +713,7 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 |---|---|
 | Scenarios (6) | Normal day, New company (no cards), Observer view, Super admin opens as Owner, Big board (24 cards), Archived project |
 | Latency (4) | Instant (0 ms), Fast (300 ms), Slow (1500 ms), Very slow (4000 ms) |
-| Faults (6) | Offline (status 0), Server error (500), Session expired (401), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card) |
+| Faults (7) | Offline (status 0), Server error (500), Session expired (401), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card), Bad request (400, the move is refused as invalid) |
 
 ### The 6 scenarios in detail
 
@@ -683,7 +724,7 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 | Observer view | Khoa, Observer | Same 7 cards | Look for Move buttons and PATCH requests | Banner says Observers cannot change anything; no Move buttons; the API would answer 403 (G-3) |
 | Super admin opens as Owner | Linh, Super admin | Same 7 cards | Read the banner; move a card | Banner says she views the company as its Owner and changes are logged; the move works (G-6, G-14) |
 | Big board | Minh, Owner | 4 columns, 24 cards | Scroll; reload with Very slow latency; move a card | Counts of 6 per column and a layout that holds; 4 s skeleton; counts become 5 and 7 after the move |
-| Archived project | Minh, Owner | Same 7 cards | Read the banner; look for Move buttons | Banner says archived and read-only; no Move buttons; the API would answer 403 (G-15) |
+| Archived project | Minh, Owner | Same 7 cards | Read the banner; look for Move buttons | The banner stands in for the Owner's Archived list row: it says the project is archived and read-only, with the days left to restore. No Move buttons, and the API would answer 403 (G-15). In the real app this is the Archived list, with Restore inside 30 days and Locked after (G-19) |
 
 The request log clears when the scenario changes, so it only shows requests for the current scenario.
 
@@ -704,7 +745,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q3 | How do people move cards: a menu, drag and drop, or both? Recommended: a menu first because it is easier to make accessible. | Before M7b |
 | Q4 | Do invites and notifications send real email? Decided: notifications stay in the app. Invites are sent as email through Auth (Mailpit when local). | Decided |
 | Q5 | Can cards be removed, and what happens to a column that still has cards? Recommended: cards are archived rather than deleted, and a column that still has active cards cannot be archived. | Before M7 (cards), M15 (columns) |
-| Q6 | Which router for the 14 screens? Decided: React Router 7. | Decided |
+| Q6 | Which router for the 15 screens? Decided: React Router 7. | Decided |
 | Q7 | Self-signup or invite-only? Decided: invite-only, by turning public signup off (Q13). | Decided |
 | Q8 | How do database tests run locally and in CI? Recommended: Vitest through supabase-js with real signed-in users (a refused UPDATE changes 0 rows, not 403), against `supabase start`; CI starts Supabase. | Before M2 |
 | Q9 | Self-host the fonts or use the Google Fonts link? Decided: self-host with `@fontsource`. | Decided |
@@ -718,6 +759,9 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q17 | Who owns a company a Super admin creates? Decided: `create-company` invites the named Owner. The Super admin never becomes Owner. | Decided (M17) |
 | Q18 | How long does Open as Owner last? Decided: 2 hours, with an Extend button, one session per Super admin; access ends at expiry; Exit sets `ended_at` and the row is kept. | Decided (M18) |
 | Q19 | Can members be removed? Decided: they are archived and can be restored, never deleted. The last active Owner cannot be archived, and nobody archives themselves. | Decided (M14) |
+| Q20 | What happens to people already signed up when their domain is removed from `allowed_domains`? Decided: they are locked out at once. A custom access token hook refuses sign-in and token refresh, and the database helpers check the signed-in email on every read and write. Memberships are kept and work again if the domain is added back (G-20). | Decided (M2, M3) |
+| Q21 | How does the prototype show the invite flow? Decided: it gets an Accept invite screen, and Sign in shows the G-20 states (company address only, domain removed). Checks run in the browser first and again in the database: a bad field gives 400, a duplicate or stale edit gives 409. Each error appears at its field and keeps the user's input. | Decided (M14b, M20b) |
+
 ## Before the build
 
 - [x] Use the dedicated repo `lintran-agilityio/tazko-practice` (practice only, no client code).
@@ -726,6 +770,8 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 - [ ] Install Docker and Node.js 20.19 or newer, so the local Supabase stack can run.
 - [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
 - [ ] Save the prototype source and tokens into design/, and save this plan as PLAN.md in the repo.
+- [x] Prototype Version 35 source is saved in design/: the Accept invite screen, the G-20 states on Sign in, the Archived project scenario reworded for G-19, and the 400 fault. The 400 and the duplicate 409 are shown at the fields of Sign in and Accept invite; the panel shows the move being refused as a banner.
+- [x] Version 35 is loaded into a new Design artifact and the prototype link above points to it. Still to check by hand: click through the Sign in states, the Accept invite link states and the 400 fault.
 
 ## Kickoff prompt for Claude Code
 
@@ -734,10 +780,10 @@ Paste this into Claude Code from the root of this repository.
 ```text
 You are building Tazko, a kanban work tracker that one group runs for several of its companies.
 
-Source of truth: PLAN.md in this repository (29 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
+Source of truth: PLAN.md in this repository (31 small milestones, each one pull request and one release). Visual reference: the prototype in design/ (see design/README.md; PLAN.md wins on conflict).
 
 Work one milestone at a time, starting with M1. For each milestone:
-1. Read the milestone and the decisions G-1 to G-19 and UX-1 to UX-6.
+1. Read the milestone and the decisions G-1 to G-21 and UX-1 to UX-6.
 2. Create a branch named mN-short-name from dev.
 3. Implement the tasks.
 4. Run typecheck, lint and all tests, including the isolation tests. For screen changes, also open the app in a browser and use the feature, including error cases.
