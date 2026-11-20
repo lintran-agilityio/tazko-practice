@@ -212,13 +212,13 @@ class Component extends DCLogic {
       rule: 'Long columns must stay readable and fast.',
       steps: ['Scroll through the board and read the count badges.', 'Set latency to Very slow and press Reload board.', 'Move a card from the last row of Backlog.'],
       expected: 'Each column shows a count of 6 and the layout does not break. The skeleton shows for 4 seconds. The move still works and the counts change to 5 and 7.' },
-    { id: 'archived', label: 'Archived project', desc: 'Read-only, purged after 30 days',
+    { id: 'archived', label: 'Archived project', desc: 'In the Archived list, restore for 30 days',
       who: 'Minh, Owner of Harbor Logistics',
-      situation: 'Minh archived the Client portal 5 days ago. It can still be restored for another 25 days.',
+      situation: 'Minh archived the Client portal 5 days ago. It is no longer a board: it sits in the Archived list of the Owner and can be restored for another 25 days.',
       data: 'The same 7 cards as Normal day.',
-      rule: 'Archived projects are read-only and are purged automatically after 30 days. There is no Delete button (G-15).',
-      steps: ['Read the banner above the board.', 'Look for "Move to" buttons on the cards.', 'Check the request log for any PATCH request.'],
-      expected: 'A banner says the project is archived and read-only. There are no Move buttons and no PATCH requests. If one were sent, the API would answer 403.' }
+      rule: 'An archived project leaves the boards and is listed in the Archived list of the Owner. It can be restored for 30 days, then it is locked and kept in the database. There is no Delete button and nothing is purged (G-15, G-19).',
+      steps: ['Read the banner: it stands in for the Archived list row, with Restore and the days left.', 'Look for "Move to" buttons on the cards.', 'Check the request log for any PATCH request.'],
+      expected: 'The banner says the project is archived, shows Restore while inside 30 days and Locked after, and the card view is read-only. There are no Move buttons and no PATCH requests. If one were sent, the API would answer 403.' }
   ];
   LATENCIES = [
     { id: 'instant', label: 'Instant', ms: 0, desc: '0 ms' },
@@ -233,7 +233,8 @@ class Component extends DCLogic {
     { id: 'session', label: 'Session expired', desc: 'Status 401, the sign-in is no longer valid' },
     { id: 'forbidden', label: 'Forbidden', desc: 'Status 403, blocked by row level security' },
     { id: 'notfound', label: 'Not found', desc: 'Status 404, the project is gone' },
-    { id: 'conflict', label: 'Conflict', desc: 'Status 409 when moving a card' }
+    { id: 'conflict', label: 'Conflict', desc: 'Status 409 when moving a card, or on a duplicate such as a label name' },
+    { id: 'badrequest', label: 'Bad request', desc: 'Status 400, a field is missing or wrong; shown at the field' }
   ];
   COLUMNS = ['Backlog', 'In progress', 'Review', 'Done'];
 
@@ -263,7 +264,8 @@ class Component extends DCLogic {
     if (cfg.fault === 'session') return { status: 401, message: 'Your session has expired. Sign in again to continue.' };
     if (cfg.fault === 'server') return { status: 500, message: 'Server error: something went wrong on our side. Try again in a moment.' };
     if (cfg.fault === 'forbidden') return { status: 403, message: 'Forbidden: you are not a member of this company. The database blocked the request.' };
-    if (cfg.fault === 'notfound') return { status: 404, message: 'Not found: this project does not exist or was purged.' };
+    if (cfg.fault === 'notfound') return { status: 404, message: 'Not found: this project does not exist.' };
+    if (cfg.fault === 'badrequest' && method !== 'GET') return { status: 400, message: 'Bad request: the card position is not valid. Check the value and try again. Your input is kept.' };
     if (cfg.fault === 'conflict' && method === 'PATCH') return { status: 409, message: 'Conflict: someone else moved this card first. Reload to see the latest board.' };
     const db = this.db;
     if (method === 'GET' && path === '/projects/client-portal') return { status: 200, data: db };
@@ -388,7 +390,7 @@ class Component extends DCLogic {
     })) : [];
     let banner = '';
     if (b && b.asOwner) banner = 'Viewing ' + b.company + ' as its Owner. Every change you make is logged in Activity.';
-    if (b && b.archived) banner = 'This project is archived. It is read-only and is purged automatically after 30 days.';
+    if (b && b.archived) banner = 'This project is archived. It is read-only. An Owner can restore it for 25 more days, then it is locked and kept (G-19).';
     if (b && b.role === 'Observer') banner = 'Observer: you can read this board but you cannot change anything.';
     const lat = this.LATENCIES.find((l) => l.id === s.latency);
     return {

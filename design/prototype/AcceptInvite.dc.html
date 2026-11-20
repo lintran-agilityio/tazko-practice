@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tazko: Accept invite</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#1B1B2E}
+a{color:#4F52D9}a:hover{color:#3A3DB8}
+</style>
+</helmet>
+<div style="display:flex;justify-content:center;min-height:760px;background:#F6F6FB;padding:48px 24px;box-sizing:border-box">
+<div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:20px;height:fit-content">
+<div style="display:flex;align-items:center;gap:10px"><span style="width:36px;height:36px;border-radius:8px;background:#4F52D9;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px">T</span><span style="font-weight:700;font-size:20px">Tazko</span></div>
+<div style="background:#fff;border:1px solid #E3E3EE;border-radius:12px;padding:24px;display:flex;flex-direction:column;gap:16px">
+<sc-if value="{{ isReady }}" hint-placeholder-val="{{ true }}"><div style="display:flex;flex-direction:column;gap:16px">
+<div><h1 style="margin:0;font-size:24px;line-height:1.2;font-weight:700">Accept your invite</h1><p style="margin:6px 0 0;font-size:14px;color:#5B5B76">Minh invited you to <b>Harbor Logistics</b> as <b>Member</b>.</p></div>
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:13px;font-weight:600">Email</span><div style="min-height:44px;display:flex;align-items:center;padding:0 12px;border-radius:8px;background:#F6F6FB;border:1px solid #E3E3EE;font-size:14px;color:#5B5B76">hoa@harbor-logistics.example</div></div>
+<div style="display:flex;flex-direction:column;gap:6px"><label for="pw" style="font-size:13px;font-weight:600">Create a password</label><input id="pw" type="password" value="{{ pw }}" onInput="{{ onPw }}" aria-invalid="{{ pwInvalid }}" style="{{ pwStyle }}"><sc-if value="{{ pwErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#8A1F14">{{ pwErr }}</div></sc-if><div style="font-size:12px;color:#5B5B76">At least 8 characters.</div></div>
+<div style="display:flex;flex-direction:column;gap:6px"><label for="pw2" style="font-size:13px;font-weight:600">Repeat the password</label><input id="pw2" type="password" value="{{ pw2 }}" onInput="{{ onPw2 }}" aria-invalid="{{ pw2Invalid }}" style="{{ pw2Style }}"><sc-if value="{{ pw2Err }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#8A1F14">{{ pw2Err }}</div></sc-if></div>
+<button type="button" onClick="{{ submit }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;font-weight:600;font-size:14px;font-family:inherit;box-sizing:border-box;width:100%;cursor:pointer;background:#4F52D9;color:#fff;border:0">{{ btnLabel }}</button>
+<p style="margin:0;font-size:12px;color:#5B5B76">Prototype tip: the password <span style="font-family:'DM Mono',monospace">password123</span> is refused by the server as too common.</p>
+</div></sc-if>
+<sc-if value="{{ isProblem }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:12px">
+<h1 style="margin:0;font-size:22px;line-height:1.2;font-weight:700">{{ pTitle }}</h1>
+<p style="margin:0;font-size:14px;color:#5B5B76;line-height:1.5">{{ pText }}</p>
+<a href="Main.dc.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;font-weight:600;font-size:14px;box-sizing:border-box;width:100%;text-decoration:none;background:#fff;color:#1B1B2E;border:1px solid #E3E3EE">{{ pAction }}</a>
+</div></sc-if>
+</div>
+<div style="background:#fff;border:1px dashed #C9C9DA;border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:8px"><div style="font-size:12px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Prototype: link state</div><div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ states }}" as="o" hint-placeholder-count="7"><button type="button" onClick="{{ o.pick }}" aria-pressed="{{ o.pressed }}" style="{{ o.style }}">{{ o.label }}</button></sc-for></div></div>
+</div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":760}}'>
+class Component extends DCLogic {
+constructor(p){super(p);this.state={view:'ready',pw:'',pw2:'',pwErr:'',pw2Err:'',busy:false};}
+STATES=[
+{id:'ready',label:'Valid link'},
+{id:'expired',label:'Expired',title:'This invite has expired',text:'Invites last 7 days. Ask an Owner of Harbor Logistics to send you a new one.',action:'Go to Sign in'},
+{id:'used',label:'Already used',title:'This invite was already used',text:'You already have an account. Sign in to open Harbor Logistics.',action:'Go to Sign in'},
+{id:'revoked',label:'Revoked',title:'This invite was cancelled',text:'An Owner cancelled it. Ask them to send a new one if you still need access.',action:'Go to Sign in'},
+{id:'domain',label:'Domain removed',title:'This email domain is no longer allowed',text:'Only company addresses can join. Contact your Owner. Your invite works again if the domain is added back.',action:'Go to Sign in'},
+{id:'existing',label:'Existing account',title:'You already have a Tazko account',text:'Sign in with this email. Harbor Logistics is added to your companies.',action:'Sign in'},
+{id:'offline',label:'Offline',title:'You are offline',text:'Check your connection. Your link is still valid, so reload this page when you are back.',action:'Go to Sign in'}];
+renderVals(){
+const st=this.state,cur=this.STATES.find(x=>x.id===st.view);
+const bad='border:1px solid #B3261E;',ok='border:1px solid #8888A6;';
+const base='min-height:44px;padding:0 12px;border-radius:8px;font-family:inherit;font-size:14px;color:#1B1B2E;background:#fff;width:100%;box-sizing:border-box;';
+return{
+isReady:st.view==='ready',isProblem:st.view!=='ready',pTitle:cur.title||'',pText:cur.text||'',pAction:cur.action||'',
+pw:st.pw,pw2:st.pw2,pwErr:st.pwErr,pw2Err:st.pw2Err,
+pwInvalid:st.pwErr?'true':'false',pw2Invalid:st.pw2Err?'true':'false',
+pwStyle:base+(st.pwErr?bad:ok),pw2Style:base+(st.pw2Err?bad:ok),
+btnLabel:st.busy?'Creating your account...':'Create account and continue',
+onPw:(e)=>this.setState({pw:e.target.value,pwErr:''}),
+onPw2:(e)=>this.setState({pw2:e.target.value,pw2Err:''}),
+submit:()=>this.submit(),
+states:this.STATES.map(o=>({label:o.label,pressed:st.view===o.id?'true':'false',style:'padding:6px 12px;min-height:32px;border-radius:999px;font-family:inherit;font-size:12px;cursor:pointer;'+(st.view===o.id?'background:#4F52D9;color:#fff;border:1px solid #4F52D9':'background:#fff;color:#1B1B2E;border:1px solid #C9C9DA'),pick:()=>this.setState({view:o.id,pwErr:'',pw2Err:''})}))
+};
+}
+submit(){
+if(this.state.busy)return;
+const pw=this.state.pw,pw2=this.state.pw2;
+// Browser check first, then the server checks again (G-21). Input is kept on error.
+let pwErr='',pw2Err='';
+if(!pw)pwErr='Password is required.';else if(pw.length<8)pwErr='Use at least 8 characters.';
+if(!pw2)pw2Err='Repeat the password.';else if(pw2!==pw)pw2Err='The two passwords do not match.';
+if(pwErr||pw2Err){this.setState({pwErr,pw2Err});return;}
+this.setState({busy:true});
+setTimeout(()=>{
+if(pw==='password123'){this.setState({busy:false,pwErr:'This password is too common. Choose another one.'});return;}
+window.location.href='Home.dc.html';
+},400);
+}
+}
+</script>
+</body>
+</html>
