@@ -148,7 +148,7 @@ Each row is one pull request and one release.
 | M1 | Scaffold and app shell | Placeholders for all 14 | None | v0.1.0 | 27 |
 | M2 | Database, roles and isolation | None (database only) | M1 | v0.2.0 | 50 |
 | M2b | Seed and isolation tests | None (database only) | M2 | v0.2.1 | 30 |
-| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 16 |
+| M3 | Sign in with email | Sign in | M2b | v0.3.0 | 26 |
 | M3b | Sign in states and hardening | Sign in | M3 | v0.3.1 | 16 |
 | M4 | Company switcher and Profile | Profile | M3b | v0.4.0 | 20 |
 | M5 | Sign in with Google | Sign in | M3 | v0.5.0 | 10 |
@@ -164,7 +164,7 @@ Each row is one pull request and one release.
 | M12 | Search | Search | M7 | v0.12.0 | 16 |
 | M13 | Notifications | Notifications | M9 | v0.13.0 | 21 |
 | M14 | Members and roles | Members | M4 | v0.14.0 | 31 |
-| M14b | Invites and Accept invite | Members, Accept invite | M14, M3b | v0.14.1 | 34 |
+| M14b | Invites and Accept invite | Members, Accept invite | M14, M3b | v0.14.1 | 46 |
 | M14c | Invite token hardening | Accept invite | M14b | v0.14.2 | 18 |
 | M15 | Create and edit projects | Project settings | M7 | v0.15.0 | 19 |
 | M15b | Column menu and Add list | Board | M15 | v0.15.1 | 18 |
@@ -177,7 +177,7 @@ Each row is one pull request and one release.
 | M20b | States and fault matrix | All 15 screens | M20 | v0.20.1 | 34 |
 | M20c | Hand-off | All 15 screens | M20b | v1.0.0 | 12 |
 
-Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 694 hours (about 87 days), or about 109 days with review rounds and gates. The GitHub issues carry the per-task estimates.
+Hours are the estimate for one person at 8 working hours a day, covering build and tests, and the Verify ticket. Total: 716 hours (about 90 days), or about 113 days with review rounds and gates. The GitHub issues carry the per-task estimates.
 
 ## Milestones
 
