@@ -434,7 +434,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 #### M14b: Invites and Accept invite
 
-- **Screens:** Members (invites), Accept invite (not in the prototype)
+- **Screens:** Members (invites), Accept invite (added to the prototype flow, Q21)
 - **Depends on:** M14, M3
 - **Release:** `v0.14.1`
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
@@ -563,7 +563,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Sonnet builds
 
 - [ ] Make every change optimistic with undo on failure, and add clear error, session-expired and offline states.
-- [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 6 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict). Every combination must end in the right screen with no errors.
+- [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 7 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict, Bad request). Every combination must end in the right screen with no errors.
 
 **Done when:** Every combination in the matrix ends in the right screen with no errors.
 
@@ -597,7 +597,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 | Companies | M17 |
 | Company detail | M17, M18b |
 | Usage | M19 |
-| Accept invite (not in the prototype) | M14b |
+| Accept invite (added to the prototype flow, Q21) | M14b |
 
 ## How to release and manage
 
@@ -678,7 +678,7 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 |---|---|
 | Scenarios (6) | Normal day, New company (no cards), Observer view, Super admin opens as Owner, Big board (24 cards), Archived project |
 | Latency (4) | Instant (0 ms), Fast (300 ms), Slow (1500 ms), Very slow (4000 ms) |
-| Faults (6) | Offline (status 0), Server error (500), Session expired (401), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card) |
+| Faults (7) | Offline (status 0), Server error (500), Session expired (401), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card, or a duplicate such as a label name), Bad request (400, a field is missing or wrong) |
 
 ### The 6 scenarios in detail
 
@@ -689,7 +689,7 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 | Observer view | Khoa, Observer | Same 7 cards | Look for Move buttons and PATCH requests | Banner says Observers cannot change anything; no Move buttons; the API would answer 403 (G-3) |
 | Super admin opens as Owner | Linh, Super admin | Same 7 cards | Read the banner; move a card | Banner says she views the company as its Owner and changes are logged; the move works (G-6, G-14) |
 | Big board | Minh, Owner | 4 columns, 24 cards | Scroll; reload with Very slow latency; move a card | Counts of 6 per column and a layout that holds; 4 s skeleton; counts become 5 and 7 after the move |
-| Archived project | Minh, Owner | Same 7 cards | Read the banner; look for Move buttons | Banner says archived and read-only; no Move buttons; the API would answer 403 (G-15) |
+| Archived project | Minh, Owner | Same 7 cards | Open the Archived list; restore inside 30 days; look at a locked one | The project is not a board (G-19). The Owner's Archived list shows Restore while inside 30 days and Locked after (G-15) |
 
 The request log clears when the scenario changes, so it only shows requests for the current scenario.
 
@@ -725,6 +725,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q18 | How long does Open as Owner last? Decided: 2 hours, with an Extend button, one session per Super admin; access ends at expiry; Exit sets `ended_at` and the row is kept. | Decided (M18) |
 | Q19 | Can members be removed? Decided: they are archived and can be restored, never deleted. The last active Owner cannot be archived, and nobody archives themselves. | Decided (M14) |
 | Q20 | What happens to people already signed up when their domain is removed from `allowed_domains`? Decided: they are locked out at once. A custom access token hook refuses sign-in and token refresh, and the database helpers check the signed-in email on every read and write. Memberships are kept and work again if the domain is added back (G-20). | Decided (M2, M3) |
+| Q21 | How does the prototype show the invite flow? Decided: it gets an Accept invite screen, and Sign in shows the G-20 states (company address only, domain removed). Checks run in the browser first and again in the database: a bad field gives 400, a duplicate or stale edit gives 409. Each error appears at its field and keeps the user's input. | Decided (M14b, M20b) |
 ## Before the build
 
 - [x] Use the dedicated repo `lintran-agilityio/tazko-practice` (practice only, no client code).
