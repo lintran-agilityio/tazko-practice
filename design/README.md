@@ -8,7 +8,7 @@ Visual reference for Tazko. Not part of the app build (the format hook skips `de
 ## Contents
 - `tokens.css`: colors, fonts, radii (mirrors `src/index.css`).
 - `prototype/`: source of the 19-board Design canvas, one `.dc.html` per screen, plus `canvas.json` (layout and notes).
-  Live version: https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
+  Live version: https://claude.ai/artifact/Ha2bdKWHPDVHFZVPLcqXxF#page-dcb81aee8d83
   The files use a runtime (`support.js`) that is not stored here, so open the live link to see them rendered. Read the HTML for exact styles and copy.
 
 ## Screen index
