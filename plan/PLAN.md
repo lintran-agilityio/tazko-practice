@@ -3,7 +3,7 @@
 A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-21) and the 15-screen prototype (14 screens plus Accept invite). It is split into 29 small milestones. The ones with a letter (M2b, M6b, M7b, M8b, M14b, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
 - Prototype (15 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
-- Last updated: prototype Version 34 has the UX fixes (UX-1 to UX-5) and the reload race fix, checked in Chrome. Version 35 is still to be built (see Before the build): Accept invite, the G-20 Sign in states, the Archived list and the 400 fault (Q21, G-21).
+- Last updated: prototype Version 35 source is saved in `design/` (Accept invite, the G-20 Sign in states, the 400 fault, and the Archived project scenario reworded for G-19). The live artifact is still Version 34 until the files are loaded into Design again. Version 34 added the UX fixes (UX-1 to UX-5) and the reload race fix, checked in Chrome.
 - Delivery plan (milestones, owner gates, API surface, questions, risks): https://claude.ai/artifact/F4swGuTCXtSmSV7SnEk9rE
 - Blueprint (decisions, findings, requirements, tests, readiness): https://claude.ai/artifact/FHWvj1NtKMZX2nF22qfJeK
 
@@ -237,6 +237,8 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Redirect signed-out visitors to Sign in from every other route, except `/accept-invite` (added in M14b).
 - [ ] Show the signed-in person and their role chip at the bottom of the left navigation.
 - [ ] Custom access token hook that refuses sign-in and token refresh when the email is not on `allowed_domains`, with a clear error that Sign in shows (G-20, TP-13).
+- [ ] Set the Auth password rules in `config.toml` and the hosted project: a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21). Add rate limits for sign-in attempts. The domain-removed message appears only after the password verifies; before that, a refused sign-in always says "The email or password is not right", so nobody can probe which domains were removed.
+- [ ] Tests: Google sign-in with a non-allowed domain creates no `auth.users` row and no session. Google sign-in with an allowed email that already has a password account does not link silently (the person signs in with their password first). A direct API call with a short password, and with a leaked one, is refused.
 
 **Done when:** You can sign in as each seed user and sign out again. A user whose domain is removed from the list is refused at sign in and at the next token refresh.
 
@@ -442,6 +444,8 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
 - [ ] Migration for `invites` (company, email, role, token, expires_at, status). A trigger turns an invite into a membership only when the invited email is confirmed.
+- [ ] The invite `token` is long and random, stored hashed, single-use, and bound to the invited email. The invite-to-membership trigger and `handle_new_user` check `is_company_email` again at accept time, and the existing-user path of `invite-member` does too. Accept invite shows the "used" or "existing account" states only to the holder of a valid token, and attaches an existing account only when the signed-in email equals the invited email. Resend has a rate limit.
+- [ ] Test: invite an address, remove its domain, accept the invite, and expect a refusal with no membership.
 - [ ] Edge Function `invite-member`: checks that the caller is an Owner of the company and that the address is on an allowed company domain (a personal address gets a clear refusal, G-20), then invites by email through the Auth admin API, adds an existing user directly, or restores an archived member. The logic is separate from the HTTP layer so tests do not need the function runtime. The `service_role` key stays in the function environment and never reaches the app or the repo.
 - [ ] Invite by email and role on Members, with a clear message when the address is not a company address (G-20). Pending rows have resend, revoke and expiry, and are searchable by email (UX-5).
 - [ ] Accept invite screen at `/accept-invite`, outside the app shell: set a password (checked in the browser and again on the server, G-21), with states for an expired link, a used link, a revoked link, an address whose domain was removed since the invite, an existing account (go to Sign in instead) and offline. Then go to Home with the right role chip. The route guard from M3 lets this route through.
@@ -681,7 +685,7 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 |---|---|
 | Scenarios (6) | Normal day, New company (no cards), Observer view, Super admin opens as Owner, Big board (24 cards), Archived project |
 | Latency (4) | Instant (0 ms), Fast (300 ms), Slow (1500 ms), Very slow (4000 ms) |
-| Faults (7) | Offline (status 0), Server error (500), Session expired (401), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card, or a duplicate such as a label name), Bad request (400, a field is missing or wrong) |
+| Faults (7) | Offline (status 0), Server error (500), Session expired (401), Forbidden (403, row level security), Not found (404), Conflict (409 when moving a card), Bad request (400, the move is refused as invalid) |
 
 ### The 6 scenarios in detail
 
@@ -692,7 +696,7 @@ The prototype has a panel artboard (`Prototype panel`) that drives one fake API.
 | Observer view | Khoa, Observer | Same 7 cards | Look for Move buttons and PATCH requests | Banner says Observers cannot change anything; no Move buttons; the API would answer 403 (G-3) |
 | Super admin opens as Owner | Linh, Super admin | Same 7 cards | Read the banner; move a card | Banner says she views the company as its Owner and changes are logged; the move works (G-6, G-14) |
 | Big board | Minh, Owner | 4 columns, 24 cards | Scroll; reload with Very slow latency; move a card | Counts of 6 per column and a layout that holds; 4 s skeleton; counts become 5 and 7 after the move |
-| Archived project | Minh, Owner | Same 7 cards | Open the Archived list; restore inside 30 days; look at a locked one | The project is not a board (G-19). The Owner's Archived list shows Restore while inside 30 days and Locked after (G-15) |
+| Archived project | Minh, Owner | Same 7 cards | Read the banner; look for Move buttons | The banner stands in for the Owner's Archived list row: it says the project is archived and read-only, with the days left to restore. No Move buttons, and the API would answer 403 (G-15). In the real app this is the Archived list, with Restore inside 30 days and Locked after (G-19) |
 
 The request log clears when the scenario changes, so it only shows requests for the current scenario.
 
@@ -737,7 +741,8 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 - [ ] Install Docker and Node.js 20.19 or newer, so the local Supabase stack can run.
 - [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
 - [ ] Save the prototype source and tokens into design/, and save this plan as PLAN.md in the repo.
-- [ ] Build prototype Version 35 and save it into design/: the Accept invite screen, the G-20 states on Sign in, the Archived list in place of the Archived scenario, and the 400 fault (Q21, G-21). Update design/README.md and the prototype link above.
+- [x] Prototype Version 35 source is saved in design/: the Accept invite screen, the G-20 states on Sign in, the Archived project scenario reworded for G-19, and the 400 fault. The 400 and the duplicate 409 are shown at the fields of Sign in and Accept invite; the panel shows the move being refused as a banner.
+- [ ] Load the Version 35 files into the live Design artifact, then update the prototype link above.
 
 ## Kickoff prompt for Claude Code
 
