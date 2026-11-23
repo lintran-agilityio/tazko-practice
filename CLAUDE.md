@@ -1,6 +1,6 @@
 # Tazko
 
-Kanban work tracker for one group running several companies. Source of truth: [plan/PLAN.md](plan/PLAN.md) (31 milestones, decisions G-1..G-21, UX-1..UX-6, questions Q1..Q21). Visual reference: `design/`.
+Kanban work tracker for one group running several companies. Source of truth: [plan/PLAN.md](plan/PLAN.md) (31 milestones, decisions G-1..G-21, UX-1..UX-6, questions Q1..Q28). Visual reference: `design/`.
 
 ## Stack
 
@@ -24,6 +24,7 @@ React 19 + TypeScript + Tailwind 4 (Vite); Supabase (Postgres, Auth, Row Level S
 7. Code, comments, docs and commit messages in English.
 8. Never commit secrets. Only `.env.example`.
 9. `dev` and `main` must always work: merge only when typecheck, lint, tests pass.
+10. Every ticket is a GitHub issue (`#n`). Every commit message ends with `Refs: #n` (before the co-author line). Every PR description starts with `Closes #n` as its first line. No issue yet: create one first, never commit or open a PR without a number.
 
 ## Product invariants
 
