@@ -40,4 +40,6 @@ Source in `design/` updated to match `plan/PLAN.md` (Q22 to Q28). The live canva
 
 New screen: **Boards** (`Boards.dc.html`, Q22): project tiles, "+ New project", and an Owner-only Archived tab with Restore (21 days left) and Locked rows. The Boards item in every navigation now opens it.
 
-Not drawn yet: Members Archive, Restore and Revoke, column editing in Project settings, New company form, Sign in offline, expired and rate-limit states.
+New on **Members**: Archive (inline confirm), Restore, Revoke invite, Resend, an Active/Archived switch, and "Last Owner" instead of actions for the last Owner (Q19, G-19). Sample archived member: Dung.
+
+Not drawn yet: column editing in Project settings, New company form, Sign in offline, expired and rate-limit states.
