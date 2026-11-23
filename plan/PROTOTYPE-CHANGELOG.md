@@ -44,4 +44,4 @@ New on **Members**: Archive (inline confirm), Restore, Revoke invite, Resend, a 
 
 New on **Project settings**: columns can be renamed (400 at the field for empty, long or duplicate names), reordered with up/down, archived (refused while the column has active cards) and added at the end (M15, UX-1).
 
-Not drawn yet: New company form, Sign in offline, expired and rate-limit states.
+New in group 4: **Companies** has a New company form (company name and first Owner email; 400 at the field for an empty name or a personal address, 409 for a duplicate name) and a Pending owner row; **Company detail** has a Pending owner view with Resend invite (switch at the bottom, or open from the new row); **Sign in** has Offline, Session expired and Too many attempts states (chips, and three wrong passwords in a row); **Accept invite** has Invalid link (one generic message, M14c) and Too many tries.

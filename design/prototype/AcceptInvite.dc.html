@@ -45,7 +45,9 @@ STATES=[
 {id:'revoked',label:'Revoked',title:'This invite was cancelled',text:'An Owner cancelled it. Ask them to send a new one if you still need access.',action:'Go to Sign in'},
 {id:'domain',label:'Domain removed',title:'This email domain is no longer allowed',text:'Only company addresses can join. Contact your Owner. Your invite works again if the domain is added back.',action:'Go to Sign in'},
 {id:'existing',label:'Existing account',title:'You already have a Tazko account',text:'Sign in with this email. Harbor Logistics is added to your companies.',action:'Sign in'},
-{id:'offline',label:'Offline',title:'You are offline',text:'Check your connection. Your link is still valid, so reload this page when you are back.',action:'Go to Sign in'}];
+{id:'offline',label:'Offline',title:'You are offline',text:'Check your connection. Your link is still valid, so reload this page when you are back.',action:'Go to Sign in'},
+{id:'invalid',label:'Invalid link',title:'This link is not valid',text:'Open the whole link from your invite email, or ask an Owner of your company to send a new invite.',action:'Go to Sign in'},
+{id:'limit',label:'Too many tries',title:'Too many attempts',text:'Wait a few minutes, then open the link again.',action:'Go to Sign in'}];
 renderVals(){
 const st=this.state,cur=this.STATES.find(x=>x.id===st.view);
 const bad='border:1px solid #B3261E;',ok='border:1px solid #8888A6;';

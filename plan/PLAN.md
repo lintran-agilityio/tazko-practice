@@ -783,7 +783,7 @@ Plan and prototype disagree in these places. Fix the prototype first; the plan w
 - Fix old wording: Delete list, Delete label and Delete checklist become Archive (G-19); remove "purged automatically" on Project settings (G-15); the Board column dialog says archive, not "cannot be undone".
 - Remove the Filter button (Q23), Add card on Home (Q24) and the Search filters (Q25). Notifications sample data: assignments, comments and due only (Q26).
 - Banner on Open as Owner: add Extend next to Exit (Q18).
-- Draw what the plan has and the prototype lacks: Boards page with the Archived tab (Q22); Members Archive, Restore, Revoke invite and Archived filter; Project settings add, rename and reorder columns; New company form and the pending owner state; Sign in offline, session expired and rate-limit states; Accept invite generic invalid-link message (M14c).
+- Drawn in the Version 36 source (see PROTOTYPE-CHANGELOG.md); the live canvas still needs them: Boards page with the Archived tab (Q22); Members Archive, Restore, Revoke invite and Archived filter; Project settings add, rename and reorder columns; New company form and the pending owner state; Sign in offline, session expired and rate-limit states; Accept invite generic invalid-link message (M14c).
 
 ## Before the build
 
