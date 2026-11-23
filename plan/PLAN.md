@@ -451,7 +451,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] A policy that lets members of a company read each other’s display names, archived members included, so old Activity keeps its names.
 - [ ] Members list with role chips and last seen in the mono face (DR-2), with archived members marked.
 - [ ] Owners change a member’s role, and archive and restore members (Q19). A trigger keeps at least one active Owner, and nobody can archive themselves.
-- [ ] Search by name or email, with a Clear button, a result count, an empty state and an Archived filter (UX-5).
+- [ ] Search by name or email, with a Clear button, a result count, an empty state and a status filter: Active (default), Pending, Archived and All (UX-5).
 - [ ] Members and Observers cannot reach the screen.
 
 **Done when:** An Owner changes a role, archives and restores a member, and cannot archive the last Owner. An archived Khoa reads nothing in Harbor Logistics, and Hoa still sees his name in old Activity.
