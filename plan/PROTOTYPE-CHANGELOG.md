@@ -42,4 +42,6 @@ New screen: **Boards** (`Boards.dc.html`, Q22): project tiles, "+ New project", 
 
 New on **Members**: Archive (inline confirm), Restore, Revoke invite, Resend, a status filter (Active, Pending, Archived, All; default Active), and "Last Owner" instead of actions for the last Owner (Q19, G-19). Sample archived member: Dung.
 
-Not drawn yet: column editing in Project settings, New company form, Sign in offline, expired and rate-limit states.
+New on **Project settings**: columns can be renamed (400 at the field for empty, long or duplicate names), reordered with up/down, archived (refused while the column has active cards) and added at the end (M15, UX-1).
+
+Not drawn yet: New company form, Sign in offline, expired and rate-limit states.
