@@ -1,0 +1,6 @@
+{
+  "name": "product-flow",
+  "version": "0.2.1",
+  "description": "Tiered agent team (architect, executor, audit), one pinned model per tier, and a coordinate-only ticket-flow skill.",
+  "author": { "name": "Lin Tran" }
+}

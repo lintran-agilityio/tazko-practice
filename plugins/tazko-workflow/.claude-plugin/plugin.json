@@ -1,6 +1,6 @@
 {
   "name": "tazko-workflow",
   "version": "0.1.0",
-  "description": "Tazko milestone workflow: planner/reviewer/security agents, blueprint, ticket-to-pr and prototype-artifact skills, format-on-edit hook.",
+  "description": "Tazko milestone workflow: planner/reviewer/security agents, blueprint and prototype-artifact skills, format-on-edit hook.",
   "author": { "name": "Lin Tran" }
 }

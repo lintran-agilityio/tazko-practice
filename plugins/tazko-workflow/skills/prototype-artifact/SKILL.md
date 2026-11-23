@@ -20,7 +20,7 @@ Goal: a single-file HTML Artifact that lets the user click through a flow and fe
 - Slow-path check: after ~5 s show a "Still working…" hint.
 
 ## 3. Faults
-- A fault control injects failures on the next/every request: **Network offline**, **Timeout**, **Server error (500)**, **Validation error (422, per-field)**, **Forbidden (403)**, **Not found (404)**, **Conflict (409, stale edit)**.
+- A fault control injects failures on the next/every request: **Network offline**, **Timeout**, **Server error (500)**, **Bad request (400, per-field, checked in the browser and again on the server)**, **Forbidden (403)**, **Not found (404)**, **Conflict (409, stale edit)**.
 - Mutations: show optimistic UI, then roll back visibly on fault.
 - Every fault must leave the user a way forward (Retry, Back, Edit and resubmit). No dead ends.
 
@@ -31,7 +31,7 @@ Goal: a single-file HTML Artifact that lets the user click through a flow and fe
   - Offline: "You're offline. Your changes are saved here and will send when you're back." / [Retry]
   - Timeout: "This is taking longer than usual. Try again." / [Retry]
   - 500: "Something went wrong on our side. Your work is safe. Try again in a moment." / [Retry]
-  - 422: field-level, specific: "Project name is required." Not "Invalid input."
+  - 400: field-level, specific: "Project name is required." Not "Invalid input."
   - 403: "You can view this but not change it. Ask an Owner for access."
   - 404: "This card was moved or deleted." / [Back to board]
   - 409: "Someone else changed this card. Reload to see their version." / [Reload] [Keep mine]
