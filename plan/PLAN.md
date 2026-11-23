@@ -123,7 +123,9 @@ Rules for every table:
 | move_card | RPC, security invoker | Owners, Members | Sets column and position; reports a conflict (Q16) | M7 |
 | Activity triggers | Triggers, security definer | Database | Actor is auth.uid(); acting_as_super_admin comes from admin_sessions, not the client | M9 |
 | search_cards | RPC | Active members | Current company only | M12 |
-| touch_last_seen, guard_last_owner | RPC, trigger | Members, database | Last seen; at least one active Owner | M14 |
+| touch_last_seen | RPC | Members | Last seen (Q27) | M4 |
+| guard_last_owner | Trigger | Database | At least one active Owner | M14 |
+| company_counts | RPC | Super admin | Counts only for Company detail (Q28) | M17 |
 | invite-member | Edge Function | Owners | Check the address is a company address, then invite by email, add an existing user, or restore an archived member | M14b |
 | create-company | Edge Function | Super admin | Create a company and invite its first Owner (company address only) | M17 |
 | open_as_owner, extend_owner, exit_owner | RPC, security definer | Super admin | Manage admin_sessions | M18 |
@@ -266,7 +268,8 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Company switcher at the top of the left navigation (G-7), remembering the last company used.
 - [ ] Show only the navigation items a role may use: Owners also see Members, Labels and Project settings.
-- [ ] Profile screen: edit display name, list your companies and roles, sign out.
+- [ ] Migration for `last_seen_at` on memberships and the `touch_last_seen` RPC (Q27).
+- [ ] Profile screen: edit display name, list your companies, roles and last seen, sign out.
 
 **Done when:** Minh switches between both companies without signing out, and the choice is remembered.
 
@@ -298,8 +301,9 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Seed one board with a few cards for Northwind Foods too, so isolation tests have data on both sides (G-8).
 - [ ] Board screen: columns and cards, read-only, with tabs to switch between boards.
 - [ ] Empty state for a board with no cards.
+- [ ] Boards page at `/boards`: the company's boards as tiles, opened from the Boards item in the navigation (Q22).
 
-**Done when:** A person sees the current company’s boards and cards on the Board screen, the tabs switch boards, and an empty board shows its empty state.
+**Done when:** A person sees the current company’s boards and cards on the Board screen, the tabs switch boards, an empty board shows its empty state, and Boards lists the company's boards.
 
 #### M6b: Home and isolation tests
 
@@ -308,7 +312,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.6.1`
 - **Models:** Sonnet builds. The `security` agent runs on the diff.
 
-- [ ] Home: recent boards as tiles first, then what needs attention; tiles scroll sideways under 600px (DR-4).
+- [ ] Home: recent boards as tiles first, then what needs attention (cards assigned to you, soonest due first); tiles scroll sideways under 600px (DR-4). No Add card on Home (Q24).
 - [ ] Tests: a user sees only their own company’s boards, and a Super admin sees no boards or cards (G-14).
 
 **Done when:** Every role sees only the current company’s boards on Home and Board, and a Super admin sees none.
@@ -444,7 +448,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.14.0`
 - **Models:** Sonnet builds
 
-- [ ] Migration for `last_seen_at`, and a policy that lets members of a company read each other’s display names, archived members included, so old Activity keeps its names.
+- [ ] A policy that lets members of a company read each other’s display names, archived members included, so old Activity keeps its names.
 - [ ] Members list with role chips and last seen in the mono face (DR-2), with archived members marked.
 - [ ] Owners change a member’s role, and archive and restore members (Q19). A trigger keeps at least one active Owner, and nobody can archive themselves.
 - [ ] Search by name or email, with a Clear button, a result count, an empty state and an Archived filter (UX-5).
@@ -489,7 +493,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Sonnet builds
 
 - [ ] Settle open question Q5 for columns: a column that still has active cards cannot be archived.
-- [ ] New project action on the Boards page, for Owners only (G-16). It creates a project with the columns Backlog, In progress, Review and Done.
+- [ ] New project action on the Boards page (Q22) and on the board tab bar, for Owners only (G-16). It creates a project with the columns Backlog, In progress, Review and Done.
 - [ ] Edit a project’s name and description.
 - [ ] Add, rename and reorder columns in Project settings.
 - [ ] Owners only, enforced in the database.
@@ -518,6 +522,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] A shared confirm-by-name component, used for archiving (G-5).
 - [ ] Archive removes the project from the boards and lists it in the Owner’s Archived list. It cannot be opened or written to while archived (BR-2, G-19).
+- [ ] Archived tab on the Boards page, Owners only: each row has Restore inside 30 days, or a Locked label after (Q22).
 - [ ] Restore works for 30 days. After that the project is locked: the app refuses to restore it, and it stays in the database. No Delete button and no purge job (G-15).
 
 **Done when:** Archiving needs the typed name, restore works on day 29 and is refused on day 31, and only Owners can do it.
@@ -530,6 +535,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.17.0`
 - **Models:** Opus reviews the Edge Function first, Sonnet builds. The owner approves how the function reads `service_role`, and the `security` agent runs on the diff.
 
+- [ ] Counts-only RPC `company_counts`: members, boards, cards created this month and active in the last 7 days, Super admin only, never Activity rows (Q28, G-14). M19 reuses it.
 - [ ] Companies screen: list companies with company-level counts.
 - [ ] Edge Function `create-company(name, owner_email)`, Super admin only. The owner address must be a company address (G-20). It creates the company and invites its first Owner with the invite logic from M14b, or adds an existing user. The Super admin never becomes an Owner (G-14).
 - [ ] Company detail: people (display names through the view, Q10), counts, a "pending owner" state, and a link back to the list.
@@ -622,6 +628,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 | Profile | M4 |
 | Home | M6b |
 | Board | M6, M7, M7b, M15b |
+| Boards page (`/boards`, Q22; added to the prototype in Version 36, not counted in the 15) | M6, M15, M16 |
 | Card detail | M8, M8b, M9 |
 | Board as list | M11 |
 | Search | M12 |
@@ -736,7 +743,7 @@ The request log clears when the scenario changes, so it only shows requests for 
 
 ## Open questions
 
-Settle each one before the milestone that needs it. Out of scope for now: real-time collaboration, file uploads and card cover images, the weekly digest email, the board background picker, and a mobile app. Card titles such as "Weekly digest email" in the prototype are sample data, not features.
+Settle each one before the milestone that needs it. Out of scope for now: real-time collaboration, file uploads and card cover images, the weekly digest email, the board background picker, board filters (Q23), search filters by type or column (Q25), and a mobile app. Card titles such as "Weekly digest email" in the prototype are sample data, not features.
 
 |  | Question | Decide |
 |---|---|---|
@@ -751,7 +758,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q9 | Self-host the fonts or use the Google Fonts link? Decided: self-host with `@fontsource`. | Decided |
 | Q10 | May a Super admin read the display name of a company's members (G-14 says "people")? Recommended: yes, through a view with display name only, not the full profiles table. | Before M2 |
 | Q11 | Which branch is the base for milestones: `main` or `dev`? Decided: `dev` is the integration branch and is merged into `main` for each release (see "How to release and manage"). | Decided |
-| Q12 | What are the URLs of the screens? Decided: boards and cards are addressed by their database id (UUID), never by name. `/sign-in`, `/` (Home), `/boards/:boardId`, `/boards/:boardId/list`, `/cards/:cardId`, `/search`, `/notifications`, `/members`, `/labels`, `/settings/project`, `/profile`, `/companies`, `/companies/:companyId`, `/usage`, plus `/accept-invite` (outside the shell, built in M14b). | Decided |
+| Q12 | What are the URLs of the screens? Decided: boards and cards are addressed by their database id (UUID), never by name. `/sign-in`, `/` (Home), `/boards` (Boards, Q22), `/boards/:boardId`, `/boards/:boardId/list`, `/cards/:cardId`, `/search`, `/notifications`, `/members`, `/labels`, `/settings/project`, `/profile`, `/companies`, `/companies/:companyId`, `/usage`, plus `/accept-invite` (outside the shell, built in M14b). | Decided |
 | Q13 | How do invited people get an account? Decided: `inviteUserByEmail` in an Edge Function; a membership starts only when the invited email is confirmed; public signup is off. | Decided (M14b) |
 | Q14 | Local or hosted? Decided: local until M19; hosting, and the SMTP for invites if hosted, are decided at the M20 gate. | Decided |
 | Q15 | Does Activity survive a purge? Closed: nothing is deleted (G-19). | Closed |
@@ -761,6 +768,22 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q19 | Can members be removed? Decided: they are archived and can be restored, never deleted. The last active Owner cannot be archived, and nobody archives themselves. | Decided (M14) |
 | Q20 | What happens to people already signed up when their domain is removed from `allowed_domains`? Decided: they are locked out at once. A custom access token hook refuses sign-in and token refresh, and the database helpers check the signed-in email on every read and write. Memberships are kept and work again if the domain is added back (G-20). | Decided (M2, M3) |
 | Q21 | How does the prototype show the invite flow? Decided: it gets an Accept invite screen, and Sign in shows the G-20 states (company address only, domain removed). Checks run in the browser first and again in the database: a bad field gives 400, a duplicate or stale edit gives 409. Each error appears at its field and keeps the user's input. | Decided (M14b, M20b) |
+| Q22 | What is the Boards item in the left navigation? Decided: a `/boards` page with the company's boards, "+ New project" (Owners, G-16) and, for Owners, an Archived tab listing archived projects with Restore for 30 days and Locked after (G-15, G-19). The prototype keeps "+ New project" on the board tab bar too. | Decided (M6, M15, M16) |
+| Q23 | Does the board need a Filter button? Decided: no. The prototype button had no behavior, a board is grouped by column and the list view sorts. Removed from Board and Board as list. | Decided |
+| Q24 | Does Home have Add card? Decided: no. Add card lives on Board only (M7). Home shows recent boards and what needs attention. | Decided |
+| Q25 | Does Search have Type and Column filters? Decided: no. The Board and Column columns of the results table are enough. | Decided |
+| Q26 | Which events create a notification? Decided: assignments, comments and due tomorrow only (M13). Description edits and moves stay in Activity. | Decided |
+| Q27 | When does `last_seen_at` exist? Decided: from M4, because Profile shows Last seen. M14 only shows it on Members. | Decided (M4) |
+| Q28 | Where do the Company detail figures come from? Decided: a counts-only RPC `company_counts` built in M17 (members, boards, cards created this month, active last 7 days), reused by `usage_counts` in M19. A Super admin never reads Activity rows (G-14). | Decided (M17) |
+
+## Prototype to-do (Version 36)
+
+Plan and prototype disagree in these places. Fix the prototype first; the plan wins until then (design/README.md).
+
+- Fix old wording: Delete list, Delete label and Delete checklist become Archive (G-19); remove "purged automatically" on Project settings (G-15); the Board column dialog says archive, not "cannot be undone".
+- Remove the Filter button (Q23), Add card on Home (Q24) and the Search filters (Q25). Notifications sample data: assignments, comments and due only (Q26).
+- Banner on Open as Owner: add Extend next to Exit (Q18).
+- Draw what the plan has and the prototype lacks: Boards page with the Archived tab (Q22); Members Archive, Restore, Revoke invite and Archived filter; Project settings add, rename and reorder columns; New company form and the pending owner state; Sign in offline, session expired and rate-limit states; Accept invite generic invalid-link message (M14c).
 
 ## Before the build
 
