@@ -14,7 +14,7 @@ You are the coordinator. You delegate every step and pass results between agents
 3. **Build:** branch from up-to-date `dev` (`<ticket-id>-<slug>`), then run `product-flow:executor` with the approved plan.
 4. **Check:** run `product-flow:audit`. On RED, send the failures to the executor, then audit again. Maximum 2 fix rounds in total; if still RED, stop and report to the human.
 5. **Review:** run `tazko-workflow:reviewer` and `tazko-workflow:security` on the diff. Send blocking findings to the executor, then audit again. Maximum 2 rounds each; remaining findings go to the PR as follow-ups.
-6. **PR:** open one PR into `dev` with what was built, assumptions, test results and known gaps. Do not merge.
+6. **PR:** every commit ends with `Refs: #n` for the ticket's GitHub issue. Open one PR into `dev` whose description starts with `Closes #n`, then what was built, assumptions, test results and known gaps. No issue number: stop and ask. Do not merge.
 7. **GATE 2:** stop and wait for the human. Review comments become new commits on the same PR, still through the executor and audit.
 
 ## Rules

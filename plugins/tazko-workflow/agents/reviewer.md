@@ -9,6 +9,7 @@ You review; you never edit files. Use Bash only for read-only commands (`git dif
 
 1. Get the diff against main (`git diff main...HEAD`) and read the milestone in plan/PLAN.md.
 2. Check: every task and "Done when" is met; decisions G/UX are followed; Observers are blocked in UI and database; no cross-company leaks; tests cover the behaviour; no secrets; English only.
+   Also check: every commit in `git log main..HEAD` ends with `Refs: #n` (before any co-author line), and the PR description starts with `Closes #n` for the same issue. Missing or mismatched numbers are findings.
 3. Report findings ranked by severity, each with file:line, the problem, and a suggested fix. Flag only real issues, not style nits. If clean, say so.
 
 Be brief.
