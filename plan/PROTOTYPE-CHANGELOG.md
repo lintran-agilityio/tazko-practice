@@ -1,6 +1,6 @@
 # Prototype change log
 
-What changed in the prototype after the first build plan. Visual reference: `design/` (read-only). Live prototype: https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
+What changed in the prototype after the first build plan. Visual reference: `design/` (read-only). Live prototype (Version 36): https://claude.ai/artifact/UNoNKZwkCss9hrxUqEKrk5
 
 ## v22: grill round 2 decisions
 

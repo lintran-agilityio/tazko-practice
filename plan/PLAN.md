@@ -2,8 +2,8 @@
 
 A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-21) and the 15-screen prototype (14 screens plus Accept invite). It is split into 31 small milestones. The ones with a letter (M2b, M3b, M6b, M7b, M8b, M14b, M14c, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
-- Prototype (15 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/Ha2bdKWHPDVHFZVPLcqXxF
-- Last updated: prototype Version 35 source is saved in `design/` (Accept invite, the G-20 Sign in states, the 400 fault, and the Archived project scenario reworded for G-19). The live artifact is the new Design canvas "Tazko Prototype v35", linked above (the old Version 34 canvas is retired). Version 34 added the UX fixes (UX-1 to UX-5) and the reload race fix, checked in Chrome.
+- Prototype (15 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/UNoNKZwkCss9hrxUqEKrk5
+- Last updated: prototype Version 36 source is saved in `design/` (Boards page with the Archived tab, Members status filter with Archive, Restore and Revoke, column editing in Project settings, New company and Pending owner, the Sign in and Accept invite error states, and the wording fixes for G-19; see `plan/PROTOTYPE-CHANGELOG.md`). The live artifact is the Design canvas "Tazko Prototype v36", linked above. It is private until its owner shares it. The older v35 canvas (Ha2bdKWHPDVHFZVPLcqXxF) is retired.
 - Delivery plan (milestones, owner gates, API surface, questions, risks): https://claude.ai/artifact/F4swGuTCXtSmSV7SnEk9rE
 - Blueprint (decisions, findings, requirements, tests, readiness): https://claude.ai/artifact/FHWvj1NtKMZX2nF22qfJeK
 
