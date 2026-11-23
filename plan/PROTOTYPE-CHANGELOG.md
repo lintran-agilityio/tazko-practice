@@ -38,4 +38,6 @@ Source in `design/` updated to match `plan/PLAN.md` (Q22 to Q28). The live canva
 | Labels, Card detail | Delete became Archive | G-19 |
 | Project settings | "Purged automatically" became "locked and kept" | G-15, G-19 |
 
-Not drawn yet: Boards page with Archived tab, Members Archive, Restore and Revoke, column editing in Project settings, New company form, Sign in offline, expired and rate-limit states.
+New screen: **Boards** (`Boards.dc.html`, Q22): project tiles, "+ New project", and an Owner-only Archived tab with Restore (21 days left) and Locked rows. The Boards item in every navigation now opens it.
+
+Not drawn yet: Members Archive, Restore and Revoke, column editing in Project settings, New company form, Sign in offline, expired and rate-limit states.

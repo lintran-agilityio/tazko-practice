@@ -180,6 +180,15 @@
    "title": "Accept invite",
    "expand": "fill",
    "is_interactive": true
+  },
+  "Boards.dc.html": {
+   "x": 4080,
+   "y": 1240,
+   "w": 1280,
+   "h": 760,
+   "title": "Boards",
+   "expand": "fill",
+   "is_interactive": true
   }
  },
  "order": [
@@ -187,6 +196,7 @@
   "AcceptInvite.dc.html",
   "Profile.dc.html",
   "Home.dc.html",
+  "Boards.dc.html",
   "Board.dc.html",
   "CardDetail.dc.html",
   "BoardList.dc.html",
