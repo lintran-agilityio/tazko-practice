@@ -1,11 +1,18 @@
+import { Route, Routes } from 'react-router'
+import Placeholder from './Placeholder'
+import Shell from './Shell'
+import { acceptInvitePath, screens } from './routes'
+
 export default function App() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center gap-3 p-8">
-      <h1 className="text-3xl font-bold">Tazko</h1>
-      <p className="text-muted">
-        A kanban work tracker for a group of companies. The app shell arrives in
-        milestone M1.
-      </p>
-    </main>
+    <Routes>
+      <Route element={<Shell />}>
+        {screens.map((s) => (
+          <Route key={s.path} path={s.path} element={<Placeholder title={s.label} />} />
+        ))}
+      </Route>
+      <Route path={acceptInvitePath} element={<Placeholder title="Accept invite" />} />
+      <Route path="*" element={<Placeholder title="Page not found" />} />
+    </Routes>
   )
 }
