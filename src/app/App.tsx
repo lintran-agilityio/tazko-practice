@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router'
-import Placeholder from './Placeholder'
-import Shell from './Shell'
+import Placeholder from '../components/Placeholder'
+import Shell from '../components/layout/Shell'
 import { acceptInvitePath, screens } from './routes'
 
 export default function App() {

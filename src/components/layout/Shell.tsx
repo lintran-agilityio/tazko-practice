@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
-import { groupLabels, screens, type Screen } from './routes'
+import { groupLabels, screens, type Screen } from '../../app/routes'
 
 const groups = Object.keys(groupLabels) as Screen['group'][]
 

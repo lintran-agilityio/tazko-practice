@@ -6,7 +6,7 @@ const declarations = (css: string): [string, string][] =>
 
 describe('design tokens', () => {
   const design = declarations(readFileSync('design/tokens.css', 'utf8'))
-  const app = new Map(declarations(readFileSync('src/index.css', 'utf8')))
+  const app = new Map(declarations(readFileSync('src/styles/index.css', 'utf8')))
 
   it('has every token from design/tokens.css with the same value', () => {
     expect(design.length).toBeGreaterThan(20)
@@ -16,7 +16,7 @@ describe('design tokens', () => {
   })
 
   it('self-hosts both fonts with @fontsource', () => {
-    const css = readFileSync('src/index.css', 'utf8')
+    const css = readFileSync('src/styles/index.css', 'utf8')
     expect(css).toContain('@fontsource/hanken-grotesk/')
     expect(css).toContain('@fontsource/dm-mono/')
   })
