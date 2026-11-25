@@ -25,6 +25,7 @@ React 19 + TypeScript + Tailwind 4 (Vite); Supabase (Postgres, Auth, Row Level S
 8. Never commit secrets. Only `.env.example`.
 9. `dev` and `main` must always work: merge only when typecheck, lint, tests pass.
 10. Every ticket is a GitHub issue (`#n`). Every commit message ends with `Refs: #n` (before the co-author line). Every PR description starts with `Closes #n` as its first line. No issue yet: create one first, never commit or open a PR without a number.
+11. Tests first (TDD) for every feature: write failing vitest tests before the implementation, commit them first, then make them pass (as in #170). Keep tests in a `tests/` folder next to the code they cover (`src/app/` keeps its test next to the code). A bug fix starts with a failing test that reproduces it.
 
 ## Product invariants
 
