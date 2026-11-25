@@ -3,7 +3,7 @@
 A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-21) and the 15-screen prototype (14 screens plus Accept invite). It is split into 31 small milestones. The ones with a letter (M2b, M3b, M6b, M7b, M8b, M14b, M14c, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
 - Prototype (15 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/UNoNKZwkCss9hrxUqEKrk5
-- Last updated: prototype Version 36 source is saved in `design/` (Boards page with the Archived tab, Members status filter with Archive, Restore and Revoke, column editing in Project settings, New company and Pending owner, the Sign in and Accept invite error states, and the wording fixes for G-19; see `plan/PROTOTYPE-CHANGELOG.md`). The live artifact is the Design canvas "Tazko Prototype v36", linked above. It is private until its owner shares it. The older v35 canvas (Ha2bdKWHPDVHFZVPLcqXxF) is retired.
+- Last updated: prototype Version 36 source is saved in `design/` (Boards page with the Archived tab, Members status filter with Archive, Restore and Revoke, column editing in Project settings, New company and Pending owner, the Sign in and Accept invite error states, the issue #167 fixes, and the wording fixes for G-19; see `plan/PROTOTYPE-CHANGELOG.md`). The live artifact linked above is an older canvas that does not have all of this yet; the source in `design/` is the reference until the live canvas is reloaded from it. It is private until its owner shares it. The older v35 canvas (Ha2bdKWHPDVHFZVPLcqXxF) is retired.
 - Delivery plan (milestones, owner gates, API surface, questions, risks): https://claude.ai/artifact/F4swGuTCXtSmSV7SnEk9rE
 - Blueprint (decisions, findings, requirements, tests, readiness): https://claude.ai/artifact/FHWvj1NtKMZX2nF22qfJeK
 
@@ -43,7 +43,7 @@ These came from the interview and are the source of truth for the build.
 | G-19 | Data | Nothing is ever permanently deleted in the database. Every table that people can remove rows from has `archived_at` and `archived_by`. DELETE is revoked from all app roles, and reads return active rows only. Archived rows are listed and restored through Owner-only RPCs. In this plan "delete" for labels, checklist items, links, lists and members means archive. |
 | G-20 | Permissions | People can sign in, and be invited, only with an email address on an allowed company domain. Personal addresses (Gmail and the like) are refused for Google, for email sign-in and for invites. There is one allow-list for the whole group, kept in the database (`allowed_domains`, soft delete) and loaded by the seed from the `ALLOWED_EMAIL_DOMAINS` environment variable. The real domain is set in the local environment and is not written in the repo. The database refuses to create a user, or change a user's email, to any other domain, so no screen or provider setting can skip the rule. The rule is checked again at every sign-in and token refresh, and by the database policies on every read and write, so removing a domain locks out everyone on it at once. Their memberships are kept and work again if the domain is added back. This also stops someone who buys a dropped domain from signing in as a former user. |
 | G-21 | Validation | Every input is checked twice: in the browser first, for fast feedback, and again on the server and in the database, which never trust the browser. A rejected field gives 400 and a duplicate or stale edit gives 409. The screen shows the message at that field and keeps what the person typed. Nothing invalid reaches the database, even when the API is called directly. |
-| UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list and Archive list. Archive asks for confirmation, and a list that still has active cards cannot be archived (Q5). The prototype's separate Delete list is merged into Archive list (G-19). Owners only. The menu must stay fully inside its column (a prototype bug clipped it). |
+| UX-1 | List actions | Each board column has a "⋯" menu: Rename, Add card, Move list and Archive list. Archive asks for confirmation, and a list that still has active cards cannot be archived (Q5). The prototype's separate Delete list is merged into Archive list (G-19). Owners only. The menu must stay fully inside its column (a prototype bug clipped it). Every "⋯" menu, including the checklist menu on a card, closes with Esc and with a click outside it. |
 | UX-2 | Add list | A dashed "+ Add list" column ends each board. The name field has focus at once; Enter adds, Esc cancels. Owners only. |
 | UX-3 | Checklist | A card has a checklist: check, delete an item with Undo, a "Hide checked items" toggle that shows a count, and a menu to uncheck all or delete the whole checklist (confirmed). |
 | UX-4 | Links | A card has a Links list. Long URLs are cut with an ellipsis (domain and start of path), with the full URL in the tooltip and the accessible name. Long text in descriptions and comments wraps. |
@@ -69,7 +69,7 @@ Why Row Level Security matters here: the rule that each company sees only its ow
 | companies | id, name, created_at | A tenant. Every board, card and member belongs to exactly one company (T-1). |
 | profiles | id (the auth user), display_name, is_super_admin, last_company_id | One row per signed-in person. last_company_id powers the company switcher (G-7). |
 | memberships | company_id, user_id, role (owner, member, observer), last_seen_at, archived_at, archived_by | Links people to companies. Unique per company and person. An archived membership loses all access at once, keeps its history, and can be restored. A company always keeps one active Owner. |
-| boards | id, company_id, name, description, archived_at | Called a project in settings (T-2). archived_at starts the 30-day restore window (BR-2). |
+| boards | id, company_id, name, description, updated_at, archived_at | Called a project in settings (T-2). archived_at starts the 30-day restore window (BR-2). |
 | columns | id, board_id, name, position | The columns of a board. |
 | cards | id, company_id, board_id, column_id, title, description, due_date, position, created_by, updated_at | A card lives on exactly one board and in one column; moving it changes column_id and position on the same row, never a copy (BR-1). |
 | card_assignees | card_id, user_id | Any role can be assigned, Observers included (G-3). |
@@ -138,6 +138,7 @@ Errors the screens must handle:
 | Expired token (401) | "Your session has expired" with Sign in again |
 | INSERT refused by WITH CHECK (403) | Forbidden message, change rolled back |
 | UPDATE refused by RLS changes 0 rows, not 403 | Treated as Forbidden |
+| A stale edit: the row's `updated_at` changed since it was read | The update goes through an RPC or trigger that checks `updated_at`, bumps it and raises a conflict (409), so it is never mistaken for a 0-row Forbidden. The screen shows Reload or Keep mine |
 | move_card reports a conflict | Conflict banner, card returns to its column, Retry |
 | Status 0 or a 5xx | Offline or server error with Try again |
 
@@ -165,7 +166,7 @@ Each row is one pull request and one release.
 | M11 | Board as list | Board as list | M7 | v0.11.0 | 12 |
 | M12 | Search | Search | M7 | v0.12.0 | 16 |
 | M13 | Notifications | Notifications | M9 | v0.13.0 | 21 |
-| M14 | Members and roles | Members | M4 | v0.14.0 | 31 |
+| M14 | Members and roles | Members | M4, M9 | v0.14.0 | 31 |
 | M14b | Invites and Accept invite | Members, Accept invite | M14, M3b | v0.14.1 | 46 |
 | M14c | Invite token hardening | Accept invite | M14b | v0.14.2 | 18 |
 | M15 | Create and edit projects | Project settings | M7 | v0.15.0 | 19 |
@@ -210,7 +211,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder, an .env.example and the npm scripts db:start and db:reset. Turn public signup off in the Auth config (Q13).
 - [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, `archived_at` and `archived_by` on memberships (G-19), and the `allowed_domains` table (G-20).
-- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships, and they also require the signed-in email to be on `allowed_domains` (G-20), so a removed domain loses access at once. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14).
+- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships, and they also require the signed-in email to be on `allowed_domains` (G-20), so a removed domain loses access at once. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14). Create the empty `admin_sessions` table here, so `has_company_access` can check it from the start; M18 only adds the RPCs that write it. Add a view `company_people` (user id, company id, display name, archived members included) that members of a company can read, so the assignee picker (M8) and Activity (M9) show real names while `last_company_id` and `is_super_admin` of other people stay private.
 - [ ] Block a person from changing their own is_super_admin flag or role, in the database. Revoke DELETE from every app role, and add a test that fails if any table grants it (G-19). Add the guard trigger on `auth.users` that refuses a new user, or an email change, outside `allowed_domains` (G-20), with a clear error message.
 - [ ] Answer TP-9 on memberships: archive through an RPC, and record whether a plain PATCH of `archived_at` fails under an active-only SELECT policy.
 
@@ -224,7 +225,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Haiku writes seed data, Sonnet builds the tests
 
 - [ ] Seed the 2 companies and 4 users from G-8 with one command. The seed first loads `allowed_domains` from `ALLOWED_EMAIL_DOMAINS` (`.env.example` has a placeholder domain), and the seed users use an allowed domain. Users are created through the Auth admin API, with passwords from the local env (never committed).
-- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, an archived member reads nothing, a personal address (for example a Gmail address) cannot be created as a user, and a user whose domain is archived reads nothing. A write refused by RLS changes 0 rows, and the tests assert that.
+- [ ] Isolation tests through supabase-js with real signed-in users (Q8): one company cannot read another company’s rows, Linh reads company-level tables only, an Observer cannot write, nobody can promote themselves, an archived member reads nothing, a personal address (for example a Gmail address) cannot be created as a user, and a user whose domain is archived reads nothing. A write refused by RLS changes 0 rows, and the tests assert that. A member reads co-members' display names through `company_people` (archived included), a non-member reads none, and nobody reads another person's `last_company_id`.
 - [ ] CI starts Supabase and runs the database tests in their own Vitest project (TP-3).
 
 **Done when:** The seed loads with one command and every isolation test passes, locally and in CI.
@@ -253,7 +254,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Sign in states: wrong password, offline and session expired. Each keeps the typed email and offers a way forward. A refused token refresh (no password involved) sends the person to Sign in with "Your session has expired".
 - [ ] Map the access token hook error: "Your company domain is no longer allowed. Contact your Owner" appears only when the password verified and the domain is gone (G-20, Q20). For an unverified caller, a wrong password and a removed domain give the same message, "The email or password is not right", so nobody can probe which domains were removed. The hook error text is never sent to the browser as is.
-- [ ] Set the Auth password rules in `config.toml` and the hosted project: a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21).
+- [ ] Set the Auth password rules in `config.toml` (the hosted project is set in M20c): a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21).
 - [ ] Rate limits on sign-in attempts, per email and per IP address, with the numbers written in the config and in the README.
 - [ ] Tests: wrong password with a removed domain gives the generic message; a refused refresh lands on Sign in; a direct API call with a short password, and with a leaked one, is refused; the rate limit blocks the next attempt.
 
@@ -312,7 +313,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.6.1`
 - **Models:** Sonnet builds. The `security` agent runs on the diff.
 
-- [ ] Home: recent boards as tiles first, then what needs attention (cards assigned to you, soonest due first); tiles scroll sideways under 600px (DR-4). No Add card on Home (Q24).
+- [ ] Home: recent boards as tiles first, then what needs attention (cards assigned to you, soonest due first, added in M8 once cards can be assigned); tiles scroll sideways under 600px (DR-4). No Add card on Home (Q24).
 - [ ] Tests: a user sees only their own company’s boards, and a Super admin sees no boards or cards (G-14).
 
 **Done when:** Every role sees only the current company’s boards on Home and Board, and a Super admin sees none.
@@ -354,10 +355,11 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Card page with title, description editing, due date and column, and a link back to the board.
 - [ ] Description editing takes focus at once and saves with Ctrl+Enter or ⌘+Enter (UX-5).
-- [ ] Assignees, Observers included, with a note that Observers follow the card but cannot edit it (G-3), and a picker with search by name or email (UX-5). Only active members can be assigned.
+- [ ] Assignees, Observers included, with a note that Observers follow the card but cannot edit it (G-3), and a picker with search by name or email (UX-5). Only active members can be assigned. Create the `card_assignees` table in this milestone, then fill the Home attention list (cards assigned to you, soonest due first).
 - [ ] Observers see the page read-only.
+- [ ] A card edit sends the `updated_at` it was based on. If the card changed since, the database refuses it with 409 and the screen shows "Reload or Keep mine" at the field (G-21).
 
-**Done when:** Hoa can edit a card and assign people; Khoa can be assigned to it but cannot change anything (TP-6).
+**Done when:** Hoa can edit a card and assign people; Khoa can be assigned to it but cannot change anything (TP-6). Home lists the cards assigned to you, soonest due first. An edit made on an old version of a card gets 409.
 
 #### M8b: Checklist and links
 
@@ -379,7 +381,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Opus reviews the trigger design first, Sonnet builds. The `security` agent runs on the diff.
 
 - [ ] Comments table and a comment box on Card detail; Ctrl+Enter or ⌘+Enter sends, with the matching hint (UX-5).
-- [ ] Activity table plus database triggers for comments, moves, assignments, due dates and description edits (G-4). A description edit records who and when, never the text (G-17).
+- [ ] Activity table plus database triggers for comments, moves, assignments, due dates, description edits, and a card being created or archived (G-4). A description edit records who and when, never the text (G-17).
 - [ ] Add the acting_as_super_admin column now, ready for M18 (G-6). Activity triggers run as security definer, and app roles cannot insert into activity.
 - [ ] Activity list on Card detail showing who did what and when, with times in the mono face.
 
@@ -444,14 +446,13 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 #### M14: Members and roles
 
 - **Screens:** Members
-- **Depends on:** M4
+- **Depends on:** M4, M9
 - **Release:** `v0.14.0`
 - **Models:** Sonnet builds
 
-- [ ] A policy that lets members of a company read each other’s display names, archived members included, so old Activity keeps its names.
 - [ ] Members list with role chips and last seen in the mono face (DR-2), with archived members marked.
 - [ ] Owners change a member’s role, and archive and restore members (Q19). A trigger keeps at least one active Owner, and nobody can archive themselves.
-- [ ] Search by name or email, with a Clear button, a result count, an empty state and a status filter: Active (default), Pending, Archived and All (UX-5).
+- [ ] Search by name or email, with a Clear button, a result count, an empty state and a status filter: Active (default), Archived and All; M14b adds Pending (UX-5).
 - [ ] Members and Observers cannot reach the screen.
 
 **Done when:** An Owner changes a role, archives and restores a member, and cannot archive the last Owner. An archived Khoa reads nothing in Harbor Logistics, and Hoa still sees his name in old Activity.
@@ -494,7 +495,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Settle open question Q5 for columns: a column that still has active cards cannot be archived.
 - [ ] New project action on the Boards page (Q22) and on the board tab bar, for Owners only (G-16). It creates a project with the columns Backlog, In progress, Review and Done.
-- [ ] Edit a project’s name and description.
+- [ ] Edit a project’s name and description. The edit sends the `updated_at` it was based on, and a stale edit gets 409 with "Reload or Keep mine" (G-21).
 - [ ] Add, rename and reorder columns in Project settings.
 - [ ] Owners only, enforced in the database.
 
@@ -585,7 +586,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 #### M20: Polish, phone width and accessibility
 
 - **Screens:** All 15 screens
-- **Depends on:** M1 to M19, including M3b, M6b, M7b, M8b, M14b, M14c, M15b and M18b
+- **Depends on:** M1 to M19 (except M5 if it was skipped), including M3b, M6b, M7b, M8b, M14b, M14c, M15b and M18b
 - **Release:** `v0.20.0`
 - **Models:** Sonnet builds
 
@@ -603,7 +604,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Sonnet builds
 
 - [ ] Make every change optimistic with undo on failure, and add clear error, session-expired and offline states.
-- [ ] One error mapper turns every API and database error into the screen's wording: 400 to a message at the field, 409 to a message with Reload or Keep mine, and an update refused by RLS (0 rows) to Forbidden (G-21).
+- [ ] One error mapper turns every API and database error into the screen's wording: 400 to a message at the field (on a card move, the banner with Retry), 409 on a card move to the banner with Retry (M7b), 409 on an edited field or text to a message at the field with Reload or Keep mine, a duplicate 409 to a message at the field, and an update refused by RLS (0 rows) to Forbidden (G-21).
 - [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 7 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict, Bad request). Every combination must end in the right screen with no errors.
 
 **Done when:** Every combination in the matrix ends in the right screen with no errors.
@@ -618,15 +619,16 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Open the real app in a browser and run each menu, form and shortcut from UX-1 to UX-5 at desktop and phone width.
 - [ ] Write the README: setup, seed accounts, how to run the tests, and that data is never removed (G-19).
 - [ ] Compare each screen with the prototype and list any differences in the final pull request.
+- [ ] If the owner chooses hosting (Q14), set the Auth password rules, rate limits and allowed domains on the hosted project and re-run the sign-in and invite tests there. Ask first: this is Supabase configuration.
 
-**Done when:** All 15 screens match the prototype, the README works from a clean clone, and every test passes.
+**Done when:** All 15 screens match the prototype, the README works from a clean clone, and every test passes. If hosted, the hosted Auth rules match the local ones.
 ### Which milestone builds which screen
 
 | Screen | Built in |
 |---|---|
 | Sign in | M3, M3b, M5 |
 | Profile | M4 |
-| Home | M6b |
+| Home | M6b, M8 |
 | Board | M6, M7, M7b, M15b |
 | Boards page (`/boards`, Q22; added to the prototype in Version 36, not counted in the 15) | M6, M15, M16 |
 | Card detail | M8, M8b, M9 |
@@ -693,9 +695,9 @@ Give Claude more freedom one rung at a time. Move up only when the previous rung
 | Rung | Milestones | How it runs |
 |---|---|---|
 | 1. Supervised | M1 | You approve every command and read every diff. No chained or batched commands. |
-| 2. Semi-supervised | M2 to M5, M14b, M14c and M17 | Claude edits code freely. It asks first for migrations, package installs, auth or Supabase configuration, and anything that reads the `service_role` key (Edge Functions). |
-| 3. Autonomous | M6 to M19, except M14b, M14c and M17 | Claude runs a whole milestone and stops at each pull request. |
-| 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
+| 2. Semi-supervised | M2 to M5, M14b, M14c, M17 and M20c | Claude edits code freely. It asks first for migrations, package installs, auth or Supabase configuration, and anything that reads the `service_role` key (Edge Functions). |
+| 3. Autonomous | M6 to M20b, except M14b, M14c and M17 | Claude runs a whole milestone and stops at each pull request. |
+| 4. Full run | Only if the owner lifts G-13 in writing | Claude chains milestones with no wait for review. Until then every rung stops at each pull request. The stop conditions below still apply. |
 
 The `security` agent runs on M2, M3b, M6, M6b, M7, M7b, M9, M14b, M14c, M16, M17, M18, M18b and M19, at every rung.
 
@@ -760,7 +762,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q11 | Which branch is the base for milestones: `main` or `dev`? Decided: `dev` is the integration branch and is merged into `main` for each release (see "How to release and manage"). | Decided |
 | Q12 | What are the URLs of the screens? Decided: boards and cards are addressed by their database id (UUID), never by name. `/sign-in`, `/` (Home), `/boards` (Boards, Q22), `/boards/:boardId`, `/boards/:boardId/list`, `/cards/:cardId`, `/search`, `/notifications`, `/members`, `/labels`, `/settings/project`, `/profile`, `/companies`, `/companies/:companyId`, `/usage`, plus `/accept-invite` (outside the shell, built in M14b). | Decided |
 | Q13 | How do invited people get an account? Decided: `inviteUserByEmail` in an Edge Function; a membership starts only when the invited email is confirmed; public signup is off. | Decided (M14b) |
-| Q14 | Local or hosted? Decided: local until M19; hosting, and the SMTP for invites if hosted, are decided at the M20 gate. | Decided |
+| Q14 | Local or hosted? Decided: local until M19; hosting, and the SMTP for invites if hosted, are decided at the M20c gate. If hosted, M20c also sets the Auth password rules and rate limits on the hosted project. | Decided |
 | Q15 | Does Activity survive a purge? Closed: nothing is deleted (G-19). | Closed |
 | Q16 | How does a move work and report conflicts? Decided: the `move_card(card, to_column, expected_from_column)` RPC sets column and position (appended at the end) on the same row. A card that already moved, or a missing column, is a conflict. BR-1 now means "same row, never a copy". | Decided (M7b) |
 | Q17 | Who owns a company a Super admin creates? Decided: `create-company` invites the named Owner. The Super admin never becomes Owner. | Decided (M17) |
@@ -784,6 +786,8 @@ Plan and prototype disagree in these places. Fix the prototype first; the plan w
 - Remove the Filter button (Q23), Add card on Home (Q24) and the Search filters (Q25). Notifications sample data: assignments, comments and due only (Q26).
 - Banner on Open as Owner: add Extend next to Exit (Q18).
 - Drawn in the Version 36 source (see PROTOTYPE-CHANGELOG.md); the live canvas still needs them: Boards page with the Archived tab (Q22); Members Archive, Restore, Revoke invite and Archived filter; Project settings add, rename and reorder columns; New company form and the pending owner state; Sign in offline, session expired and rate-limit states; Accept invite generic invalid-link message (M14c).
+- The Open as Owner banner (with Extend 2 hours and Exit) is drawn on the Board only. M18b builds it on every screen; the prototype does not show it elsewhere.
+- Drawn in the issue #167 fixes: the stale-edit state ("Reload or Keep mine") on the Card detail description and the Project settings name, label New, Edit and Archive with a duplicate-name error, an Activity row when a description is saved, a working company switcher, Esc and click-outside on menus, one shared "today" (Nov 13), and no member emails or "Cards moved" for a Super admin.
 
 ## Before the build
 
@@ -793,8 +797,8 @@ Plan and prototype disagree in these places. Fix the prototype first; the plan w
 - [ ] Install Docker and Node.js 20.19 or newer, so the local Supabase stack can run.
 - [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
 - [ ] Save the prototype source and tokens into design/, and save this plan as PLAN.md in the repo.
-- [x] Prototype Version 35 source is saved in design/: the Accept invite screen, the G-20 states on Sign in, the Archived project scenario reworded for G-19, and the 400 fault. The 400 and the duplicate 409 are shown at the fields of Sign in and Accept invite; the panel shows the move being refused as a banner.
-- [x] Version 35 is loaded into a new Design artifact and the prototype link above points to it. Still to check by hand: click through the Sign in states, the Accept invite link states and the 400 fault.
+- [x] Prototype Version 35 source is saved in design/: the Accept invite screen, the G-20 states on Sign in, the Archived project scenario reworded for G-19, and the 400 fault. The 400 and the duplicate 409 are shown at the fields of Sign in, Accept invite, Card detail, Add list, Project settings and Companies; the panel shows a refused move as a banner with Retry. Project settings now has a working type-the-name archive (G-5).
+- [x] Version 35 was loaded into a Design artifact. Version 36 and the fixes of issue #167 (type-the-name archive, field errors, rate limit) still need loading into the live canvas, then a hand check of the Sign in states, the Accept invite link states and the 400 fault.
 
 ## Kickoff prompt for Claude Code
 
