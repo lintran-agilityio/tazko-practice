@@ -45,7 +45,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #4F52D9;outline-offset:2p
 <section aria-labelledby="h-fa">
 <h2 id="h-fa" style="margin:0 0 8px;font-size:13px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Fault</h2>
 <div style="display:flex;flex-direction:column;gap:6px">
-<sc-for list="{{faults}}" as="o" hint-placeholder-count="7">
+<sc-for list="{{faults}}" as="o" hint-placeholder-count="8">
 <button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}"><span style="display:block;font-size:14px;font-weight:600">{{o.label}}</span><span style="display:block;font-size:12px;color:#5B5B76;margin-top:2px">{{o.desc}}</span></button>
 </sc-for>
 </div>
