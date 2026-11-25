@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import App from '../../src/app/App'
-import { acceptInvitePath, screens } from '../../src/app/routes'
+import App from './App'
+import { acceptInvitePath, screens } from './routes'
 
 const renderAt = (path: string) =>
   render(

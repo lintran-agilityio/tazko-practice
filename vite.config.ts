@@ -11,7 +11,7 @@ export default defineConfig({
     // Revisit when a newer vitest is released.
     pool: 'vmThreads',
     environment: 'jsdom',
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./src/test/setup.ts'],
     globals: false,
   },
 })
