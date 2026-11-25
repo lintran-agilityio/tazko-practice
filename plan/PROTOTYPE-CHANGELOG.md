@@ -45,3 +45,13 @@ New on **Members**: Archive (inline confirm), Restore, Revoke invite, Resend, a 
 New on **Project settings**: columns can be renamed (400 at the field for empty, long or duplicate names), reordered with up/down, archived (refused while the column has active cards) and added at the end (M15, UX-1).
 
 New in group 4: **Companies** has a New company form (company name and first Owner email; 400 at the field for an empty name or a personal address, 409 for a duplicate name) and a Pending owner row; **Company detail** has a Pending owner view with Resend invite (switch at the bottom, or open from the new row); **Sign in** has Offline, Session expired and Too many attempts states (chips, and three wrong passwords in a row); **Accept invite** has Invalid link (one generic message, M14c) and Too many tries.
+
+## v36 (source only): issue #167 fixes and 400 fault
+
+- Prototype panel: 7 faults. Bad request (400) was added to the 6 from v26; a refused move shows a banner with Retry.
+- Card detail description and Project settings name: stale-edit state with Reload or Keep mine (409, G-21).
+- Labels: New, Edit and Archive, with a duplicate-name error.
+- Card detail Activity: a row when a description is saved (who and when, no text, G-17).
+- Company switcher works in the prototype; menus close with Esc on Board, Card detail and Labels.
+- One shared "today" (Nov 13). Super admin views show no member emails and no "Cards moved" (G-14).
+- Note: the Open as Owner banner is drawn on Board only; M18b covers every screen.

@@ -3,7 +3,7 @@
 A step-by-step plan to build Tazko as a real app, based on the decisions from the interview and the planning reviews (G-1 to G-21) and the 15-screen prototype (14 screens plus Accept invite). It is split into 31 small milestones. The ones with a letter (M2b, M3b, M6b, M7b, M8b, M14b, M14c, M15b, M18b, M20b, M20c) are follow-ups that keep each pull request small. Each milestone ends in one pull request and one release.
 
 - Prototype (15 screens, plus a Prototype panel with a fake API for scenarios, latency and faults): https://claude.ai/artifact/UNoNKZwkCss9hrxUqEKrk5
-- Last updated: prototype Version 36 source is saved in `design/` (Boards page with the Archived tab, Members status filter with Archive, Restore and Revoke, column editing in Project settings, New company and Pending owner, the Sign in and Accept invite error states, and the wording fixes for G-19; see `plan/PROTOTYPE-CHANGELOG.md`). The live artifact is the Design canvas "Tazko Prototype v36", linked above. It is private until its owner shares it. The older v35 canvas (Ha2bdKWHPDVHFZVPLcqXxF) is retired.
+- Last updated: prototype Version 36 source is saved in `design/` (Boards page with the Archived tab, Members status filter with Archive, Restore and Revoke, column editing in Project settings, New company and Pending owner, the Sign in and Accept invite error states, the issue #167 fixes, and the wording fixes for G-19; see `plan/PROTOTYPE-CHANGELOG.md`). The live artifact linked above is an older canvas that does not have all of this yet; the source in `design/` is the reference until the live canvas is reloaded from it. It is private until its owner shares it. The older v35 canvas (Ha2bdKWHPDVHFZVPLcqXxF) is retired.
 - Delivery plan (milestones, owner gates, API surface, questions, risks): https://claude.ai/artifact/F4swGuTCXtSmSV7SnEk9rE
 - Blueprint (decisions, findings, requirements, tests, readiness): https://claude.ai/artifact/FHWvj1NtKMZX2nF22qfJeK
 
@@ -786,6 +786,7 @@ Plan and prototype disagree in these places. Fix the prototype first; the plan w
 - Remove the Filter button (Q23), Add card on Home (Q24) and the Search filters (Q25). Notifications sample data: assignments, comments and due only (Q26).
 - Banner on Open as Owner: add Extend next to Exit (Q18).
 - Drawn in the Version 36 source (see PROTOTYPE-CHANGELOG.md); the live canvas still needs them: Boards page with the Archived tab (Q22); Members Archive, Restore, Revoke invite and Archived filter; Project settings add, rename and reorder columns; New company form and the pending owner state; Sign in offline, session expired and rate-limit states; Accept invite generic invalid-link message (M14c).
+- The Open as Owner banner (with Extend 2 hours and Exit) is drawn on the Board only. M18b builds it on every screen; the prototype does not show it elsewhere.
 - Drawn in the issue #167 fixes: the stale-edit state ("Reload or Keep mine") on the Card detail description and the Project settings name, label New, Edit and Archive with a duplicate-name error, an Activity row when a description is saved, a working company switcher, Esc and click-outside on menus, one shared "today" (Nov 13), and no member emails or "Cards moved" for a Super admin.
 
 ## Before the build
