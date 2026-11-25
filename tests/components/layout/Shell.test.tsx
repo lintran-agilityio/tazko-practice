@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import App from '../../app/App'
+import App from '../../../src/app/App'
 
 const nav = () => screen.getByRole('navigation', { name: 'Main' })
 const menu = () => screen.getByRole('button', { name: 'Open menu' })
