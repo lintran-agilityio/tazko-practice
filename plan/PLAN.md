@@ -210,7 +210,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Start the local Supabase stack with supabase init and supabase start; add a migrations folder, an .env.example and the npm scripts db:start and db:reset. Turn public signup off in the Auth config (Q13).
 - [ ] Migrations for companies, profiles and memberships, plus the role type, the is_super_admin flag, `archived_at` and `archived_by` on memberships (G-19), and the `allowed_domains` table (G-20).
-- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships, and they also require the signed-in email to be on `allowed_domains` (G-20), so a removed domain loses access at once. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14).
+- [ ] Row Level Security helpers: is_member, role_of, is_super_admin, and `has_company_access`, which every policy uses. All of them ignore archived memberships, and they also require the signed-in email to be on `allowed_domains` (G-20), so a removed domain loses access at once. Policies for the three tables. A Super admin reads companies and memberships only, and member display names through a view (Q10, G-14). Create the empty `admin_sessions` table here, so `has_company_access` can check it from the start; M18 only adds the RPCs that write it. Add the policy that lets members of a company read each other's display names, archived members included, so the assignee picker (M8) and Activity (M9) show real names.
 - [ ] Block a person from changing their own is_super_admin flag or role, in the database. Revoke DELETE from every app role, and add a test that fails if any table grants it (G-19). Add the guard trigger on `auth.users` that refuses a new user, or an email change, outside `allowed_domains` (G-20), with a clear error message.
 - [ ] Answer TP-9 on memberships: archive through an RPC, and record whether a plain PATCH of `archived_at` fails under an active-only SELECT policy.
 
@@ -253,7 +253,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Sign in states: wrong password, offline and session expired. Each keeps the typed email and offers a way forward. A refused token refresh (no password involved) sends the person to Sign in with "Your session has expired".
 - [ ] Map the access token hook error: "Your company domain is no longer allowed. Contact your Owner" appears only when the password verified and the domain is gone (G-20, Q20). For an unverified caller, a wrong password and a removed domain give the same message, "The email or password is not right", so nobody can probe which domains were removed. The hook error text is never sent to the browser as is.
-- [ ] Set the Auth password rules in `config.toml` and the hosted project: a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21).
+- [ ] Set the Auth password rules in `config.toml` (the hosted project is set in M20c): a minimum length and leaked-password protection, so the server refuses weak or common passwords even when the API is called directly (G-21).
 - [ ] Rate limits on sign-in attempts, per email and per IP address, with the numbers written in the config and in the README.
 - [ ] Tests: wrong password with a removed domain gives the generic message; a refused refresh lands on Sign in; a direct API call with a short password, and with a leaked one, is refused; the rate limit blocks the next attempt.
 
@@ -312,7 +312,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.6.1`
 - **Models:** Sonnet builds. The `security` agent runs on the diff.
 
-- [ ] Home: recent boards as tiles first, then what needs attention (cards assigned to you, soonest due first); tiles scroll sideways under 600px (DR-4). No Add card on Home (Q24).
+- [ ] Home: recent boards as tiles first, then what needs attention (cards assigned to you, soonest due first, added in M8 once cards can be assigned); tiles scroll sideways under 600px (DR-4). No Add card on Home (Q24).
 - [ ] Tests: a user sees only their own company’s boards, and a Super admin sees no boards or cards (G-14).
 
 **Done when:** Every role sees only the current company’s boards on Home and Board, and a Super admin sees none.
@@ -354,8 +354,9 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Card page with title, description editing, due date and column, and a link back to the board.
 - [ ] Description editing takes focus at once and saves with Ctrl+Enter or ⌘+Enter (UX-5).
-- [ ] Assignees, Observers included, with a note that Observers follow the card but cannot edit it (G-3), and a picker with search by name or email (UX-5). Only active members can be assigned.
+- [ ] Assignees, Observers included, with a note that Observers follow the card but cannot edit it (G-3), and a picker with search by name or email (UX-5). Only active members can be assigned. Create the `card_assignees` table in this milestone, then fill the Home attention list (cards assigned to you, soonest due first).
 - [ ] Observers see the page read-only.
+- [ ] A card edit sends the `updated_at` it was based on. If the card changed since, the database refuses it with 409 and the screen shows "Reload or Keep mine" at the field (G-21).
 
 **Done when:** Hoa can edit a card and assign people; Khoa can be assigned to it but cannot change anything (TP-6).
 
@@ -379,7 +380,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Opus reviews the trigger design first, Sonnet builds. The `security` agent runs on the diff.
 
 - [ ] Comments table and a comment box on Card detail; Ctrl+Enter or ⌘+Enter sends, with the matching hint (UX-5).
-- [ ] Activity table plus database triggers for comments, moves, assignments, due dates and description edits (G-4). A description edit records who and when, never the text (G-17).
+- [ ] Activity table plus database triggers for comments, moves, assignments, due dates, description edits, and a card being created or archived (G-4). A description edit records who and when, never the text (G-17).
 - [ ] Add the acting_as_super_admin column now, ready for M18 (G-6). Activity triggers run as security definer, and app roles cannot insert into activity.
 - [ ] Activity list on Card detail showing who did what and when, with times in the mono face.
 
@@ -448,7 +449,6 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Release:** `v0.14.0`
 - **Models:** Sonnet builds
 
-- [ ] A policy that lets members of a company read each other’s display names, archived members included, so old Activity keeps its names.
 - [ ] Members list with role chips and last seen in the mono face (DR-2), with archived members marked.
 - [ ] Owners change a member’s role, and archive and restore members (Q19). A trigger keeps at least one active Owner, and nobody can archive themselves.
 - [ ] Search by name or email, with a Clear button, a result count, an empty state and a status filter: Active (default), Pending, Archived and All (UX-5).
@@ -494,7 +494,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Settle open question Q5 for columns: a column that still has active cards cannot be archived.
 - [ ] New project action on the Boards page (Q22) and on the board tab bar, for Owners only (G-16). It creates a project with the columns Backlog, In progress, Review and Done.
-- [ ] Edit a project’s name and description.
+- [ ] Edit a project’s name and description. The edit sends the `updated_at` it was based on, and a stale edit gets 409 with "Reload or Keep mine" (G-21).
 - [ ] Add, rename and reorder columns in Project settings.
 - [ ] Owners only, enforced in the database.
 
@@ -585,7 +585,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 #### M20: Polish, phone width and accessibility
 
 - **Screens:** All 15 screens
-- **Depends on:** M1 to M19, including M3b, M6b, M7b, M8b, M14b, M14c, M15b and M18b
+- **Depends on:** M1 to M19 (except M5 if it was skipped), including M3b, M6b, M7b, M8b, M14b, M14c, M15b and M18b
 - **Release:** `v0.20.0`
 - **Models:** Sonnet builds
 
@@ -603,7 +603,7 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - **Models:** Sonnet builds
 
 - [ ] Make every change optimistic with undo on failure, and add clear error, session-expired and offline states.
-- [ ] One error mapper turns every API and database error into the screen's wording: 400 to a message at the field, 409 to a message with Reload or Keep mine, and an update refused by RLS (0 rows) to Forbidden (G-21).
+- [ ] One error mapper turns every API and database error into the screen's wording: 400 to a message at the field, 409 on a card move to the banner with Retry (M7b), 409 on an edited field or text to a message at the field with Reload or Keep mine, a duplicate 409 to a message at the field, and an update refused by RLS (0 rows) to Forbidden (G-21).
 - [ ] Test the states against the prototype panel's matrix: 6 scenarios (Normal, New company, Observer, Super admin, Big board, Archived), 4 latencies and 7 faults plus none (Offline, Server error, Session expired, Forbidden, Not found, Conflict, Bad request). Every combination must end in the right screen with no errors.
 
 **Done when:** Every combination in the matrix ends in the right screen with no errors.
@@ -694,8 +694,8 @@ Give Claude more freedom one rung at a time. Move up only when the previous rung
 |---|---|---|
 | 1. Supervised | M1 | You approve every command and read every diff. No chained or batched commands. |
 | 2. Semi-supervised | M2 to M5, M14b, M14c and M17 | Claude edits code freely. It asks first for migrations, package installs, auth or Supabase configuration, and anything that reads the `service_role` key (Edge Functions). |
-| 3. Autonomous | M6 to M19, except M14b, M14c and M17 | Claude runs a whole milestone and stops at each pull request. |
-| 4. Full run | After rung 3 | Claude chains milestones with no wait for review. The stop conditions below still apply. |
+| 3. Autonomous | M6 to M20c, except M14b, M14c and M17 | Claude runs a whole milestone and stops at each pull request. |
+| 4. Full run | Only if the owner lifts G-13 in writing | Claude chains milestones with no wait for review. Until then every rung stops at each pull request. The stop conditions below still apply. |
 
 The `security` agent runs on M2, M3b, M6, M6b, M7, M7b, M9, M14b, M14c, M16, M17, M18, M18b and M19, at every rung.
 
@@ -760,7 +760,7 @@ Settle each one before the milestone that needs it. Out of scope for now: real-t
 | Q11 | Which branch is the base for milestones: `main` or `dev`? Decided: `dev` is the integration branch and is merged into `main` for each release (see "How to release and manage"). | Decided |
 | Q12 | What are the URLs of the screens? Decided: boards and cards are addressed by their database id (UUID), never by name. `/sign-in`, `/` (Home), `/boards` (Boards, Q22), `/boards/:boardId`, `/boards/:boardId/list`, `/cards/:cardId`, `/search`, `/notifications`, `/members`, `/labels`, `/settings/project`, `/profile`, `/companies`, `/companies/:companyId`, `/usage`, plus `/accept-invite` (outside the shell, built in M14b). | Decided |
 | Q13 | How do invited people get an account? Decided: `inviteUserByEmail` in an Edge Function; a membership starts only when the invited email is confirmed; public signup is off. | Decided (M14b) |
-| Q14 | Local or hosted? Decided: local until M19; hosting, and the SMTP for invites if hosted, are decided at the M20 gate. | Decided |
+| Q14 | Local or hosted? Decided: local until M19; hosting, and the SMTP for invites if hosted, are decided at the M20c gate. If hosted, M20c also sets the Auth password rules and rate limits on the hosted project. | Decided |
 | Q15 | Does Activity survive a purge? Closed: nothing is deleted (G-19). | Closed |
 | Q16 | How does a move work and report conflicts? Decided: the `move_card(card, to_column, expected_from_column)` RPC sets column and position (appended at the end) on the same row. A card that already moved, or a missing column, is a conflict. BR-1 now means "same row, never a copy". | Decided (M7b) |
 | Q17 | Who owns a company a Super admin creates? Decided: `create-company` invites the named Owner. The Super admin never becomes Owner. | Decided (M17) |
@@ -793,7 +793,7 @@ Plan and prototype disagree in these places. Fix the prototype first; the plan w
 - [ ] Install Docker and Node.js 20.19 or newer, so the local Supabase stack can run.
 - [ ] Prepare a Google sign-in credential for Supabase Auth. It is only needed for M5, so it can wait.
 - [ ] Save the prototype source and tokens into design/, and save this plan as PLAN.md in the repo.
-- [x] Prototype Version 35 source is saved in design/: the Accept invite screen, the G-20 states on Sign in, the Archived project scenario reworded for G-19, and the 400 fault. The 400 and the duplicate 409 are shown at the fields of Sign in and Accept invite; the panel shows the move being refused as a banner.
+- [x] Prototype Version 35 source is saved in design/: the Accept invite screen, the G-20 states on Sign in, the Archived project scenario reworded for G-19, and the 400 fault. The 400 and the duplicate 409 are shown at the fields of Sign in, Accept invite, Card detail, Add list, Project settings and Companies; the panel shows a refused move as a banner with Retry. Project settings now has a working type-the-name archive (G-5).
 - [x] Version 35 is loaded into a new Design artifact and the prototype link above points to it. Still to check by hand: click through the Sign in states, the Accept invite link states and the 400 fault.
 
 ## Kickoff prompt for Claude Code

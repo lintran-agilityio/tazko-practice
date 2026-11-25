@@ -45,7 +45,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #4F52D9;outline-offset:2p
 <section aria-labelledby="h-fa">
 <h2 id="h-fa" style="margin:0 0 8px;font-size:13px;font-weight:700;color:#5B5B76;letter-spacing:.04em;text-transform:uppercase">Fault</h2>
 <div style="display:flex;flex-direction:column;gap:6px">
-<sc-for list="{{faults}}" as="o" hint-placeholder-count="6">
+<sc-for list="{{faults}}" as="o" hint-placeholder-count="7">
 <button type="button" aria-pressed="{{o.pressed}}" onClick="{{o.pick}}" style="{{o.style}}"><span style="display:block;font-size:14px;font-weight:600">{{o.label}}</span><span style="display:block;font-size:12px;color:#5B5B76;margin-top:2px">{{o.desc}}</span></button>
 </sc-for>
 </div>
@@ -145,7 +145,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #4F52D9;outline-offset:2p
 <div style="display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid #E3E3EE;border-radius:8px;padding:12px;box-sizing:border-box">
 <span style="font-size:14px;font-weight:500;line-height:1.35">{{card.title}}</span>
 <span style="display:flex;flex-direction:column;align-items:flex-start;gap:8px"><span style="font-size:12px;font-weight:600;background:#ECECFD;color:#3A3DB8;border-radius:6px;padding:1px 8px">{{card.label}}</span>
-<sc-if value="{{card.canMove}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{card.move}}" aria-label="Move card to next column" style="min-height:44px;width:100%;padding:0 12px;border-radius:8px;background:#fff;color:#3A3DB8;font-weight:600;font-size:13px;border:1px solid #8888A6;cursor:pointer;font-family:inherit">{{card.moveText}}</button></sc-if></span>
+<sc-if value="{{card.canMove}}" hint-placeholder-val="{{ true }}"><button type="button" onClick="{{card.move}}" aria-label="{{card.moveLabel}}" style="min-height:44px;width:100%;padding:0 12px;border-radius:8px;background:#fff;color:#3A3DB8;font-weight:600;font-size:13px;border:1px solid #8888A6;cursor:pointer;font-family:inherit">{{card.moveText}}</button></sc-if></span>
 </div>
 </sc-for>
 </section>
@@ -248,9 +248,11 @@ class Component extends DCLogic {
     const cfg = this.cfg;
     const ms = this.LATENCIES.find((l) => l.id === cfg.latency).ms;
     const t0 = Date.now();
+    const gen0 = this.gen;
     return new Promise((resolve) => {
       setTimeout(() => {
         const res = this.route(method, path, body, cfg);
+        if (gen0 !== this.gen) { resolve(res); return; }
         this.seq += 1;
         this.logArr = [{ n: this.seq, req: method + ' ' + path, status: String(res.status), ok: res.status === 200, ms: (Date.now() - t0) + ' ms' }].concat(this.logArr).slice(0, 8);
         this.setState({ log: this.logArr });
@@ -385,6 +387,7 @@ class Component extends DCLogic {
         title: k.title, label: k.label,
         canMove: canEdit && ci < b.columns.length - 1,
         moveText: ci < b.columns.length - 1 ? 'Move to ' + b.columns[ci + 1].name : '',
+        moveLabel: ci < b.columns.length - 1 ? 'Move to ' + b.columns[ci + 1].name + ': ' + k.title : '',
         move: () => this.move(k, ci)
       }))
     })) : [];

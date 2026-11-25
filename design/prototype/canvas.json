@@ -104,7 +104,7 @@
    "x": 1360,
    "y": 3720,
    "w": 1280,
-   "h": 860,
+   "h": 960,
    "title": "Project settings",
    "expand": "fill",
    "is_interactive": true
@@ -113,7 +113,7 @@
    "x": 0,
    "y": 4960,
    "w": 1280,
-   "h": 760,
+   "h": 900,
    "title": "Companies",
    "expand": "fill",
    "is_interactive": true

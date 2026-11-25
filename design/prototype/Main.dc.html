@@ -65,6 +65,8 @@ if(emailErr||pwErr){this.setState({emailErr,pwErr,banner:''},()=>{const el=docum
 this.setState({busy:true,banner:''});
 // Then the server and database check again (G-20, G-21). Input is kept on every error.
 setTimeout(()=>{
+// Rate limit (M3b): after 3 wrong passwords every attempt is refused, even a correct one.
+if((this.fails||0)>=3){this.setState({busy:false,banner:'Too many sign-in attempts. Try again in 15 minutes.'});return;}
 // The password is checked first. The domain message shows only after it verified (M3b), so nobody can probe removed domains.
 if(pw==='wrong'){this.fails=(this.fails||0)+1;this.setState({busy:false,banner:this.fails>=3?'Too many sign-in attempts. Try again in 15 minutes.':'The email or password is not right. Check them and try again.'});return;}
 if(/@old-brand\.example$/.test(email)){this.setState({busy:false,banner:'Your company domain is no longer allowed. Contact your Owner. Your access comes back if the domain is added again.'});return;}
