@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { domain, inTx } from './db'
+import { domain, inTx } from './db.ts'
 
 describe('grants (G-19)', () => {
   it('no table in public grants DELETE or TRUNCATE to an app role', async () => {

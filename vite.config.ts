@@ -16,6 +16,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'unit',
+          sequence: { groupOrder: 1 },
           pool,
           environment: 'jsdom',
           include: ['src/**/*.test.{ts,tsx}'],
@@ -28,6 +29,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'db',
+          sequence: { groupOrder: 2 },
           pool,
           environment: 'node',
           include: ['supabase/**/*.test.ts'],

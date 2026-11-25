@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { inTx, seed } from './db'
+import { inTx, seed } from './db.ts'
 
 const names = (rows: { name?: string; display_name?: string }[]) =>
   rows.map((r) => r.name ?? r.display_name).sort()
