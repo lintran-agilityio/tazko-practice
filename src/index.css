@@ -1,19 +1,47 @@
 @import 'tailwindcss';
 
-/* Tazko Indigo design tokens (see ../plan/PLAN.md, milestone M1). */
+@import '@fontsource/hanken-grotesk/400.css';
+@import '@fontsource/hanken-grotesk/500.css';
+@import '@fontsource/hanken-grotesk/600.css';
+@import '@fontsource/hanken-grotesk/700.css';
+@import '@fontsource/dm-mono/400.css';
+@import '@fontsource/dm-mono/500.css';
+
+/* Tazko Indigo design tokens, copied from design/tokens.css (plan/PLAN.md, M1). */
 @theme {
   --color-bg: #f6f6fb;
   --color-surface: #ffffff;
   --color-ink: #1b1b2e;
   --color-muted: #5b5b76;
   --color-line: #e3e3ee;
+  --color-field-border: #8888a6;
+  --color-column: #ededf5;
   --color-accent: #4f52d9;
   --color-accent-strong: #3a3db8;
   --color-accent-soft: #ececfd;
+  /* Labels and badges: background + text */
+  --color-green-soft: #e6f4ec;
+  --color-green: #14603a;
+  --color-blue-soft: #e6f0fd;
+  --color-blue: #1c4f9a;
+  --color-amber-soft: #fff1db;
+  --color-amber: #7a4a00;
+  --color-neutral-soft: #ededf4;
+  --color-neutral: #4b4b66;
+
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --tap-min: 44px;
 }
 
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-ink);
+  font-family: var(--font-sans);
 }
