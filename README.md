@@ -9,10 +9,10 @@ This is a practice project built with Claude from a prototype. It contains no re
 | Path | What it is |
 |---|---|
 | `plan/PLAN.md` | The build plan: decisions, data model, 20 small milestones, release rules |
-| `docs/prototype/` | Exported prototype screens used as the visual reference |
+| `design/` | Prototype source (`prototype/`), `tokens.css` and a screen index: the visual reference |
 | `src/` | The React app |
 
-Prototype: https://claude.ai/artifact/Np7KMP6A6CyZXwkT5o23Vc
+Prototype: https://claude.ai/artifact/UNoNKZwkCss9hrxUqEKrk5
 
 ## Stack
 

@@ -1,0 +1,45 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "Bash(npm test*)",
+      "Bash(npm run test*)",
+      "Bash(npm run lint*)",
+      "Bash(npm run typecheck*)",
+      "Bash(npx vitest*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git show*)",
+      "Bash(git branch --list*)",
+      "Bash(git blame*)",
+      "mcp__claude-in-chrome__tabs_create_mcp",
+      "ClaudeInChromeDomain(claude.ai)",
+      "mcp__claude-in-chrome__browser_batch"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.local)",
+      "Read(.env.*.local)",
+      "Read(.env.production)",
+      "Read(.env.development)",
+      "Edit(design/**)",
+      "Bash(sudo*)",
+      "Bash(rm -rf*)",
+      "Bash(npm publish*)",
+      "Bash(npm exec*)",
+      "Bash(npm config*)",
+      "Bash(npm login*)",
+      "Bash(npm link*)"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(npm install*)",
+      "Bash(npm i *)",
+      "Bash(npm add*)",
+      "Bash(npm uninstall*)",
+      "Bash(npm update*)",
+      "Bash(npm ci*)"
+    ]
+  }
+}
