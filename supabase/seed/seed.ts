@@ -73,6 +73,10 @@ export async function runSeed(options: SeedOptions): Promise<void> {
         });
         if (error) throw new Error(`Could not create ${email}: ${error.message}`);
         id = data.user.id;
+      } else {
+        // Keep the password in step with the local env, so a changed value still signs in.
+        const { error } = await auth.updateUserById(id, { password: options.password });
+        if (error) throw new Error(`Could not update ${email}: ${error.message}`);
       }
       await db.query(
         "update public.profiles set display_name = $2, is_super_admin = $3 where id = $1",
