@@ -9,6 +9,10 @@ describe('auth password rules (security review)', () => {
     expect(config).toMatch(/"password_requirements":\s*"lower_upper_letters_digits_symbols"/)
   })
 
+  it('asks for a recent sign-in before a password change', () => {
+    expect(config).toMatch(/"secure_password_change":\s*true/)
+  })
+
   it('keeps public signup off', () => {
     expect(config).toMatch(/"enable_signup":\s*false/)
   })
