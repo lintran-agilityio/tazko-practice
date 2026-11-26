@@ -287,7 +287,7 @@ describe('input validation reaches the database (G-21)', () => {
     await inTx(async (db) => {
       await db.admin("insert into public.companies (name) values ('Test Harbor')")
       await expect(
-        db.admin("insert into public.companies (name) values ('harbor logistics')"),
+        db.admin("insert into public.companies (name) values ('test harbor')"),
       ).rejects.toMatchObject({ code: '23505' })
     })
   })
