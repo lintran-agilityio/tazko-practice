@@ -115,3 +115,39 @@ describe('company email guard on auth.users (G-20)', () => {
     })
   })
 })
+
+describe('defaults for tables and functions created later (security review)', () => {
+  it('a new table gets no grant for anon or authenticated, and a new function is not callable by anon', async () => {
+    await inTx(async (db) => {
+      await db.admin('create table public.zz_probe (id int)')
+      await db.admin('create function public.zz_probe_fn() returns int language sql as $$ select 1 $$')
+      const grants = await db.admin(
+        `select grantee, privilege_type from information_schema.role_table_grants
+          where table_schema = 'public' and table_name = 'zz_probe'
+            and grantee in ('anon', 'authenticated')`,
+      )
+      expect(grants.rows).toEqual([])
+      const fn = await db.admin(
+        `select has_function_privilege('anon', 'public.zz_probe_fn()', 'execute') as anon_can,
+                has_function_privilege('authenticated', 'public.zz_probe_fn()', 'execute') as auth_can`,
+      )
+      expect(fn.rows[0]).toEqual({ anon_can: false, auth_can: false })
+    })
+  })
+
+  it('every table in public has RLS on and no grant to anon', async () => {
+    await inTx(async (db) => {
+      const off = await db.admin(
+        `select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+          where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity`,
+      )
+      expect(off.rows).toEqual([])
+      const anon = await db.admin(
+        `select table_name from information_schema.role_table_grants
+          where table_schema = 'public' and grantee = 'anon'`,
+      )
+      expect(anon.rows).toEqual([])
+    })
+  })
+})
+

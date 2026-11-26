@@ -293,3 +293,95 @@ describe('input validation reaches the database (G-21)', () => {
     })
   })
 })
+
+describe('an archived company stops its Owners writing (security review)', () => {
+  it('an Owner of an archived company cannot add a member or archive one', async () => {
+    await inTx(async (db) => {
+      const s = await seed(db)
+      await db.admin('update public.companies set archived_at = now() where id = $1', [s.harbor])
+      await expect(
+        db.as(
+          s.minh,
+          "insert into public.memberships (company_id, user_id, role) values ($1, $2, 'member')",
+          [s.harbor, s.stranger.id],
+        ),
+      ).rejects.toThrow(/row-level security/)
+      await expect(
+        db.as(s.minh, 'select public.archive_membership($1)', [s.memberships.hoa]),
+      ).rejects.toThrow(/not allowed/i)
+    })
+  })
+})
+
+describe('a company always keeps one active Owner (security review)', () => {
+  it('refuses to demote or archive the last Owner', async () => {
+    await inTx(async (db) => {
+      const s = await seed(db)
+      await expect(
+        db.admin("update public.memberships set role = 'member' where id = $1", [
+          s.memberships.minhOrchard,
+        ]),
+      ).rejects.toThrow(/at least one Owner/i)
+      await expect(
+        db.admin('update public.memberships set archived_at = now() where id = $1', [
+          s.memberships.minhOrchard,
+        ]),
+      ).rejects.toThrow(/at least one Owner/i)
+    })
+  })
+
+  it('allows removing an Owner while another remains, but not the one left', async () => {
+    await inTx(async (db) => {
+      const s = await seed(db)
+      // hoa already has a Member row in Harbor; promote it so Harbor has two Owners.
+      await db.admin("update public.memberships set role = 'owner' where id = $1", [
+        s.memberships.hoa,
+      ])
+      await db.as(s.minh, 'select public.archive_membership($1)', [s.memberships.hoa])
+      await expect(
+        db.admin("update public.memberships set role = 'member' where id = $1", [
+          s.memberships.minhHarbor,
+        ]),
+      ).rejects.toThrow(/at least one Owner/i)
+    })
+  })
+})
+
+describe('restoring a membership (G-19)', () => {
+  it('an Owner restores an archived membership and that person reads again', async () => {
+    await inTx(async (db) => {
+      const s = await seed(db)
+      await db.as(s.minh, 'select public.archive_membership($1)', [s.memberships.hoa])
+      await db.as(s.minh, 'select public.restore_membership($1)', [s.memberships.hoa])
+      const { rows } = await db.admin(
+        'select archived_at, archived_by from public.memberships where id = $1',
+        [s.memberships.hoa],
+      )
+      expect(rows[0]).toEqual({ archived_at: null, archived_by: null })
+      expect((await db.as(s.hoa, 'select * from public.memberships')).rows.length).toBeGreaterThan(0)
+    })
+  })
+
+  it('a Member cannot restore, and an active or unknown membership is refused', async () => {
+    await inTx(async (db) => {
+      const s = await seed(db)
+      await db.as(s.minh, 'select public.archive_membership($1)', [s.memberships.khoa])
+      await expect(
+        db.as(s.hoa, 'select public.restore_membership($1)', [s.memberships.khoa]),
+      ).rejects.toThrow(/not allowed/i)
+      await expect(
+        db.as(s.minh, 'select public.restore_membership($1)', [s.memberships.hoa]),
+      ).rejects.toThrow(/not found/i)
+    })
+  })
+
+  it('an Owner of another company cannot restore it', async () => {
+    await inTx(async (db) => {
+      const s = await seed(db)
+      await db.as(s.minh, 'select public.archive_membership($1)', [s.memberships.khoa])
+      await expect(
+        db.as(s.stranger, 'select public.restore_membership($1)', [s.memberships.khoa]),
+      ).rejects.toThrow(/not allowed/i)
+    })
+  })
+})
