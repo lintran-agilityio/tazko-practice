@@ -173,6 +173,11 @@ describe('nobody promotes themselves', () => {
   it('an Owner of another company cannot touch this company’s memberships', async () => {
     await inTx(async (db) => {
       const s = await seed(db)
+      // Harbor needs an Owner (last-Owner guard) before minh stops being one there.
+      await db.admin(
+        "insert into public.memberships (company_id, user_id, role) values ($1, $2, 'owner')",
+        [s.harbor, s.stranger.id],
+      )
       await db.admin("update public.memberships set role = 'member' where id = $1", [
         s.memberships.minhHarbor,
       ])
