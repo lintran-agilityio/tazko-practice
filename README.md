@@ -38,6 +38,21 @@ npm run dev
 | `npm test` | Run the tests once |
 | `npm run test:watch` | Run the tests in watch mode |
 
+## Database tests
+
+The database tests run against a local Supabase. From a clean clone:
+
+```bash
+cp .env.example .env
+npm run db:start
+npx supabase status -o env   # copy the keys into .env
+# set SEED_USER_PASSWORD in .env (upper, lower, digit and symbol)
+npm run db:seed
+npm run test:db
+```
+
+`npm run db:reset` re-applies the migrations and empties the data; run `npm run db:seed` afterwards.
+
 ## Working on a milestone
 
 `main` is the release branch. One milestone is one branch cut from `main`, one pull request back into it and one release tag. Read the milestone in `plan/PLAN.md`, build it, run `typecheck`, `lint` and `test`, then open the pull request.
