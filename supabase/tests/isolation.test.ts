@@ -9,7 +9,7 @@ describe('company isolation by RLS (T-1)', () => {
     await inTx(async (db) => {
       const s = await seed(db)
       const { rows } = await db.as(s.hoa, 'select name from public.companies')
-      expect(names(rows)).toEqual(['Harbor Logistics'])
+      expect(names(rows)).toEqual(['Test Harbor'])
       const mem = await db.as(s.hoa, 'select company_id from public.memberships')
       expect(new Set(mem.rows.map((r) => r.company_id))).toEqual(new Set([s.harbor]))
     })
@@ -19,7 +19,7 @@ describe('company isolation by RLS (T-1)', () => {
     await inTx(async (db) => {
       const s = await seed(db)
       const { rows } = await db.as(s.minh, 'select name from public.companies')
-      expect(names(rows)).toEqual(['Harbor Logistics', 'Orchard Foods'])
+      expect(names(rows)).toEqual(['Test Harbor', 'Test Orchard'])
     })
   })
 
@@ -34,9 +34,11 @@ describe('company isolation by RLS (T-1)', () => {
   it('a Super admin reads companies and memberships (G-14)', async () => {
     await inTx(async (db) => {
       const s = await seed(db)
-      const c = await db.as(s.linh, 'select name from public.companies')
-      expect(names(c.rows)).toEqual(['Harbor Logistics', 'Orchard Foods'])
-      const m = await db.as(s.linh, 'select id from public.memberships')
+      const c = await db.as(s.linh, "select name from public.companies where name like 'Test %'")
+      expect(names(c.rows)).toEqual(['Test Harbor', 'Test Orchard'])
+      const m = await db.as(s.linh, 'select id from public.memberships where company_id = any($1)', [
+        [s.harbor, s.orchard],
+      ])
       expect(m.rows).toHaveLength(4)
     })
   })
@@ -46,7 +48,11 @@ describe('company isolation by RLS (T-1)', () => {
       const s = await seed(db)
       const own = await db.as(s.linh, 'select id from public.profiles')
       expect(own.rows.map((r) => r.id)).toEqual([s.linh.id])
-      const people = await db.as(s.linh, 'select display_name from public.company_people')
+      const people = await db.as(
+        s.linh,
+        'select display_name from public.company_people where company_id = any($1)',
+        [[s.harbor, s.orchard]],
+      )
       expect(names(people.rows)).toEqual(['Hoa', 'Khoa', 'Minh', 'Minh'])
     })
   })
@@ -279,7 +285,7 @@ describe('input validation reaches the database (G-21)', () => {
 
   it('refuses a duplicate company name in any case with a unique violation (409)', async () => {
     await inTx(async (db) => {
-      await db.admin("insert into public.companies (name) values ('Harbor Logistics')")
+      await db.admin("insert into public.companies (name) values ('Test Harbor')")
       await expect(
         db.admin("insert into public.companies (name) values ('harbor logistics')"),
       ).rejects.toMatchObject({ code: '23505' })

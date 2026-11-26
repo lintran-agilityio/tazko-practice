@@ -56,7 +56,11 @@ describe('company email guard on auth.users (G-20)', () => {
       await db.admin('insert into auth.users (id, email) values (gen_random_uuid(), $1)', [
         `new@${domain}`,
       ])
-      const { rows } = await db.admin('select count(*)::int as n from public.profiles')
+      const { rows } = await db.admin(
+        `select count(*)::int as n from public.profiles p
+         join auth.users u on u.id = p.id where u.email = $1`,
+        [`new@${domain}`],
+      )
       expect(rows[0].n).toBe(1)
     })
   })

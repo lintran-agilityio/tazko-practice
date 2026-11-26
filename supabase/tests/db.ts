@@ -94,9 +94,9 @@ export async function seed(db: Db) {
   ])
   await db.admin('insert into public.companies (id, name) values ($1, $2), ($3, $4)', [
     ids.harbor,
-    'Harbor Logistics',
+    'Test Harbor',
     ids.orchard,
-    'Orchard Foods',
+    'Test Orchard',
   ])
 
   const membership = async (company: string, p: User, role: string) =>
