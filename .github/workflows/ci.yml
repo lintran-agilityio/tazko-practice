@@ -18,5 +18,24 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run test:unit
       - run: npx supabase start
-      - run: npm test
+      - name: Hand local keys to the database tests
+        run: |
+          npx supabase status -o env > "$RUNNER_TEMP/supabase.env"
+          get() { grep "^$1=" "$RUNNER_TEMP/supabase.env" | head -n1 | cut -d= -f2- | tr -d '"'; }
+          SERVICE_KEY=$(get SERVICE_ROLE_KEY)
+          ANON_KEY=$(get ANON_KEY)
+          [ -n "$ANON_KEY" ] || ANON_KEY=$(get PUBLISHABLE_KEY)
+          SEED_PASSWORD="Aa1!$(openssl rand -hex 16)"
+          echo "::add-mask::$SERVICE_KEY"
+          echo "::add-mask::$ANON_KEY"
+          echo "::add-mask::$SEED_PASSWORD"
+          {
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY"
+            echo "VITE_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "VITE_SUPABASE_URL=http://127.0.0.1:54321"
+            echo "ALLOWED_EMAIL_DOMAINS=example.com"
+            echo "SEED_USER_PASSWORD=$SEED_PASSWORD"
+          } >> "$GITHUB_ENV"
+      - run: npm run test:db
