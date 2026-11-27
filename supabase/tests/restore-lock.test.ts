@@ -36,6 +36,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   // The test user is the database owner here; app roles can never delete (G-19).
+  if (!setup) return;
   await setup.query("delete from public.memberships where company_id = $1", [company]);
   await setup.query("delete from public.companies where id = $1", [company]);
   await setup.query("delete from public.profiles where id = any($1)", [[ada.id, bob.id, cy.id]]);
@@ -52,6 +53,7 @@ describe("restore_membership under a concurrent demotion (#184)", () => {
       await demoter.query("begin");
       await demoter.query("update public.memberships set role = 'member' where id = $1", [ids.ada]);
 
+      const callerPid = (await caller.query("select pg_backend_pid() as pid")).rows[0].pid;
       await caller.query("begin");
       await caller.query("set local role authenticated");
       await caller.query("select set_config('request.jwt.claims', $1, true)", [
@@ -62,7 +64,17 @@ describe("restore_membership under a concurrent demotion (#184)", () => {
         (error: { code?: string }) => error.code ?? "error",
       );
 
-      await new Promise((r) => setTimeout(r, 500)); // let the restore reach the lock
+      // Wait until the restore is really blocked on a lock, so the test proves it waited.
+      let waiting = false;
+      for (let i = 0; i < 50 && !waiting; i++) {
+        const { rows } = await setup.query(
+          "select 1 from pg_stat_activity where pid = $1 and wait_event_type = 'Lock'",
+          [callerPid],
+        );
+        waiting = rows.length > 0;
+        if (!waiting) await new Promise((r) => setTimeout(r, 100));
+      }
+      expect(waiting).toBe(true);
       await demoter.query("commit");
 
       expect(await restore).toBe("42501"); // Not allowed
