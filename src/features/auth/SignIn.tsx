@@ -37,7 +37,7 @@ export default function SignIn() {
     setPending(true)
     try {
       const { error } = await api.signInWithPassword(clean, password)
-      if (error) setErrors({ form: error })
+      if (error) setErrors({ form: error.message })
     } catch {
       setErrors({ form: 'Could not sign in. Try again' })
     } finally {

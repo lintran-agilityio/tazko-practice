@@ -10,6 +10,7 @@ const emptyAccount = (email: string): api.Account => ({
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [known, setKnown] = useState(false)
+  const [leftOnPurpose, setLeftOnPurpose] = useState(false)
   const [session, setSession] = useState<api.Session | null>(null)
   const [account, setAccount] = useState<{ userId: string; value: api.Account } | null>(null)
 
@@ -17,12 +18,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let live = true
     const unsubscribe = api.onAuthChange((s) => {
       if (!live) return
+      if (s) setLeftOnPurpose(false)
       setSession((prev) => (prev?.userId === s?.userId && prev?.email === s?.email ? prev : s))
       setKnown(true)
     })
     api.getSession().then(
       (s) => {
         if (!live) return
+        if (s) setLeftOnPurpose(false)
         setSession((prev) => prev ?? s)
         setKnown(true)
       },
@@ -35,6 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const userId = session?.userId
+  const signOut = async () => {
+    setLeftOnPurpose(true)
+    await api.signOut()
+  }
   const email = session?.email ?? ''
   useEffect(() => {
     if (!userId) return
@@ -52,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loading = !known || (session !== null && current === null)
 
   return (
-    <AuthContext value={{ loading, session, account: current, signOut: api.signOut }}>
+    <AuthContext value={{ loading, session, account: current, signOut, leftOnPurpose }}>
       {children}
     </AuthContext>
   )

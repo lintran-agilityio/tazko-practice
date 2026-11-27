@@ -10,11 +10,12 @@ const safe = (from: unknown): string =>
 
 /** Everything except Sign in and /accept-invite sits behind this (M3). Shows nothing while loading. */
 export function RequireAuth() {
-  const { loading, session } = useAuth()
+  const { loading, session, leftOnPurpose } = useAuth()
   const location = useLocation()
   if (loading) return null
   if (!session) {
-    const from = location.pathname + location.search + location.hash
+    // Sign out forgets the page; a signed-out visit or an expired session keeps it.
+    const from = leftOnPurpose ? undefined : location.pathname + location.search + location.hash
     return <Navigate to={signInPath} replace state={{ from } satisfies From} />
   }
   return <Outlet />

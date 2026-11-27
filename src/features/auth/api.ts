@@ -29,16 +29,33 @@ export function onAuthChange(cb: (s: Session | null) => void): () => void {
   return () => data.subscription.unsubscribe()
 }
 
+export type SignInError = {
+  kind: 'invalid_credentials' | 'weak_password' | 'refused' | 'other'
+  message: string
+}
+
+const NOT_RIGHT = 'The email or password is not right'
+/** Matches the Auth password rules in supabase/config.jsonc. */
+const WEAK_PASSWORD =
+  'The password needs at least 6 characters, an uppercase letter, a lowercase letter, a digit and a special character'
+
 /**
- * One generic message for every refusal, the access token hook's included: the hook error is
- * never sent to the screen, and nobody can probe which domains were removed (G-20; mapped in M3b).
+ * Maps by HTTP status and error code, never by message text. The access token hook's 403 stays
+ * generic, so nobody can probe which domains were removed (G-20; its own message is M3b).
  */
+export function mapSignInError(status: number | undefined, code: string | undefined): SignInError {
+  if (code === 'weak_password' || status === 422) return { kind: 'weak_password', message: WEAK_PASSWORD }
+  if (status === 400) return { kind: 'invalid_credentials', message: NOT_RIGHT }
+  if (status === 403) return { kind: 'refused', message: NOT_RIGHT }
+  return { kind: 'other', message: 'Could not sign in. Try again' }
+}
+
 export async function signInWithPassword(
   email: string,
   password: string,
-): Promise<{ error: string | null }> {
+): Promise<{ error: SignInError | null }> {
   const { error } = await supabase().auth.signInWithPassword({ email, password })
-  return { error: error ? 'The email or password is not right' : null }
+  return { error: error ? mapSignInError(error.status, error.code) : null }
 }
 
 export async function signOut(): Promise<void> {

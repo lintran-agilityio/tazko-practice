@@ -7,6 +7,8 @@ export type AuthState = {
   session: api.Session | null
   account: api.Account | null
   signOut: () => Promise<void>
+  /** True after the person chose Sign out: the next sign in goes Home, not back to a page. */
+  leftOnPurpose: boolean
 }
 
 export const AuthContext = createContext<AuthState | null>(null)
