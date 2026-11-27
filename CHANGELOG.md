@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.1 - 2026-11-27
+
+- M2b: seed and isolation tests. `npm run db:seed` loads allowed domains, 2 companies and 4 users (local Supabase only); 14 isolation tests through supabase-js with real signed-in users; CI starts Supabase and runs the database tests in their own Vitest project; 104 tests pass (#23, #24, #25, #26, PR #180).
+
 ## v0.2.0 - 2026-11-26
 
 - M2: database, roles and isolation. Local Supabase stack; companies, profiles, memberships, allowed domains and admin sessions with RLS on every table; company email guard (G-20); archive and restore membership RPCs, last-Owner guard and no DELETE grants (G-19); safe default grants for later tables; password rules and signup off; 82 database tests run in CI (#177, PR #178).
