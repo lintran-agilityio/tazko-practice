@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mockAuth, session } from '../features/auth/tests/mockAuth'
 import App from './App'
-import { acceptInvitePath, screens } from './routes'
+import { acceptInvitePath, screens, signInPath } from './routes'
+
+vi.mock('../features/auth/api')
 
 const renderAt = (path: string) =>
   render(
@@ -11,25 +14,42 @@ const renderAt = (path: string) =>
     </MemoryRouter>,
   )
 
+const inShell = screens.filter((s) => s.path !== signInPath)
+
 describe('routes', () => {
+  beforeEach(() => mockAuth(session('minh')))
+
   it('has 14 screens', () => {
     expect(screens).toHaveLength(14)
   })
 
-  it.each(screens)('shows $label at $path inside the shell', ({ path, label }) => {
+  it.each(inShell)('shows $label at $path inside the shell', async ({ path, label }) => {
     renderAt(path)
-    expect(screen.getByRole('heading', { level: 1, name: label })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: label })).toBeInTheDocument()
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
   })
 
-  it('shows Accept invite outside the shell', () => {
-    renderAt(acceptInvitePath)
-    expect(screen.getByRole('heading', { name: 'Accept invite' })).toBeInTheDocument()
+  it('shows Sign in outside the shell, for a signed-out visitor', async () => {
+    mockAuth(null)
+    renderAt(signInPath)
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument()
   })
 
-  it('shows a not-found page for unknown paths', () => {
+  it('does not list Sign in in the navigation', async () => {
+    renderAt('/')
+    await screen.findByRole('navigation', { name: 'Main' })
+    expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument()
+  })
+
+  it('shows Accept invite outside the shell', async () => {
+    renderAt(acceptInvitePath)
+    expect(await screen.findByRole('heading', { name: 'Accept invite' })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument()
+  })
+
+  it('shows a not-found page for unknown paths when signed in', async () => {
     renderAt('/nope')
-    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
   })
 })

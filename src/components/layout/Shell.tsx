@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
-import { groupLabels, screens, type Screen } from '../../app/routes'
+import { groupLabels, screens, signInPath, type Screen } from '../../app/routes'
+import { useAuth } from '../../features/auth/useAuth'
 
 const groups = Object.keys(groupLabels) as Screen['group'][]
 
+const roleLabel = { owner: 'Owner', member: 'Member', observer: 'Observer' } as const
+
 export default function Shell() {
+  const { account, signOut } = useAuth()
+  const chip = account?.role
+    ? roleLabel[account.role]
+    : account?.isSuperAdmin
+      ? 'Super admin'
+      : null
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -54,7 +63,7 @@ export default function Shell() {
             </p>
             <ul>
               {screens
-                .filter((s) => s.group === group)
+                .filter((s) => s.group === group && s.path !== signInPath)
                 .map((s) => (
                   <li key={s.path}>
                     <NavLink
@@ -76,6 +85,27 @@ export default function Shell() {
             </ul>
           </div>
         ))}
+        {account && (
+          <div
+            role="group"
+            aria-label="Signed in as"
+            className="mt-auto flex flex-col gap-2 border-t border-line pt-3"
+          >
+            <span className="font-semibold">{account.displayName}</span>
+            {chip && (
+              <span className="w-fit rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-strong">
+                {chip}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="min-h-(--tap-min) rounded-md border border-field-border px-3 text-left"
+            >
+              Sign out
+            </button>
+          </div>
+        )}
       </nav>
 
       <main className="min-w-0 flex-1">
