@@ -4,9 +4,18 @@ import { useAuth } from './useAuth'
 
 type From = { from?: string }
 
-/** Only a path inside the app is a safe place to return to after sign in. */
-const safe = (from: unknown): string =>
-  typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : '/'
+/** Only a same-origin path inside the app is a safe place to return to after sign in. */
+const safe = (from: unknown): string => {
+  if (typeof from !== 'string' || !from.startsWith('/') || from.startsWith('//')) return '/'
+  if (from.includes('\\')) return '/'
+  const base = 'http://app.invalid'
+  try {
+    const url = new URL(from, base)
+    return url.origin === base ? url.pathname + url.search + url.hash : '/'
+  } catch {
+    return '/'
+  }
+}
 
 /** Everything except Sign in and /accept-invite sits behind this (M3). Shows nothing while loading. */
 export function RequireAuth() {

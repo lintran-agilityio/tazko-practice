@@ -9,6 +9,11 @@ const roleLabel = { owner: 'Owner', member: 'Member', observer: 'Observer' } as 
 
 export default function Shell() {
   const { account, signOut } = useAuth()
+  const chip = account?.role
+    ? roleLabel[account.role]
+    : account?.isSuperAdmin
+      ? 'Super admin'
+      : null
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
@@ -87,9 +92,11 @@ export default function Shell() {
             className="mt-auto flex flex-col gap-2 border-t border-line pt-3"
           >
             <span className="font-semibold">{account.displayName}</span>
-            <span className="w-fit rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-strong">
-              {account.role ? roleLabel[account.role] : account.isSuperAdmin ? 'Super admin' : null}
-            </span>
+            {chip && (
+              <span className="w-fit rounded-full bg-accent-soft px-2 py-0.5 text-xs font-semibold text-accent-strong">
+                {chip}
+              </span>
+            )}
             <button
               type="button"
               onClick={() => void signOut()}

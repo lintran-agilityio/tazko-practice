@@ -12,7 +12,7 @@ const h1 = (name: string) => screen.findByRole('heading', { level: 1, name })
 describe('return path after sign in is same-origin only (#29)', () => {
   beforeEach(() => vi.resetAllMocks())
 
-  it.each(['/\evil.com', '//evil.com', 'https://x.example', '/ok\path', '\\evil.com'])(
+  it.each(['/\\evil.com', '//evil.com', 'https://x.example', '/ok\\path', '\\\\evil.com'])(
     'ignores %s and goes Home',
     async (from) => {
       mockAuth(session('minh'))

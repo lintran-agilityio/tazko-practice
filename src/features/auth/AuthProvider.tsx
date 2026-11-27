@@ -40,7 +40,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userId = session?.userId
   const signOut = async () => {
     setLeftOnPurpose(true)
-    await api.signOut()
+    let ended = false
+    try {
+      await api.signOut()
+      ended = true
+    } catch {
+      try {
+        await api.signOut('local')
+        ended = true
+      } catch {
+        // Still signed in; nothing more to do here.
+      }
+    } finally {
+      // A sign out that did not happen must not make a later expiry forget the page.
+      if (!ended) setLeftOnPurpose(false)
+    }
   }
   const email = session?.email ?? ''
   useEffect(() => {

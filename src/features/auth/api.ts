@@ -58,8 +58,9 @@ export async function signInWithPassword(
   return { error: error ? mapSignInError(error.status, error.code) : null }
 }
 
-export async function signOut(): Promise<void> {
-  await supabase().auth.signOut()
+/** `local` ends this browser's session only, as a fallback when the server call fails. */
+export async function signOut(scope?: 'local'): Promise<void> {
+  await supabase().auth.signOut(scope ? { scope } : undefined)
 }
 
 /** The role comes from last_company_id, else the first active membership (I11). RLS limits the rows. */
