@@ -67,8 +67,13 @@ afterAll(async () => {
 });
 
 const ids = (rows: { id: string }[] | null) => (rows ?? []).map((r) => r.id).sort();
-const nothing = (r: { error: unknown; data: unknown[] | null }) =>
-  r.error !== null || r.data?.length === 0;
+type Result = { error: { code?: string } | null; data: unknown[] | null };
+// Anonymous reads are refused by grant (an error) or return no rows.
+const nothing = (r: Result) => r.error !== null || r.data?.length === 0;
+// A column the app role has no UPDATE grant on: the request fails with 42501 (G-19).
+const refusedByGrant = (r: Result) => r.error?.code === "42501";
+// A write RLS refuses changes 0 rows and raises no error.
+const zeroRows = (r: Result) => r.error === null && r.data?.length === 0;
 
 describe("one company cannot read another (T-1)", () => {
   it("a Member of Harbor reads Harbor only", async () => {
@@ -157,13 +162,13 @@ describe("writes refused by RLS change 0 rows", () => {
       .update({ is_super_admin: true })
       .eq("id", id.hoa)
       .select();
-    expect(nothing(flag)).toBe(true);
+    expect(refusedByGrant(flag)).toBe(true);
     const role = await as.hoa
       .from("memberships")
       .update({ role: "owner" })
       .eq("user_id", id.hoa)
       .select();
-    expect(nothing(role)).toBe(true);
+    expect(zeroRows(role)).toBe(true);
     const row = (
       await sql(
         `select p.is_super_admin, m.role from public.profiles p
@@ -181,7 +186,7 @@ describe("writes refused by RLS change 0 rows", () => {
       .eq("user_id", id.minh)
       .eq("company_id", harbor)
       .select();
-    expect(nothing(res)).toBe(true);
+    expect(zeroRows(res)).toBe(true);
     const rows = await sql(
       "select role from public.memberships where user_id = $1 and company_id = $2",
       [id.minh, harbor],

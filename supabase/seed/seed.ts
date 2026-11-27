@@ -32,6 +32,12 @@ export async function runSeed(options: SeedOptions): Promise<void> {
   if (!options.password) throw new Error("Set SEED_USER_PASSWORD before seeding.");
   if (!options.serviceRoleKey) throw new Error("Set SUPABASE_SERVICE_ROLE_KEY before seeding.");
 
+  // The seed resets passwords and creates users, so it only runs against a local stack.
+  const host = new URL(options.supabaseUrl).hostname;
+  if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(host)) {
+    throw new Error(`The seed only runs against a local Supabase, not ${host}.`);
+  }
+
   const db = new pg.Client({ connectionString: options.dbUrl });
   await db.connect();
   try {
