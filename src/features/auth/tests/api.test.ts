@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // The real api.ts, with supabase-js replaced: sign-in errors are mapped by status and code,
 // never by message text (M3, owner decision).
@@ -7,7 +7,7 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({ auth: { signInWithPassword: signIn } }),
 }))
 
-import { signInWithPassword } from '../api'
+import { allowedDomains, signInWithPassword } from '../api'
 
 const fail = (status: number | undefined, code: string | undefined, message: string) =>
   signIn.mockResolvedValue({ data: {}, error: { status, code, message } })
@@ -67,5 +67,34 @@ describe('signInWithPassword error mapping', () => {
     })
     fail(500, undefined, 'boom')
     expect((await signInWithPassword('a@b.co', 'pw')).error?.kind).toBe('other')
+  })
+})
+
+describe('allowedDomains (G-20 hint, real api.ts)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
+  it('returns trimmed, lowercase domains from VITE_ALLOWED_EMAIL_DOMAINS', () => {
+    vi.stubEnv('VITE_ALLOWED_EMAIL_DOMAINS', ' Acme.test, b.test ')
+    expect(allowedDomains()).toEqual(['acme.test', 'b.test'])
+  })
+
+  it.each(['', ' , '])('returns [] when the variable is %j', (value) => {
+    vi.stubEnv('VITE_ALLOWED_EMAIL_DOMAINS', value)
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    expect(allowedDomains()).toEqual([])
+  })
+
+  it('warns once in dev when the list is empty, so a missing hint is not silent', async () => {
+    vi.resetModules()
+    vi.stubEnv('VITE_ALLOWED_EMAIL_DOMAINS', '')
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const fresh = await import('../api')
+    fresh.allowedDomains()
+    fresh.allowedDomains()
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0]?.[0])).toContain('VITE_ALLOWED_EMAIL_DOMAINS')
   })
 })
