@@ -34,6 +34,9 @@ export const session = (name: string): Session => ({
 /** Sets up the mocked api. `session` null means signed out; `account` is what loadAccount returns. */
 export function mockAuth(current: Session | null, account: Account = minh) {
   const m = vi.mocked(api);
+  // vi.resetAllMocks() does not clear the call history of these automocks (vitest 5.1, vmThreads),
+  // so a call in one test leaked into the next. Reset each function here.
+  for (const fn of Object.values(api)) (fn as ReturnType<typeof vi.fn>).mockReset();
   let listener: ((s: Session | null) => void) | null = null;
   m.allowedDomains.mockReturnValue([domain]);
   m.getSession.mockResolvedValue(current);
