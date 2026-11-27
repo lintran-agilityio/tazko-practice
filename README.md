@@ -38,6 +38,16 @@ npm run dev
 | `npm test` | Run the tests once |
 | `npm run test:watch` | Run the tests in watch mode |
 
+## Sign in (local setup)
+
+Sign in shows a hint, "Use your company account", when the email is outside your company domains. Set them in `.env`:
+
+```bash
+VITE_ALLOWED_EMAIL_DOMAINS=yourcompany.com   # comma separated; also VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+```
+
+Vite reads `.env` only when the dev server starts, so restart `npm run dev` after editing it. If the variable is missing or empty the hint is off and the dev console warns once. The hint is only a convenience: the database refuses other domains at sign in and on every request (G-20).
+
 ## Database tests
 
 The database tests run against a local Supabase. From a clean clone:

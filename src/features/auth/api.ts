@@ -84,10 +84,23 @@ export async function loadAccount(userId: string): Promise<Account> {
   }
 }
 
-/** Company domains from VITE_ALLOWED_EMAIL_DOMAINS (comma separated). A hint only; the database decides (G-20). */
+let warned = false
+
+/**
+ * Company domains from VITE_ALLOWED_EMAIL_DOMAINS (comma separated, read at build/start time).
+ * A hint only; the database decides (G-20). An empty list switches the hint off, so say so in dev.
+ */
 export function allowedDomains(): string[] {
-  return ((import.meta.env.VITE_ALLOWED_EMAIL_DOMAINS as string | undefined) ?? '')
+  const list = ((import.meta.env.VITE_ALLOWED_EMAIL_DOMAINS as string | undefined) ?? '')
     .split(',')
     .map((d) => d.trim().toLowerCase())
     .filter(Boolean)
+  if (list.length === 0 && import.meta.env.DEV && !warned) {
+    warned = true
+    console.warn(
+      'VITE_ALLOWED_EMAIL_DOMAINS is not set, so the company domain hint on Sign in is off. ' +
+        'Set it in .env and restart the dev server.',
+    )
+  }
+  return list
 }
