@@ -335,18 +335,13 @@
     //   "inactivity_timeout": "8h"
     // },
 
-    // This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
-    // "hook": {
-    //   "before_user_created": {
-    //     "enabled": true,
-    //     "uri": "pg-functions://postgres/auth/before-user-created-hook"
-    //   },
-    //   // This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
-    //   "custom_access_token": {
-    //     "enabled": true,
-    //     "uri": "pg-functions://<database>/<schema>/<hook_name>"
-    //   }
-    // },
+    // Refuses sign-in and token refresh when the email domain is not on allowed_domains (G-20, M3).
+    "hook": {
+      "custom_access_token": {
+        "enabled": true,
+        "uri": "pg-functions://postgres/public/custom_access_token_hook"
+      }
+    },
 
     // Multi-factor-authentication is available to Supabase Pro plan.
     "mfa": {
