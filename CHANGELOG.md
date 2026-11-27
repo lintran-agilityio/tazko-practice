@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.3.0 - 2026-11-27
+
+- M3: sign in with email. Sign in screen (email and password, domain hint "Use your company account", sign out); route guard that returns to the requested page (`/accept-invite` stays open); navigation footer with the person and role chip; access token hook that refuses sign-in and token refresh when the email domain is not allowed (G-20, TP-13); profile row for new users; `restore_membership` re-checks the Owner role under a lock; plan notes for M7b and M9; 172 tests pass (#27, #28, #29, #30, #31, #148, #183, #184, PR #182, PR #185, PR #186).
+
 ## v0.2.1 - 2026-11-27
 
 - M2b: seed and isolation tests. `npm run db:seed` loads allowed domains, 2 companies and 4 users (local Supabase only); 14 isolation tests through supabase-js with real signed-in users; CI starts Supabase and runs the database tests in their own Vitest project; 104 tests pass (#23, #24, #25, #26, PR #180).
