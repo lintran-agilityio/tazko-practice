@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import { groupLabels, screens, signInPath, type Screen } from '../../app/routes'
-import { useAuth } from '../../features/auth/AuthProvider'
+import { useAuth } from '../../features/auth/useAuth'
 
 const groups = Object.keys(groupLabels) as Screen['group'][]
 

@@ -1,6 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { signInPath } from '../../app/routes'
-import { useAuth } from './AuthProvider'
+import { useAuth } from './useAuth'
 
 type From = { from?: string }
 

@@ -1,15 +1,6 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import * as api from './api'
-
-export type AuthState = {
-  /** True until the stored session and, if signed in, the account are known. Show nothing meanwhile. */
-  loading: boolean
-  session: api.Session | null
-  account: api.Account | null
-  signOut: () => Promise<void>
-}
-
-const AuthContext = createContext<AuthState | null>(null)
+import { AuthContext } from './useAuth'
 
 const emptyAccount = (email: string): api.Account => ({
   displayName: email.split('@')[0] ?? '',
@@ -65,10 +56,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext>
   )
-}
-
-export function useAuth(): AuthState {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider')
-  return ctx
 }
