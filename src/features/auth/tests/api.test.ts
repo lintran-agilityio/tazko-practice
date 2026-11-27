@@ -38,13 +38,15 @@ describe('signInWithPassword error mapping', () => {
     [422, 'weak_password'],
     [422, undefined],
     [400, 'weak_password'],
-  ])('maps a weak password (%s, %s) to a message listing what is missing', async (status, code) => {
+  ])('keeps password rules out of sign in: %s %s (M3b)', async (status, code) => {
     fail(status, code, 'x')
     const { error } = await signInWithPassword('a@b.co', 'pw')
-    expect(error?.kind).toBe('weak_password')
-    for (const part of ['6 characters', 'uppercase', 'lowercase', 'digit', 'special character']) {
-      expect(error?.message).toContain(part)
+    if (status === 422) {
+      expect(error).toEqual({ kind: 'other', message: 'Could not sign in. Try again' })
+    } else {
+      expect(error?.kind).toBe('invalid_credentials')
     }
+    expect(JSON.stringify(error)).not.toMatch(/uppercase|digit|special/)
   })
 
   it('keeps the access token hook 403 generic, without its text', async () => {
