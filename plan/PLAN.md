@@ -342,10 +342,11 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 - [ ] Settle open question Q3 (how cards move), then build it.
 - [ ] Moving a card changes its column and position on the same row, never copies it (BR-1). It goes through the `move_card` RPC, which reports a card that already moved or a column that is gone as a conflict (Q16).
 - [ ] Hide move controls from Observers, and block moves in the database (BR-3).
+- [ ] `move_card` locks the card row first and re-checks the caller's role after the lock, so a role change at the same moment cannot let a move through (BR-3). A move to the column the card is already in, with the same position, changes nothing and records no mover (BR-1).
 - [ ] Move optimistically: the card moves at once; if the API fails it goes back to its column with a message, and Retry (or Sign in again for a 401).
 - [ ] Ignore replies that belong to an older load, so a reload during a save cannot corrupt the "saving" count or roll back the new board (TP-8).
 
-**Done when:** Hoa can move cards; Khoa sees no move controls and the database refuses his moves. A conflict shows the banner and Retry. A reload while a move is saving leaves the board and the saving indicator correct.
+**Done when:** Hoa can move cards; Khoa sees no move controls and the database refuses his moves. A role removed while a move waits for the lock refuses that move; a move that changes nothing leaves no mover. A conflict shows the banner and Retry. A reload while a move is saving leaves the board and the saving indicator correct.
 
 #### M8: Card detail
 
@@ -383,10 +384,11 @@ Hours are the estimate for one person at 8 working hours a day, covering build a
 
 - [ ] Comments table and a comment box on Card detail; Ctrl+Enter or ⌘+Enter sends, with the matching hint (UX-5).
 - [ ] Activity table plus database triggers for comments, moves, assignments, due dates, description edits, and a card being created or archived (G-4). A description edit records who and when, never the text (G-17).
+- [ ] The moves trigger writes a moved entry, with the actor, only when the column or position really changed; a no-op update writes nothing (BR-1, G-4).
 - [ ] Add the acting_as_super_admin column now, ready for M18 (G-6). Activity triggers run as security definer, and app roles cannot insert into activity.
 - [ ] Activity list on Card detail showing who did what and when, with times in the mono face.
 
-**Done when:** Every action from M7, M7b and M8 appears in Activity.
+**Done when:** Every action from M7, M7b and M8 appears in Activity. A move that changes nothing, and an update that changes no field, appear nowhere.
 
 #### M10: Labels
 
