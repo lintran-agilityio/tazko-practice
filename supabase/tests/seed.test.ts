@@ -67,6 +67,12 @@ describe("seed (G-8, G-20)", () => {
     await expect(runSeed({ ...options, domains: [] })).rejects.toThrow(/ALLOWED_EMAIL_DOMAINS/);
   });
 
+  it("refuses to seed anything but a local Supabase", async () => {
+    for (const supabaseUrl of ["https://abcd.supabase.co", "http://10.0.0.5:54321"]) {
+      await expect(runSeed({ ...options, supabaseUrl })).rejects.toThrow(/local/i);
+    }
+  });
+
   afterAll(async () => {
     await client.end().catch(() => undefined);
   });
