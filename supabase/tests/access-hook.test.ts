@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 // M3-5 (#148): the custom access token hook refuses sign-in and token refresh when the
 // email's domain is not on allowed_domains (G-20, TP-13). Real Auth stack, real users.
@@ -35,6 +35,9 @@ const setDomainArchived = (archived: boolean) =>
     domain,
     archived ? new Date().toISOString() : null,
   ]);
+
+// A failed assertion must not leave the domain archived for the next test.
+afterEach(() => setDomainArchived(false));
 
 describe("access token hook (G-20, TP-13)", () => {
   it("is registered as a Postgres function the Auth service may run", async () => {

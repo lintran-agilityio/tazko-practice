@@ -7,8 +7,8 @@ import * as api from "../api";
  *
  *   getSession(): Promise<{ userId: string; email: string } | null>
  *   onAuthChange(cb: (s: Session | null) => void): () => void    // returns unsubscribe
- *   signInWithPassword(email, password): Promise<{ error: string | null }>
- *   signOut(): Promise<void>
+ *   signInWithPassword(email, password): Promise<{ error: SignInError | null }>  // SignInError = { kind, message }
+ *   signOut(scope?: "local"): Promise<void>
  *   loadAccount(userId): Promise<Account>   // I11: last_company_id, else first active membership
  *   allowedDomains(): string[]              // from VITE_ALLOWED_EMAIL_DOMAINS, a hint only (G-20)
  */

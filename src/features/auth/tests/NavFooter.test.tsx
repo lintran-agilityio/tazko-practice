@@ -34,6 +34,15 @@ describe("navigation footer (M3-4)", () => {
     expect(footer.getByText(chip)).toBeInTheDocument();
   });
 
+  it("shows no role chip for a person with no role who is not a super admin", async () => {
+    const footer = await footerFor("pat", { displayName: "Pat", role: null, isSuperAdmin: false });
+    expect(footer.getByText("Pat")).toBeInTheDocument();
+    expect(footer.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+    const group = screen.getByRole("group", { name: "Signed in as" });
+    expect(group).toHaveTextContent(/^PatSign out$/);
+    expect(group.querySelectorAll("span")).toHaveLength(1); // the name only: no empty chip
+  });
+
   it("has the Sign out button in the footer", async () => {
     const footer = await footerFor("minh", minh);
     expect(footer.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
