@@ -4,7 +4,7 @@ export type Screen = {
   group: 'main' | 'project' | 'superAdmin'
 }
 
-/** The 14 screens of the prototype (design/README.md), all inside the shell. */
+/** The 14 screens of the prototype (design/README.md). All sit inside the shell except Sign in (M3). */
 export const screens: Screen[] = [
   { path: '/', label: 'Home', group: 'main' },
   { path: '/board', label: 'Board', group: 'main' },
@@ -22,6 +22,7 @@ export const screens: Screen[] = [
   { path: '/usage', label: 'Usage', group: 'superAdmin' },
 ]
 
+export const signInPath = '/sign-in'
 export const acceptInvitePath = '/accept-invite'
 
 export const groupLabels: Record<Screen['group'], string> = {
