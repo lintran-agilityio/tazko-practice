@@ -30,21 +30,16 @@ export function onAuthChange(cb: (s: Session | null) => void): () => void {
 }
 
 export type SignInError = {
-  kind: 'invalid_credentials' | 'weak_password' | 'refused' | 'other'
+  kind: 'invalid_credentials' | 'refused' | 'other'
   message: string
 }
 
 const NOT_RIGHT = 'The email or password is not right'
-/** Matches the Auth password rules in supabase/config.jsonc. */
-const WEAK_PASSWORD =
-  'The password needs at least 6 characters, an uppercase letter, a lowercase letter, a digit and a special character'
-
 /**
- * Maps by HTTP status and error code, never by message text. The access token hook's 403 stays
+ * Maps by HTTP status, never by message text. The access token hook's 403 stays
  * generic, so nobody can probe which domains were removed (G-20; its own message is M3b).
  */
-export function mapSignInError(status: number | undefined, code: string | undefined): SignInError {
-  if (code === 'weak_password' || status === 422) return { kind: 'weak_password', message: WEAK_PASSWORD }
+export function mapSignInError(status: number | undefined): SignInError {
   if (status === 400) return { kind: 'invalid_credentials', message: NOT_RIGHT }
   if (status === 403) return { kind: 'refused', message: NOT_RIGHT }
   return { kind: 'other', message: 'Could not sign in. Try again' }
@@ -55,7 +50,7 @@ export async function signInWithPassword(
   password: string,
 ): Promise<{ error: SignInError | null }> {
   const { error } = await supabase().auth.signInWithPassword({ email, password })
-  return { error: error ? mapSignInError(error.status, error.code) : null }
+  return { error: error ? mapSignInError(error.status) : null }
 }
 
 /** `local` ends this browser's session only, as a fallback when the server call fails. */
